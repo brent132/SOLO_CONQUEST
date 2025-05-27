@@ -471,37 +471,19 @@ class EditScreen(BaseScreen):
                                     if self.collision_manager.handle_collision_click(mouse_pos, button.rect, source_path):
                                         return None
 
-                # Handle mouse wheel for cycling through tiles
-                if event.type == pygame.MOUSEWHEEL:
-                    # Only handle mouse wheel if we have a selected tile
-                    if self.selected_tile:
-                        # Get the current tileset buttons
-                        buttons = self.tileset_manager.tileset_buttons[self.selected_tileset_index]
-
-                        # Find the index of the currently selected tile
-                        current_index = -1
-                        for i, button_data in enumerate(buttons):
-                            if button_data == self.selected_tile:
-                                current_index = i
-                                break
-
-                        if current_index != -1:
-                            # Calculate the new index based on scroll direction
-                            # Scroll up (positive y) means previous tile, scroll down (negative y) means next tile
-                            new_index = (current_index - event.y) % len(buttons)
-
-                            # Deselect all buttons
-                            for button_data in buttons:
-                                if button_data['button']:
-                                    button_data['button'].is_selected = False
-
-                            # Select the new button
-                            new_button_data = buttons[new_index]
-                            if new_button_data['button']:
-                                new_button_data['button'].is_selected = True
-                                self.selected_tile = new_button_data
-                                # Update the brush manager with the selected tile
-                                self.brush_manager.set_selected_tile(new_button_data)
+            # Handle mouse wheel events
+            if event.type == pygame.MOUSEWHEEL:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+                    # Shift + scroll for horizontal tile selection movement
+                    self._move_tile_selection_horizontal(-event.y)  # Negative for natural scrolling
+                    return None
+                elif keys[pygame.K_LALT] or keys[pygame.K_RALT]:
+                    # Alt + scroll for vertical tile selection movement
+                    self._move_tile_selection_vertical(event.y)  # Positive for natural scrolling
+                    return None
+                # Note: Regular scroll (no modifiers) is now disabled
+                return None
 
             # Handle starting drag placement/erasure
             if event.type == pygame.MOUSEBUTTONDOWN and mouse_pos[0] < self.map_area_width:
@@ -668,12 +650,14 @@ class EditScreen(BaseScreen):
                         self.selected_tile = None
                         # Clear the brush manager's selected tile
                         self.brush_manager.set_selected_tile(None)
+
                         self.tileset_manager.position_tileset_buttons(self.selected_tileset_index)
                 # Special key 3 for key item animation
                 elif event.key == pygame.K_3:
                     # Select the last tileset (which contains animated tiles)
                     self.selected_tileset_index = len(self.tileset_manager.tileset_buttons) - 1
                     self.selected_tile = None
+
 
                     # Position the tileset buttons
                     self.tileset_manager.position_tileset_buttons(self.selected_tileset_index)
@@ -1389,9 +1373,10 @@ class EditScreen(BaseScreen):
         return [
             "Left click/drag: Place tiles",
             "Right click/drag: Remove tiles",
-            "Mouse wheel: Cycle through tiles",
             "Arrow keys or WASD: Move view (hold for acceleration)",
             "P key: Toggle tile preview following cursor",
+            "Shift + scroll: Move selection horizontally",
+            "Alt + scroll: Move selection vertically",
             "",
             "Brush:",
             "- Use the Brush tab to change brush size and shape",
@@ -1449,3 +1434,97 @@ class EditScreen(BaseScreen):
             "- Maps in the same folder can be connected",
             "- Plan your world structure before creating maps"
         ]
+
+    def _move_tile_selection_horizontal(self, direction):
+        """Move tile selection horizontally through the palette grid"""
+        if not self.selected_tile:
+            return
+
+        # Get the current tileset buttons
+        buttons = self.tileset_manager.tileset_buttons[self.selected_tileset_index]
+
+        # Find the current tile's position in the grid
+        current_row = self.selected_tile['original_row']
+        current_col = self.selected_tile['original_col']
+
+        # Get the tileset layout to understand the grid structure
+        layout = self.tileset_manager.tileset_layouts[self.selected_tileset_index]
+        tiles_per_row = layout["tiles_per_row"]
+
+        # Calculate new column position
+        new_col = current_col + direction
+
+        # Find a tile at the new position
+        target_tile = None
+        for button_data in buttons:
+            if (button_data['original_row'] == current_row and
+                button_data['original_col'] == new_col):
+                target_tile = button_data
+                break
+
+        # If no tile found at exact position, try wrapping to next/previous row
+        if not target_tile:
+            if direction > 0:  # Moving right, wrap to next row
+                new_row = current_row + 1
+                new_col = 0
+            else:  # Moving left, wrap to previous row
+                new_row = current_row - 1
+                new_col = tiles_per_row - 1
+
+            # Find tile at wrapped position
+            for button_data in buttons:
+                if (button_data['original_row'] == new_row and
+                    button_data['original_col'] == new_col):
+                    target_tile = button_data
+                    break
+
+        # If we found a target tile, select it
+        if target_tile and target_tile['button']:
+            self._select_tile(target_tile)
+
+    def _move_tile_selection_vertical(self, direction):
+        """Move tile selection vertically through the palette grid"""
+        if not self.selected_tile:
+            return
+
+        # Get the current tileset buttons
+        buttons = self.tileset_manager.tileset_buttons[self.selected_tileset_index]
+
+        # Find the current tile's position in the grid
+        current_row = self.selected_tile['original_row']
+        current_col = self.selected_tile['original_col']
+
+        # Calculate new row position
+        new_row = current_row + direction
+
+        # Find a tile at the new position
+        target_tile = None
+        for button_data in buttons:
+            if (button_data['original_row'] == new_row and
+                button_data['original_col'] == current_col):
+                target_tile = button_data
+                break
+
+        # If we found a target tile, select it
+        if target_tile and target_tile['button']:
+            self._select_tile(target_tile)
+
+    def _select_tile(self, target_tile):
+        """Helper method to select a specific tile"""
+        # Get the current tileset buttons
+        buttons = self.tileset_manager.tileset_buttons[self.selected_tileset_index]
+
+        # Deselect all buttons (regular and animated)
+        for button_data in buttons:
+            if button_data['button']:
+                button_data['button'].is_selected = False
+
+        for button_data in self.tileset_manager.animated_tile_buttons:
+            if button_data['button']:
+                button_data['button'].is_selected = False
+
+        # Select the target tile
+        target_tile['button'].is_selected = True
+        self.selected_tile = target_tile
+        # Update the brush manager with the selected tile
+        self.brush_manager.set_selected_tile(target_tile)

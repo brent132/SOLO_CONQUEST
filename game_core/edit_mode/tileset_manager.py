@@ -19,9 +19,8 @@ class TilesetManager:
         # Initialize height for scroll calculations
         self.height = 720  # Default height
 
-        # Scroll offset for the palette
+        # Scroll offset for the palette (not used for tile selection movement)
         self.scroll_offset_y = 0
-        self.max_scroll_offset = 0  # Will be calculated when positioning buttons
 
         # Tileset folders and their original dimensions
         self.tileset_info = [
@@ -332,6 +331,8 @@ class TilesetManager:
         if tileset_width_scaled <= available_width:
             # Calculate the starting x position to center the tileset
             start_x = self.map_area_width + (self.sidebar_width - tileset_width_scaled) // 2
+
+
 
         # Position each button according to its original position in the tileset
         for button_data in buttons:
