@@ -4,7 +4,6 @@ Menu module - contains menu-related classes including splash screen
 import pygame
 import math
 from settings import *
-from font_manager import font_manager
 from base_screen import BaseScreen
 
 class Button:
@@ -76,11 +75,10 @@ class SplashScreen(BaseScreen):
         self.bg_scroll_speed = 0.2  # Pixels per frame - lower = slower, smoother scrolling
         # ===== END BACKGROUND ANIMATION SETTINGS ====
 
-        # Button configuration
+        # Button configuration - removed edit button for gameplay mode
         self.button_paths = {
             'start': "Menu Assets/Start-Button.png",
             'settings': "Menu Assets/Settings-Button.png",
-            'edit': "Menu Assets/Edit-Button.png",
             'exit': "Menu Assets/Exit-Button.png"
         }
 
@@ -124,15 +122,13 @@ class SplashScreen(BaseScreen):
         self.title_rect.centerx = self.width // 2
         self.title_rect.y = title_y
 
-        # Create buttons
+        # Create buttons - removed edit button for gameplay mode
         center_x = self.width // 2 - button_width // 2
         self.buttons = {
             'start': Button(center_x, start_y, self.button_paths['start'], button_scale),
             'settings': Button(center_x, start_y + button_height + button_spacing,
                               self.button_paths['settings'], button_scale),
-            'edit': Button(center_x, start_y + (button_height + button_spacing) * 2,
-                          self.button_paths['edit'], button_scale),
-            'exit': Button(center_x, start_y + (button_height + button_spacing) * 3,
+            'exit': Button(center_x, start_y + (button_height + button_spacing) * 2,
                           self.button_paths['exit'], button_scale)
         }
 
@@ -161,11 +157,6 @@ class SplashScreen(BaseScreen):
                 from debug_utils import debug_manager
                 debug_manager.log("Settings clicked", "menu")
                 return "settings"
-
-            elif self.buttons['edit'].is_clicked(event):
-                from debug_utils import debug_manager
-                debug_manager.log("Edit Mode clicked", "menu")
-                return "edit"
 
             elif self.buttons['exit'].is_clicked(event):
                 from debug_utils import debug_manager
@@ -236,11 +227,10 @@ class SplashScreen(BaseScreen):
         # Center buttons horizontally
         center_x = self.width // 2 - button_width // 2
 
-        # Update button positions
+        # Update button positions - removed edit button for gameplay mode
         self.buttons['start'].rect.topleft = (center_x, start_y)
         self.buttons['settings'].rect.topleft = (center_x, start_y + button_height + button_spacing)
-        self.buttons['edit'].rect.topleft = (center_x, start_y + (button_height + button_spacing) * 2)
-        self.buttons['exit'].rect.topleft = (center_x, start_y + (button_height + button_spacing) * 3)
+        self.buttons['exit'].rect.topleft = (center_x, start_y + (button_height + button_spacing) * 2)
 
         # Update title position
         self.title_rect.centerx = self.width // 2
