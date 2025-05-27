@@ -13,13 +13,14 @@ import json
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
-from settings import *
-from menu import SplashScreen
-from gameplay.settings_screen import SettingsScreen
-from gameplay.play_screen import PlayScreen
-from gameplay.map_select import WorldSelectScreen
-from debug_utils import debug_manager
-from performance_monitor import performance_monitor
+# Import from game_core (IDE-friendly)
+from game_core.settings import *
+from game_core.menu import SplashScreen
+from game_core.gameplay.settings_screen import SettingsScreen
+from game_core.gameplay.play_screen import PlayScreen
+from game_core.gameplay.map_select import WorldSelectScreen
+from game_core.debug_utils import debug_manager
+from game_core.performance_monitor import performance_monitor
 
 class GameplayApp:
     def __init__(self):

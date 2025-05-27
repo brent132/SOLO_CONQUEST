@@ -12,12 +12,13 @@ import os
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
-from settings import *
-from edit_mode import EditScreen
-from debug_utils import debug_manager
-from performance_monitor import performance_monitor
-from menu import Button
-from base_screen import BaseScreen
+# Import from game_core (IDE-friendly)
+from game_core.settings import *
+from game_core.edit_mode import EditScreen
+from game_core.debug_utils import debug_manager
+from game_core.performance_monitor import performance_monitor
+from game_core.menu import Button
+from game_core.base_screen import BaseScreen
 
 class EditorSplashScreen(BaseScreen):
     """Custom splash screen for editor mode with only relevant buttons"""
@@ -105,12 +106,10 @@ class EditorSplashScreen(BaseScreen):
         # Check for button clicks
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.buttons['edit'].is_clicked(event):
-                from debug_utils import debug_manager
                 debug_manager.log("Edit Mode clicked", "menu")
                 return "edit"
 
             elif self.buttons['exit'].is_clicked(event):
-                from debug_utils import debug_manager
                 debug_manager.log("Exit clicked", "menu")
                 return "exit"
 

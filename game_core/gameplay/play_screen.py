@@ -158,15 +158,17 @@ class PlayScreen(BaseScreen):
         # Try to find the map file - it could be a main map or a related map
         # First check if it's a main map
         main_map_path = os.path.join(maps_dir, map_name, f"{map_name}.json")
-        print(f"Checking for main map file at: {main_map_path}")
+        print(f"DEBUG: Requested map name: '{map_name}'")
+        print(f"DEBUG: Checking for main map file at: {main_map_path}")
 
         if os.path.exists(main_map_path):
             # It's a main map
             map_path = main_map_path
-            print(f"Found main map file: {map_path}")
+            print(f"DEBUG: Found main map file: {map_path}")
         else:
             # It might be a related map, search in all map folders
             map_path = None
+            print(f"DEBUG: '{map_name}' is not a main map, searching in folders...")
 
             # Check if Maps directory exists
             if os.path.exists(maps_dir):
@@ -204,10 +206,13 @@ class PlayScreen(BaseScreen):
                 self.status_timer = 180
                 return False
 
+            print(f"DEBUG: Final map path being loaded: {map_path}")
             print(f"Loading map data from: {map_path}")
             # Load map data
             with open(map_path, 'r') as f:
                 map_data = json.load(f)
+            print(f"DEBUG: Loaded map data - map name in file: '{map_data.get('name', 'UNKNOWN')}'")
+            print(f"DEBUG: Map dimensions: {map_data.get('width', 0)}x{map_data.get('height', 0)}")
 
             # Store map dimensions
             self.map_width = map_data.get("width", 0)
@@ -250,32 +255,14 @@ class PlayScreen(BaseScreen):
 
             # First check if we're teleporting - if so, we'll set the position later
             if not self.is_teleporting:
-                # Determine which folder (world) this map belongs to
-                folder_name = None
-
-                # Extract folder name from map path
-                map_path_parts = map_path.split(os.sep)
-                if "Maps" in map_path_parts:
-                    maps_index = map_path_parts.index("Maps")
-                    if maps_index + 1 < len(map_path_parts):
-                        folder_name = map_path_parts[maps_index + 1]
-
-                # If we couldn't determine the folder name, try to extract it from the map name
-                if not folder_name:
-                    if "/" in map_name:
-                        folder_name = map_name.split("/")[0]
-                    elif "\\" in map_name:
-                        folder_name = map_name.split("\\")[0]
-                    else:
-                        folder_name = "main"  # Default to main if we can't determine folder
+                # Determine which folder (world) this map belongs to using the same logic as player_location_tracker
+                folder_name = self.player_location_tracker._determine_folder_name(map_name)
 
                 # Get the location for this specific world
-                world_location = None
-                if folder_name:
-                    world_location = self.player_location_tracker.get_world_location(folder_name)
+                world_location = self.player_location_tracker.get_world_location(folder_name)
 
-                # If we have a location for this world, use it
-                if world_location and world_location["map_name"]:
+                # Check if we have a saved location for this world
+                if world_location:
                     # Use the world-specific location
                     player_x = world_location["x"]
                     player_y = world_location["y"]
@@ -284,6 +271,9 @@ class PlayScreen(BaseScreen):
                     # Create the player character with saved position and direction
                     self.player = PlayerCharacter(player_x, player_y)
                     self.player.direction = player_direction
+                    print(f"DEBUG: Loading map '{map_name}' in world '{folder_name}'")
+                    print(f"DEBUG: Saved location was for map '{world_location.get('map_name')}' at ({player_x}, {player_y})")
+                    print(f"DEBUG: Using saved position for world '{folder_name}': ({player_x}, {player_y})")
 
                     # Set health and shield from the world location
                     self.player.current_health = world_location.get("health", 100)
@@ -293,46 +283,47 @@ class PlayScreen(BaseScreen):
                     if "game_state" in map_data and "camera" in map_data["game_state"]:
                         self.camera_x = map_data["game_state"]["camera"]["x"]
                         self.camera_y = map_data["game_state"]["camera"]["y"]
-                # If no world-specific location, fall back to latest location (for backward compatibility)
-                else:
-                    latest_location = self.player_location_tracker.get_latest_location()
 
-                    if latest_location and latest_location.get("map_name"):
-                        # Use the latest player location
-                        player_x = latest_location["x"]
-                        player_y = latest_location["y"]
-                        player_direction = latest_location["direction"]
+                # Check if there's a saved location for this specific map (cross-world compatibility - last resort)
+                elif self.player_location_tracker.has_location(map_name):
+                    saved_location = self.player_location_tracker.get_location(map_name)
+                    if saved_location:
+                        # Use the saved location for this map
+                        player_x = saved_location["x"]
+                        player_y = saved_location["y"]
+                        player_direction = saved_location["direction"]
 
                         # Create the player character with saved position and direction
                         self.player = PlayerCharacter(player_x, player_y)
                         self.player.direction = player_direction
+                        print(f"Loaded saved position for map '{map_name}' from any world (fallback): ({player_x}, {player_y})")
 
-                        # Set health and shield from the latest location
-                        self.player.current_health = latest_location.get("health", 100)
-                        self.player.shield_durability = latest_location.get("shield_durability", 3)
+                        # Set default health and shield (since cross-world might not have these)
+                        self.player.current_health = 100
+                        self.player.shield_durability = 3
 
-                        # Set camera position from game state if available
-                        if "game_state" in map_data and "camera" in map_data["game_state"]:
-                            self.camera_x = map_data["game_state"]["camera"]["x"]
-                            self.camera_y = map_data["game_state"]["camera"]["y"]
-                    elif "player_start" in map_data:
-                        # Use the player starting position from the map data
-                        player_grid_x = map_data["player_start"].get("x", 0)
-                        player_grid_y = map_data["player_start"].get("y", 0)
-                        player_x = player_grid_x * self.grid_cell_size
-                        player_y = player_grid_y * self.grid_cell_size
-                        player_direction = map_data["player_start"].get("direction", "down")
+                # Check if map has a defined player start position
+                elif "player_start" in map_data:
+                    # Use the player starting position from the map data
+                    player_grid_x = map_data["player_start"].get("x", 0)
+                    player_grid_y = map_data["player_start"].get("y", 0)
+                    player_x = player_grid_x * self.grid_cell_size
+                    player_y = player_grid_y * self.grid_cell_size
+                    player_direction = map_data["player_start"].get("direction", "down")
 
-                        # Create the player character with starting position
-                        self.player = PlayerCharacter(player_x, player_y)
-                        self.player.direction = player_direction
-                    else:
-                        # Default to the middle of the map
-                        player_x = (self.map_width * self.grid_cell_size) // 2
-                        player_y = (self.map_height * self.grid_cell_size) // 2
+                    # Create the player character with starting position
+                    self.player = PlayerCharacter(player_x, player_y)
+                    self.player.direction = player_direction
+                    print(f"Using map's player_start position: ({player_x}, {player_y})")
 
-                        # Create the player character (default direction is already "down")
-                        self.player = PlayerCharacter(player_x, player_y)
+                else:
+                    # Default to the middle of the map
+                    player_x = (self.map_width * self.grid_cell_size) // 2
+                    player_y = (self.map_height * self.grid_cell_size) // 2
+
+                    # Create the player character (default direction is already "down")
+                    self.player = PlayerCharacter(player_x, player_y)
+                    print(f"Using default center position: ({player_x}, {player_y})")
 
 
             else:
@@ -1243,30 +1234,8 @@ class PlayScreen(BaseScreen):
                 print(f"Player touched relation point: {relation['from_point']} -> {relation['to_point']} in map {relation['to_map']}")
                 print(f"Teleporting to position: {relation['to_position']}")
 
-                # Determine which folder (world) the current map belongs to
-                current_folder_name = None
-
-                # Try to extract folder name from map_name
-                if "/" in self.map_name:
-                    current_folder_name = self.map_name.split("/")[0]
-                elif "\\" in self.map_name:
-                    current_folder_name = self.map_name.split("\\")[0]
-                else:
-                    # Try to find the folder by looking in Maps directory
-                    maps_dir = "Maps"
-                    if os.path.exists(maps_dir):
-                        # Check if map is in a subfolder
-                        for folder in os.listdir(maps_dir):
-                            folder_path = os.path.join(maps_dir, folder)
-                            if os.path.isdir(folder_path):
-                                map_path = os.path.join(folder_path, f"{self.map_name}.json")
-                                if os.path.exists(map_path):
-                                    current_folder_name = folder
-                                    break
-
-                # If still no folder name, use "main" as default
-                if not current_folder_name:
-                    current_folder_name = "main"
+                # Determine which folder (world) the current map belongs to using the same logic as player_location_tracker
+                current_folder_name = self.player_location_tracker._determine_folder_name(self.map_name)
 
                 print(f"DEBUG: Saving player location for world {current_folder_name}, map {self.map_name}")
 
@@ -1356,30 +1325,8 @@ class PlayScreen(BaseScreen):
                     self.player.rect.centerx = point_center_x
                     self.player.rect.centery = point_center_y
 
-                    # Determine which folder (world) the target map belongs to
-                    target_folder_name = None
-
-                    # Try to extract folder name from target_map
-                    if "/" in target_map:
-                        target_folder_name = target_map.split("/")[0]
-                    elif "\\" in target_map:
-                        target_folder_name = target_map.split("\\")[0]
-                    else:
-                        # Try to find the folder by looking in Maps directory
-                        maps_dir = "Maps"
-                        if os.path.exists(maps_dir):
-                            # Check if map is in a subfolder
-                            for folder in os.listdir(maps_dir):
-                                folder_path = os.path.join(maps_dir, folder)
-                                if os.path.isdir(folder_path):
-                                    map_path = os.path.join(folder_path, f"{target_map}.json")
-                                    if os.path.exists(map_path):
-                                        target_folder_name = folder
-                                        break
-
-                    # If still no folder name, use "main" as default
-                    if not target_folder_name:
-                        target_folder_name = "main"
+                    # Determine which folder (world) the target map belongs to using the same logic as player_location_tracker
+                    target_folder_name = self.player_location_tracker._determine_folder_name(target_map)
 
                     print(f"DEBUG: Saving player location for world {target_folder_name}, map {target_map}")
 
@@ -2111,30 +2058,8 @@ class PlayScreen(BaseScreen):
 
         # Save current player location for the current map
         if self.player and self.map_name:
-            # Determine which folder (world) the current map belongs to
-            current_folder_name = None
-
-            # Try to extract folder name from map_name
-            if "/" in self.map_name:
-                current_folder_name = self.map_name.split("/")[0]
-            elif "\\" in self.map_name:
-                current_folder_name = self.map_name.split("\\")[0]
-            else:
-                # Try to find the folder by looking in Maps directory
-                maps_dir = "Maps"
-                if os.path.exists(maps_dir):
-                    # Check if map is in a subfolder
-                    for folder in os.listdir(maps_dir):
-                        folder_path = os.path.join(maps_dir, folder)
-                        if os.path.isdir(folder_path):
-                            map_path = os.path.join(folder_path, f"{self.map_name}.json")
-                            if os.path.exists(map_path):
-                                current_folder_name = folder
-                                break
-
-            # If still no folder name, use "main" as default
-            if not current_folder_name:
-                current_folder_name = "main"
+            # Determine which folder (world) the current map belongs to using the same logic as player_location_tracker
+            current_folder_name = self.player_location_tracker._determine_folder_name(self.map_name)
 
             print(f"DEBUG: Saving player location for world {current_folder_name}, map {self.map_name}")
 

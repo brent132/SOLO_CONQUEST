@@ -1,0 +1,21 @@
+{
+  "current_world": "test",
+  "worlds": {
+    "test": {
+      "map_name": "test2",
+      "x": 382,
+      "y": 128,
+      "direction": "up",
+      "health": 100,
+      "shield_durability": 3
+    },
+    "map1": {
+      "map_name": "map1",
+      "x": 487,
+      "y": 121,
+      "direction": "up",
+      "health": 100,
+      "shield_durability": 3
+    }
+  }
+}

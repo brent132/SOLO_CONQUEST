@@ -256,9 +256,10 @@ class WorldSelectScreen(BaseScreen):
                     folder_name = self.selected_world
 
                     # Check if there's a player_location.json file in SaveData folder
-                    if os.path.exists("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json"):
+                    player_location_path = "SaveData/player_location.json"
+                    if os.path.exists(player_location_path):
                         try:
-                            with open("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json", 'r') as f:
+                            with open(player_location_path, 'r') as f:
                                 player_location_data = json.load(f)
 
                             # Check if this is the new format with multiple worlds
@@ -273,7 +274,7 @@ class WorldSelectScreen(BaseScreen):
                                     player_location_data["current_world"] = folder_name
 
                                     # Save the updated player_location
-                                    with open("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json", 'w') as f:
+                                    with open(player_location_path, 'w') as f:
                                         json.dump(player_location_data, f, indent=2)
 
                                     return {"action": "play", "map": map_name}
@@ -288,7 +289,7 @@ class WorldSelectScreen(BaseScreen):
                                     player_location_data["folder_name"] = folder_name
 
                                     # Save the updated player_location
-                                    with open("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json", 'w') as f:
+                                    with open(player_location_path, 'w') as f:
                                         json.dump(player_location_data, f, indent=2)
 
                                     return {"action": "play", "map": map_name}
