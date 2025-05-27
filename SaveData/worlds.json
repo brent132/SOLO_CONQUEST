@@ -1,0 +1,18 @@
+{
+  "worlds": [
+    {
+      "folder_name": "main",
+      "display_name": "Main World",
+      "description": "The main world of the game",
+      "icon": "world_icons/main.png",
+      "has_main_map": true
+    },
+    {
+      "folder_name": "test",
+      "display_name": "Test",
+      "description": "World located in test",
+      "icon": "",
+      "has_main_map": true
+    }
+  ]
+}

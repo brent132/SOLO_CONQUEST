@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "collision_data": {
+    "Tilesets/Overworld\\tile096.png": [
+      0,
+      1
+    ],
+    "animated:edge_water_tile": [
+      0,
+      1
+    ],
+    "animated:water_tile": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile000.png": [
+      0,
+      1,
+      2
+    ],
+    "Tilesets/Overworld\\tile001.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile003.png": [
+      0,
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile004.png": [
+      0,
+      1,
+      2
+    ],
+    "Tilesets/Overworld\\tile005.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile007.png": [
+      0,
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile018.png": [
+      0,
+      2
+    ],
+    "Tilesets/Overworld\\tile021.png": [
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile022.png": [
+      0,
+      2
+    ],
+    "Tilesets/Overworld\\tile025.png": [
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile036.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile037.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile039.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile040.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile041.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile043.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile058.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile059.png": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile078.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile095.png": [
+      1
+    ],
+    "Tilesets/Overworld\\tile097.png": [
+      0
+    ],
+    "Tilesets/Overworld\\tile201.png": [
+      3
+    ],
+    "Tilesets/Overworld\\tile202.png": [
+      2
+    ],
+    "animated:lootchest_item": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile183.png": [
+      3
+    ],
+    "Tilesets/Overworld\\tile184.png": [
+      2
+    ],
+    "Tilesets/Overworld\\tile135.png": [
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile136.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile137.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile138.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile139.png": [
+      0,
+      2
+    ],
+    "Tilesets/Overworld\\tile153.png": [
+      1
+    ],
+    "Tilesets/Overworld\\tile154.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile155.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile156.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile157.png": [
+      0
+    ]
+  }
+}
