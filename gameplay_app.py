@@ -9,6 +9,10 @@ import pygame
 import sys
 import os
 import json
+
+# Add game_core to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
+
 from settings import *
 from menu import SplashScreen
 from gameplay.settings_screen import SettingsScreen
@@ -193,6 +197,8 @@ class GameplayApp:
                 action = self.splash_screen.handle_event(event)
                 if action == "start":
                     # Always go to world selection screen when Start is clicked
+                    # Refresh the world list to detect any deleted maps
+                    self.map_select_screen.refresh_world_list()
                     self.game_state = "map_select"
                 elif action == "settings":
                     self.game_state = "settings"
@@ -226,6 +232,8 @@ class GameplayApp:
                 if action == "back":
                     # Reset the play screen to clear any game over state
                     self.play_screen = PlayScreen(self.width, self.height)
+                    # Refresh the world list to detect any deleted maps
+                    self.map_select_screen.refresh_world_list()
                     self.game_state = "map_select"
 
     def update(self):

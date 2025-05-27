@@ -269,8 +269,6 @@ class PlayScreen(BaseScreen):
                     else:
                         folder_name = "main"  # Default to main if we can't determine folder
 
-                print(f"DEBUG: Map belongs to folder/world: {folder_name}")
-
                 # Get the location for this specific world
                 world_location = None
                 if folder_name:
@@ -278,8 +276,6 @@ class PlayScreen(BaseScreen):
 
                 # If we have a location for this world, use it
                 if world_location and world_location["map_name"]:
-                    print(f"DEBUG: Found saved location for world {folder_name}: {world_location}")
-
                     # Use the world-specific location
                     player_x = world_location["x"]
                     player_y = world_location["y"]
@@ -288,7 +284,6 @@ class PlayScreen(BaseScreen):
                     # Create the player character with saved position and direction
                     self.player = PlayerCharacter(player_x, player_y)
                     self.player.direction = player_direction
-                    print(f"DEBUG: Created player at position ({player_x}, {player_y}) with direction {player_direction}")
 
                     # Set health and shield from the world location
                     self.player.current_health = world_location.get("health", 100)
@@ -299,11 +294,10 @@ class PlayScreen(BaseScreen):
                         self.camera_x = map_data["game_state"]["camera"]["x"]
                         self.camera_y = map_data["game_state"]["camera"]["y"]
                 # If no world-specific location, fall back to latest location (for backward compatibility)
-                elif not world_location:
+                else:
                     latest_location = self.player_location_tracker.get_latest_location()
-                    print(f"DEBUG: No world-specific location, using latest location: {latest_location}")
 
-                    if latest_location and latest_location["map_name"]:
+                    if latest_location and latest_location.get("map_name"):
                         # Use the latest player location
                         player_x = latest_location["x"]
                         player_y = latest_location["y"]
@@ -312,7 +306,6 @@ class PlayScreen(BaseScreen):
                         # Create the player character with saved position and direction
                         self.player = PlayerCharacter(player_x, player_y)
                         self.player.direction = player_direction
-                        print(f"DEBUG: Created player at position ({player_x}, {player_y}) with direction {player_direction}")
 
                         # Set health and shield from the latest location
                         self.player.current_health = latest_location.get("health", 100)
@@ -322,25 +315,24 @@ class PlayScreen(BaseScreen):
                         if "game_state" in map_data and "camera" in map_data["game_state"]:
                             self.camera_x = map_data["game_state"]["camera"]["x"]
                             self.camera_y = map_data["game_state"]["camera"]["y"]
-                # If no saved location in tracker, use player_start or default position
-                elif "player_start" in map_data:
-                    # Use the player starting position from the map data
-                    player_grid_x = map_data["player_start"].get("x", 0)
-                    player_grid_y = map_data["player_start"].get("y", 0)
-                    player_x = player_grid_x * self.grid_cell_size
-                    player_y = player_grid_y * self.grid_cell_size
-                    player_direction = map_data["player_start"].get("direction", "down")
+                    elif "player_start" in map_data:
+                        # Use the player starting position from the map data
+                        player_grid_x = map_data["player_start"].get("x", 0)
+                        player_grid_y = map_data["player_start"].get("y", 0)
+                        player_x = player_grid_x * self.grid_cell_size
+                        player_y = player_grid_y * self.grid_cell_size
+                        player_direction = map_data["player_start"].get("direction", "down")
 
-                    # Create the player character with starting position
-                    self.player = PlayerCharacter(player_x, player_y)
-                    self.player.direction = player_direction
-                else:
-                    # Default to the middle of the map
-                    player_x = (self.map_width * self.grid_cell_size) // 2
-                    player_y = (self.map_height * self.grid_cell_size) // 2
+                        # Create the player character with starting position
+                        self.player = PlayerCharacter(player_x, player_y)
+                        self.player.direction = player_direction
+                    else:
+                        # Default to the middle of the map
+                        player_x = (self.map_width * self.grid_cell_size) // 2
+                        player_y = (self.map_height * self.grid_cell_size) // 2
 
-                    # Create the player character (default direction is already "down")
-                    self.player = PlayerCharacter(player_x, player_y)
+                        # Create the player character (default direction is already "down")
+                        self.player = PlayerCharacter(player_x, player_y)
 
 
             else:

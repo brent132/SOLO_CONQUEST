@@ -15,11 +15,11 @@ class Button:
     def __init__(self, x, y, button_type, scale=1.0):
         # Map button type to image file
         button_images = {
-            "edit_mode": "edit_mode/Buttons/Edit_Mode-Button.png",
-            "browse_map": "edit_mode/Buttons/Browse_Map-Button.png",
-            "save": "edit_mode/Buttons/Save-Button.png",
-            "delete": "edit_mode/Buttons/Delete-Button.png",
-            "cancel": "edit_mode/Buttons/Cancel-Button.png"
+            "edit_mode": "game_core/edit_mode/Buttons/Edit_Mode-Button.png",
+            "browse_map": "game_core/edit_mode/Buttons/Browse_Map-Button.png",
+            "save": "game_core/edit_mode/Buttons/Save-Button.png",
+            "delete": "game_core/edit_mode/Buttons/Delete-Button.png",
+            "cancel": "game_core/edit_mode/Buttons/Cancel-Button.png"
         }
 
         # Default to a generic button if type not found

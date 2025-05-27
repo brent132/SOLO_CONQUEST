@@ -7,6 +7,11 @@ Editor module - contains the main editor application class
 """
 import pygame
 import sys
+import os
+
+# Add game_core to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
+
 from settings import *
 from edit_mode import EditScreen
 from debug_utils import debug_manager

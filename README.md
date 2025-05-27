@@ -2,6 +2,34 @@
 
 A 2D adventure game with a built-in map editor, featuring tile-based maps, enemy systems, and character progression.
 
+## Project Structure
+
+```
+SOLO_TEST/
+├── gameplay_app.py          # Main gameplay application
+├── editor_app.py            # Main map editor application
+├── game_core/               # Core game modules and packages
+│   ├── settings.py          # Game settings and constants
+│   ├── menu.py              # Menu and UI components
+│   ├── base_screen.py       # Base screen class
+│   ├── debug_utils.py       # Debug utilities
+│   ├── performance_monitor.py # Performance monitoring
+│   ├── font_manager.py      # Font management
+│   ├── gameplay/            # Gameplay-specific modules
+│   ├── edit_mode/           # Map editor modules
+│   ├── character_system/    # Character and animation system
+│   └── enemy_system/        # Enemy AI and management
+├── Assets/                  # Game assets and sprites
+├── character/               # Character sprites and animations
+├── Enemies_Sprites/         # Enemy sprites and animations
+├── Tilesets/               # Map tilesets and tiles
+├── Menu Assets/            # Menu graphics and UI elements
+├── fonts/                  # Game fonts
+├── Maps/                   # Game maps and levels
+├── SaveData/               # Save files and game state
+└── world_icons/            # World/map icons
+```
+
 ## Features
 
 ### Gameplay Features
@@ -23,23 +51,32 @@ A 2D adventure game with a built-in map editor, featuring tile-based maps, enemy
 
 ## Application Modes
 
-The game has two separate applications that can be launched independently:
+The project is organized into two independent applications with all supporting code in the `game_core/` folder:
 
 ### Gameplay Mode
 ```bash
 python gameplay_app.py
 ```
-- Launches the game with splash screen, settings, map selection, and gameplay
-- Clean interface focused on playing the game
-- No editor functionality to keep the interface simple for players
+- **Purpose**: Complete gaming experience for players
+- **Features**: Splash screen, settings, map selection, and full gameplay
+- **Interface**: Clean, player-focused interface without editor clutter
+- **Dependencies**: Automatically imports required modules from `game_core/`
 
 ### Editor Mode
 ```bash
 python editor_app.py
 ```
-- Launches the map editor with a simplified splash screen
-- Direct access to the map editing tools
-- No gameplay features to keep the interface focused for developers
+- **Purpose**: Map creation and editing tools for developers
+- **Features**: Simplified splash screen with direct access to map editor
+- **Interface**: Developer-focused interface without gameplay features
+- **Dependencies**: Automatically imports required modules from `game_core/`
+
+### Organized Structure Benefits
+- ✅ **Clean Root Directory**: Only the two main applications in root
+- ✅ **Modular Design**: All supporting code organized in `game_core/`
+- ✅ **Easy Maintenance**: Related functionality grouped together
+- ✅ **Clear Separation**: Gameplay and editor features completely separated
+- ✅ **Asset Organization**: Game assets remain easily accessible in root
 
 ## Controls
 

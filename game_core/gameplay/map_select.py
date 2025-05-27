@@ -203,6 +203,10 @@ class WorldSelectScreen(BaseScreen):
         """Refresh the list of available worlds"""
         self.world_items = []
 
+        # Force the world manager to reload worlds from disk
+        # This will detect any deleted map folders and remove them from the world list
+        self.world_manager.load_worlds()
+
         # Get all worlds from the world manager
         worlds = self.world_manager.get_all_worlds()
 
@@ -326,12 +330,36 @@ class WorldSelectScreen(BaseScreen):
         title_rect = title.get_rect(center=(self.width // 2, 50))
         surface.blit(title, title_rect)
 
-        # Draw world items
-        for item in self.world_items:
-            item.draw(surface, self.world_manager)
+        # Check if there are any worlds available
+        if not self.world_items:
+            # No worlds available - show helpful message
+            message_font = pygame.font.SysFont(None, 36)
+            instruction_font = pygame.font.SysFont(None, 28)
 
-        # Draw play button (always visible, but only functional if a world is selected)
-        self.play_button.draw(surface)
+            # Main message
+            no_worlds_text = message_font.render("No maps found!", True, (255, 255, 255))
+            no_worlds_rect = no_worlds_text.get_rect(center=(self.width // 2, self.height // 2 - 60))
+            surface.blit(no_worlds_text, no_worlds_rect)
+
+            # Instructions
+            instruction1 = instruction_font.render("Create your first map using the Map Editor:", True, (200, 200, 200))
+            instruction1_rect = instruction1.get_rect(center=(self.width // 2, self.height // 2 - 10))
+            surface.blit(instruction1, instruction1_rect)
+
+            instruction2 = instruction_font.render("Run: python editor_app.py", True, (150, 200, 255))
+            instruction2_rect = instruction2.get_rect(center=(self.width // 2, self.height // 2 + 20))
+            surface.blit(instruction2, instruction2_rect)
+
+            instruction3 = instruction_font.render("Then return here to play your maps!", True, (200, 200, 200))
+            instruction3_rect = instruction3.get_rect(center=(self.width // 2, self.height // 2 + 50))
+            surface.blit(instruction3, instruction3_rect)
+        else:
+            # Draw world items
+            for item in self.world_items:
+                item.draw(surface, self.world_manager)
+
+            # Draw play button (only visible if worlds are available)
+            self.play_button.draw(surface)
 
         # Draw common elements (back and reload buttons)
         self.draw_common_elements(surface)
