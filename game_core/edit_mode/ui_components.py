@@ -512,6 +512,199 @@ class LayerPanel:
             thumb_rect = pygame.Rect(indicator_x, indicator_y, indicator_width, indicator_height)
             pygame.draw.rect(surface, (100, 100, 100), thumb_rect)
 
+class BrushPanel:
+    """Modern brush panel with Photoshop-style interface"""
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.bg_color = (50, 50, 50)
+        self.header_color = (40, 40, 40)
+        self.border_color = (30, 30, 30)
+        self.text_color = (220, 220, 220)
+
+        # Header
+        self.header_height = 30
+        self.header_rect = pygame.Rect(x, y, width, self.header_height)
+        self.content_rect = pygame.Rect(x, y + self.header_height, width, height - self.header_height)
+
+        # Brush settings
+        self.brush_size = 1
+        self.brush_shape = "square"
+        self.available_sizes = [1, 3, 5, 7]
+        self.available_shapes = ["square", "circle"]
+
+        # UI elements
+        self.size_buttons = []
+        self.shape_buttons = []
+        self.preview_rect = None
+
+        # Fonts
+        self.header_font = font_manager.get_font('regular', 14)
+        self.button_font = font_manager.get_font('regular', 12)
+
+        # Selected tile for preview
+        self.selected_tile = None
+
+        # Create UI elements
+        self.create_ui_elements()
+
+    def create_ui_elements(self):
+        """Create brush UI elements optimized for 250px width"""
+        content_x = self.content_rect.x + 8
+        content_y = self.content_rect.y + 8
+        content_width = self.content_rect.width - 16
+
+        # Size section - arrange in 2x2 grid for better fit
+        size_label_y = content_y
+        size_buttons_y = size_label_y + 20
+
+        # Arrange size buttons in 2x2 grid
+        button_width = (content_width - 5) // 2  # 2 columns with 5px gap
+        button_height = 22
+
+        self.size_buttons = []
+        for i, size in enumerate(self.available_sizes):
+            row = i // 2
+            col = i % 2
+            x = content_x + col * (button_width + 5)
+            y = size_buttons_y + row * (button_height + 5)
+            button_rect = pygame.Rect(x, y, button_width, button_height)
+            self.size_buttons.append({
+                'rect': button_rect,
+                'size': size,
+                'selected': size == self.brush_size
+            })
+
+        # Shape section - arrange horizontally with more spacing
+        shape_label_y = size_buttons_y + 2 * (button_height + 5) + 15  # After 2 rows of size buttons + extra space
+        shape_buttons_y = shape_label_y + 25  # More space between label and buttons
+
+        shape_button_width = (content_width - 5) // len(self.available_shapes)  # 5 = 1 gap
+
+        self.shape_buttons = []
+        for i, shape in enumerate(self.available_shapes):
+            x = content_x + i * (shape_button_width + 5)
+            button_rect = pygame.Rect(x, shape_buttons_y, shape_button_width, button_height)
+            self.shape_buttons.append({
+                'rect': button_rect,
+                'shape': shape,
+                'selected': shape == self.brush_shape
+            })
+
+        # No preview section - removed for cleaner, more compact layout
+        self.preview_rect = None
+
+    def set_brush_size(self, size):
+        """Set brush size and update UI"""
+        if size in self.available_sizes:
+            self.brush_size = size
+            # Update button selection
+            for button in self.size_buttons:
+                button['selected'] = button['size'] == size
+
+    def set_brush_shape(self, shape):
+        """Set brush shape and update UI"""
+        if shape in self.available_shapes:
+            self.brush_shape = shape
+            # Update button selection
+            for button in self.shape_buttons:
+                button['selected'] = button['shape'] == shape
+
+    def set_selected_tile(self, tile):
+        """Set the selected tile for preview"""
+        self.selected_tile = tile
+
+    def handle_event(self, event, mouse_pos):
+        """Handle mouse events"""
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Check size buttons
+            for button in self.size_buttons:
+                if button['rect'].collidepoint(mouse_pos):
+                    self.set_brush_size(button['size'])
+                    return "size_changed"
+
+            # Check shape buttons
+            for button in self.shape_buttons:
+                if button['rect'].collidepoint(mouse_pos):
+                    self.set_brush_shape(button['shape'])
+                    return "shape_changed"
+
+        return None
+
+    def draw(self, surface):
+        """Draw the brush panel"""
+        # Panel background
+        pygame.draw.rect(surface, self.bg_color, self.rect)
+        pygame.draw.rect(surface, self.border_color, self.rect, 2)
+
+        # Header
+        pygame.draw.rect(surface, self.header_color, self.header_rect)
+        pygame.draw.line(surface, self.border_color,
+                        (self.header_rect.left, self.header_rect.bottom),
+                        (self.header_rect.right, self.header_rect.bottom), 1)
+
+        # Header title
+        title_text = self.header_font.render("BRUSH", True, self.text_color)
+        title_rect = title_text.get_rect(left=self.header_rect.x + 8, centery=self.header_rect.centery)
+        surface.blit(title_text, title_rect)
+
+        # Content area background
+        pygame.draw.rect(surface, (45, 45, 45), self.content_rect)
+
+        # Size section
+        size_label = self.button_font.render("Size:", True, self.text_color)
+        surface.blit(size_label, (self.content_rect.x + 10, self.content_rect.y + 10))
+
+        # Size buttons
+        for button in self.size_buttons:
+            if button['selected']:
+                bg_color = (100, 150, 255)
+                text_color = (255, 255, 255)
+                border_color = (80, 130, 235)
+            else:
+                bg_color = (70, 70, 70)
+                text_color = (200, 200, 200)
+                border_color = (50, 50, 50)
+
+            pygame.draw.rect(surface, bg_color, button['rect'])
+            pygame.draw.rect(surface, border_color, button['rect'], 1)
+
+            text = self.button_font.render(f"{button['size']}x{button['size']}", True, text_color)
+            text_rect = text.get_rect(center=button['rect'].center)
+            surface.blit(text, text_rect)
+
+        # Shape section
+        shape_y = self.size_buttons[0]['rect'].bottom + 30  # More space to avoid overlap
+        shape_label = self.button_font.render("Shape:", True, self.text_color)
+        surface.blit(shape_label, (self.content_rect.x + 8, shape_y))
+
+        # Shape buttons
+        for button in self.shape_buttons:
+            if button['selected']:
+                bg_color = (100, 150, 255)
+                text_color = (255, 255, 255)
+                border_color = (80, 130, 235)
+            else:
+                bg_color = (70, 70, 70)
+                text_color = (200, 200, 200)
+                border_color = (50, 50, 50)
+
+            pygame.draw.rect(surface, bg_color, button['rect'])
+            pygame.draw.rect(surface, border_color, button['rect'], 1)
+
+            # Draw shape text
+            if button['shape'] == "square":
+                shape_text = "Square"
+            else:
+                shape_text = "Circle"
+
+            text = self.button_font.render(shape_text, True, text_color)
+            text_rect = text.get_rect(center=button['rect'].center)
+            surface.blit(text, text_rect)
+
+        # Preview section removed for cleaner layout
+
+
+
 class TextInput:
     """Text input field for entering map name"""
     def __init__(self, x, y, width, height, font_size=FONT_SIZE_MEDIUM, max_length=20):

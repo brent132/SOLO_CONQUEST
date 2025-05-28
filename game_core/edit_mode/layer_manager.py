@@ -37,10 +37,12 @@ class LayerManager:
 
     def create_ui(self, map_area_width, _height=None):
         """Create UI components for layer management"""
-        # Create Photoshop-style layer panel
-        panel_x = map_area_width + 10
-        panel_y = 510
-        panel_width = self.sidebar_width - 20
+        # Create Photoshop-style layer panel (positioned side by side with brush panel)
+        # Right side of sidebar (second half)
+        brush_panel_width = (self.sidebar_width - 30) // 2  # Half sidebar width minus spacing
+        panel_x = map_area_width + 10 + brush_panel_width + 10  # After brush panel + spacing
+        panel_y = 510  # Same Y position as brush panel
+        panel_width = (self.sidebar_width - 30) // 2  # Half sidebar width minus spacing
         panel_height = 200
 
         self.layer_panel = LayerPanel(panel_x, panel_y, panel_width, panel_height)

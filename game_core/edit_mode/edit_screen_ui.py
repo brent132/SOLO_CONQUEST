@@ -88,6 +88,10 @@ class EditScreenUI:
             # Draw tileset buttons
             tileset_manager.draw_tileset(surface, selected_tileset_index)
 
+            # Draw brush panel (integrated into Tiles tab)
+            if brush_manager:
+                brush_manager.draw(surface, font)
+
             # Draw a separator line at a fixed position
             separator_y = 490  # Fixed position for separator line
 
@@ -101,10 +105,6 @@ class EditScreenUI:
 
             # Draw layer manager UI below the separator
             layer_manager.draw(surface)
-
-        elif tab_manager.active_tab == "Brush" and brush_manager:
-            # Draw brush settings
-            brush_manager.draw(surface, font)
 
         elif tab_manager.active_tab == "Collision" and collision_manager:
             # Draw tileset switching buttons (handled by editor)
@@ -132,17 +132,7 @@ class EditScreenUI:
                         if source_path:
                             collision_manager.draw_collision_dots(surface, button.rect, source_path)
 
-            # Draw toggle visibility button at the bottom of the sidebar with smaller font
-            toggle_font = font_manager.get_font('regular', FONT_SIZE_SMALL)
-            toggle_text = toggle_font.render("Toggle Dots Visibility", True, (50, 50, 50))
-            toggle_rect = pygame.Rect(self.map_area_width + 20, self.height - 100, 160, 26)
-            pygame.draw.rect(surface, (220, 220, 220), toggle_rect)
-            pygame.draw.rect(surface, (100, 100, 100), toggle_rect, 1)
-            toggle_text_rect = toggle_text.get_rect(center=toggle_rect.center)
-            surface.blit(toggle_text, toggle_text_rect)
-
-            # Return the toggle button rect for click detection
-            return toggle_rect
+            # Toggle dots visibility button removed
 
         elif tab_manager.active_tab == "Save":
             # Draw save controls
@@ -234,7 +224,7 @@ class EditScreenUI:
                 text_rect = text.get_rect(topleft=(self.map_area_width + 20, content_y + 40))
                 surface.blit(text, text_rect)
 
-        return collision_toggle_rect
+        return None  # collision_toggle_rect removed
 
     def draw_browser_sidebar(self, surface, map_manager, edit_mode_button, browse_mode_button):
         """Draw the sidebar for the map browser"""

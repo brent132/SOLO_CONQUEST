@@ -172,6 +172,9 @@
     ],
     "Tilesets/Overworld\\tile157.png": [
       0
+    ],
+    "Tilesets/Dungeon\\tile001.png": [
+      1
     ]
   }
 }

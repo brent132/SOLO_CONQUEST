@@ -14,8 +14,8 @@ class TabManager:
         self.tab_spacing = 5
         self.active_tab = "Tiles"  # Default active tab
 
-        # Define tabs
-        self.tabs = ["Tiles", "Brush", "Collision", "Relations", "Save", "Help"]
+        # Define tabs (Brush functionality moved to Tiles tab)
+        self.tabs = ["Tiles", "Collision", "Relations", "Save", "Help"]
         self.tab_buttons = {}
 
         # Create tab buttons

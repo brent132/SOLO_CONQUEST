@@ -1,23 +1,27 @@
 """
-Brush Manager - handles brush functionality for the edit mode
+Brush Manager - handles brush functionality for the edit mode with modern UI
 """
 import pygame
 import math
+from edit_mode.ui_components import BrushPanel
 
 class BrushManager:
-    """Manages brush functionality for the edit mode"""
+    """Manages brush functionality for the edit mode with modern UI"""
     def __init__(self):
         # Brush settings
         self.brush_size = 1  # Default to 1x1 (single tile)
         self.brush_shape = "square"  # "square" or "circle"
 
         # Available brush sizes
-        self.available_sizes = [1, 3, 5]
+        self.available_sizes = [1, 3, 5, 7]
 
         # Available brush shapes
         self.available_shapes = ["square", "circle"]
 
-        # UI elements
+        # Modern brush panel
+        self.brush_panel = None
+
+        # Legacy UI elements (kept for compatibility)
         self.size_buttons = {}
         self.shape_buttons = {}
 
@@ -132,9 +136,29 @@ class BrushManager:
         """Set the selected tile for the brush preview"""
         self.selected_tile = tile
         self.update_preview()
+        # Sync to panel if it exists
+        if self.brush_panel:
+            self.brush_panel.set_selected_tile(tile)
 
     def create_ui(self, map_area_width, sidebar_width, start_y):
         """Create UI elements for the brush settings"""
+        # Create modern brush panel positioned side by side with layers in Tiles tab
+        # Left side of sidebar (first half)
+        panel_x = map_area_width + 10
+        panel_y = 510  # Same Y position as layers
+        panel_width = (sidebar_width - 30) // 2  # Half sidebar width minus spacing
+        panel_height = 200  # Same height as layer panel
+
+        self.brush_panel = BrushPanel(panel_x, panel_y, panel_width, panel_height)
+
+        # Sync initial state
+        self.sync_to_panel()
+
+        # Legacy UI creation for compatibility
+        self.create_legacy_ui(map_area_width, sidebar_width, start_y)
+
+    def create_legacy_ui(self, map_area_width, sidebar_width, start_y):
+        """Create legacy UI for compatibility"""
         # Calculate button dimensions
         button_width = (sidebar_width - 60) // len(self.available_sizes)
         button_height = 30
@@ -152,8 +176,35 @@ class BrushManager:
             y = start_y + button_height + 10
             self.shape_buttons[shape] = pygame.Rect(x, y, shape_button_width, button_height)
 
+    def sync_to_panel(self):
+        """Sync brush manager state to the brush panel"""
+        if not self.brush_panel:
+            return
+
+        self.brush_panel.set_brush_size(self.brush_size)
+        self.brush_panel.set_brush_shape(self.brush_shape)
+        self.brush_panel.set_selected_tile(self.selected_tile)
+
+    def sync_from_panel(self):
+        """Sync brush panel state back to brush manager"""
+        if not self.brush_panel:
+            return
+
+        self.brush_size = self.brush_panel.brush_size
+        self.brush_shape = self.brush_panel.brush_shape
+        self.update_preview()
+
     def handle_event(self, event, mouse_pos):
         """Handle mouse events for brush settings"""
+        # First try the new brush panel
+        if self.brush_panel:
+            result = self.brush_panel.handle_event(event, mouse_pos)
+            if result:
+                # Sync changes back to brush manager
+                self.sync_from_panel()
+                return True
+
+        # Fallback to legacy controls
         if event.type != pygame.MOUSEBUTTONDOWN:
             return False
 
@@ -161,18 +212,30 @@ class BrushManager:
         for size, button in self.size_buttons.items():
             if button.collidepoint(mouse_pos):
                 self.set_brush_size(size)
+                self.sync_to_panel()  # Sync to panel
                 return True
 
         # Check shape button clicks
         for shape, button in self.shape_buttons.items():
             if button.collidepoint(mouse_pos):
                 self.set_brush_shape(shape)
+                self.sync_to_panel()  # Sync to panel
                 return True
 
         return False
 
     def draw(self, surface, font):
         """Draw the brush settings UI"""
+        # Draw the new brush panel
+        if self.brush_panel:
+            self.brush_panel.draw(surface)
+            return
+
+        # Fallback to legacy UI
+        self.draw_legacy_ui(surface, font)
+
+    def draw_legacy_ui(self, surface, font):
+        """Draw the legacy brush settings UI"""
         # Draw section title
         title = font.render("Brush Settings", True, (50, 50, 50))
         title_rect = title.get_rect(topleft=(self.size_buttons[1].left, self.size_buttons[1].top - 50))
@@ -227,16 +290,17 @@ class BrushManager:
             surface.blit(text, text_rect)
 
         # Draw preview
-        preview_label = font.render("Preview:", True, (50, 50, 50))
-        preview_y = self.shape_buttons["square"].bottom + 15
-        preview_label_rect = preview_label.get_rect(topleft=(self.shape_buttons["square"].left - 5, preview_y))
-        surface.blit(preview_label, preview_label_rect)
+        if self.preview_surface:
+            preview_label = font.render("Preview:", True, (50, 50, 50))
+            preview_y = self.shape_buttons["square"].bottom + 15
+            preview_label_rect = preview_label.get_rect(topleft=(self.shape_buttons["square"].left - 5, preview_y))
+            surface.blit(preview_label, preview_label_rect)
 
-        # Draw the preview centered below the buttons
-        preview_rect = self.preview_surface.get_rect()
-        preview_rect.top = preview_y + 25
-        preview_rect.centerx = (self.size_buttons[1].left + self.size_buttons[self.available_sizes[-1]].right) // 2
-        surface.blit(self.preview_surface, preview_rect)
+            # Draw the preview centered below the buttons
+            preview_rect = self.preview_surface.get_rect()
+            preview_rect.top = preview_y + 25
+            preview_rect.centerx = (self.size_buttons[1].left + self.size_buttons[self.available_sizes[-1]].right) // 2
+            surface.blit(self.preview_surface, preview_rect)
 
     def get_brush_tiles(self, center_x, center_y):
         """Get the grid positions for all tiles in the brush"""

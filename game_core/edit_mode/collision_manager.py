@@ -125,10 +125,7 @@ class CollisionManager:
 
         return False
 
-    def toggle_dots_visibility(self):
-        """Toggle visibility of collision dots"""
-        self.show_collision_dots = not self.show_collision_dots
-        return self.show_collision_dots
+
 
     def get_collision_data_for_save(self):
         """Get collision data in a format suitable for saving"""

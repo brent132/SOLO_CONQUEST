@@ -265,10 +265,6 @@ class EditScreen(BaseScreen):
                 if self.help_text_area.handle_event(event, mouse_pos):
                     return None
 
-            # Handle brush manager events if Brush tab is active
-            if self.tab_manager.active_tab == "Brush" and self.brush_manager.handle_event(event, mouse_pos):
-                return None
-
             # Handle relation component events if Relations tab is active
             if self.tab_manager.active_tab == "Relations":
                 # Update the relation component
@@ -473,14 +469,15 @@ class EditScreen(BaseScreen):
                     self.selected_tile = clicked_tile
                     # Update the brush manager with the selected tile
                     self.brush_manager.set_selected_tile(clicked_tile)
+                    # Return early to prevent brush manager from handling the same click
+                    return None
+
+                # Handle brush manager events if Tiles tab is active (only if no tile was selected)
+                if self.tab_manager.active_tab == "Tiles" and self.brush_manager.handle_event(event, mouse_pos):
+                    return None
 
                 # Handle collision dot clicks if in Collision tab
                 if self.tab_manager.active_tab == "Collision" and event.type == pygame.MOUSEBUTTONDOWN:
-                    # Check if toggle visibility button was clicked
-                    if hasattr(self, 'collision_toggle_rect') and self.collision_toggle_rect and self.collision_toggle_rect.collidepoint(mouse_pos):
-                        self.collision_manager.toggle_dots_visibility()
-                        return None
-
                     # Check if click was on a regular tile in the tileset
                     for button_data in self.tileset_manager.tileset_buttons[self.selected_tileset_index]:
                         button = button_data['button']
@@ -1159,7 +1156,7 @@ class EditScreen(BaseScreen):
                         surface.blit(point_surface, point_rect)
 
             # Draw sidebar
-            self.collision_toggle_rect = self.ui_manager.draw_sidebar(
+            self.ui_manager.draw_sidebar(
                 surface,
                 self.tab_manager,
                 self.tileset_manager,
@@ -1171,7 +1168,7 @@ class EditScreen(BaseScreen):
                 self.browse_mode_button,
                 self.selected_tileset_index,
                 self.collision_manager,
-                self.collision_toggle_rect,
+                None,  # collision_toggle_rect removed
                 self.brush_manager,
                 self  # Pass self as the editor instance
             )
@@ -1395,8 +1392,8 @@ class EditScreen(BaseScreen):
             "Alt + scroll: Move selection vertically",
             "",
             "Brush:",
-            "- Use the Brush tab to change brush size and shape",
-            "- Sizes: 1x1, 3x3, 5x5",
+            "- Brush controls are integrated into the Tiles tab",
+            "- Sizes: 1x1, 3x3, 5x5, 7x7",
             "- Shapes: Square, Circle",
             "",
             "Layers:",
