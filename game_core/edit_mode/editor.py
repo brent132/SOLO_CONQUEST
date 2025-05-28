@@ -271,16 +271,24 @@ class EditScreen(BaseScreen):
                 self.relation_component.update(mouse_pos)
 
                 # Handle relation component events (button selection)
-                if self.relation_component.handle_event(event, mouse_pos):
+                result = self.relation_component.handle_event(event, mouse_pos)
+                if result:
+                    # Check if a specific group was deleted
+                    if result.startswith("group_deleted_"):
+                        deleted_id = result.split("_")[-1]
+                        # Remove the relation points for this specific ID
+                        if deleted_id in self.relation_points:
+                            del self.relation_points[deleted_id]
+                            print(f"Removed relation points with ID {deleted_id}")
+                        return None
+
+                    # Handle other events (group selection, etc.)
                     # Get the current ID
                     current_id = str(self.relation_component.current_id)
 
                     # Make sure the current ID exists in relation_points
                     if current_id not in self.relation_points:
                         self.relation_points[current_id] = {}
-
-                    # If a group was added or removed, update relation_points
-                    # This is now handled by the RelationComponent class
 
                     # Clean up relation_points to match the groups in the component
                     valid_ids = [str(group.id) for group in self.relation_component.groups]
@@ -832,12 +840,8 @@ class EditScreen(BaseScreen):
                         self.relation_points = {}
 
                         # Reset the relation component groups
-                        self.relation_component.groups = []
-                        # Import RelationGroup
-                        from edit_mode.ui_components import RelationGroup
-                        self.relation_component.groups = [RelationGroup(1, self.relation_component.x, self.relation_component.y)]
-                        self.relation_component.selected_group_index = 0
-                        self.relation_component._reposition_groups()
+                        # Use the new sync method
+                        self.relation_component.sync_with_relation_points({})
 
                         if "relation_points" in map_data:
                             # Make a deep copy of the relation data to avoid reference issues
@@ -916,40 +920,8 @@ class EditScreen(BaseScreen):
                                                 self.relation_points[id_key]['b'] = points['b']
 
 
-                                # Create groups for each ID in the relation points
-                                # Clear existing groups first
-                                self.relation_component.groups = []
-
-                                # Sort IDs numerically
-                                sorted_ids = []
-                                for id_key in self.relation_points.keys():
-                                    try:
-                                        sorted_ids.append(int(id_key))
-                                    except ValueError:
-                                        pass
-                                sorted_ids.sort()
-
-                                # Create a group for each ID
-                                for id_value in sorted_ids:
-                                    # Create a new group at the appropriate position
-                                    new_y = self.relation_component.y + len(self.relation_component.groups) * self.relation_component.group_spacing
-                                    # Use the imported RelationGroup class
-                                    from edit_mode.ui_components import RelationGroup
-                                    self.relation_component.groups.append(
-                                        RelationGroup(id_value, self.relation_component.x, new_y)
-                                    )
-
-                                # If no groups were created, add the default group
-                                if not self.relation_component.groups:
-                                    # Use the imported RelationGroup class
-                                    from edit_mode.ui_components import RelationGroup
-                                    self.relation_component.groups = [RelationGroup(1, self.relation_component.x, self.relation_component.y)]
-
-                                # Reposition all groups
-                                self.relation_component._reposition_groups()
-
-                                # Set the selected group to the first one
-                                self.relation_component.selected_group_index = 0
+                                # Use the new sync method
+                                self.relation_component.sync_with_relation_points(self.relation_points)
 
 
 
@@ -1316,41 +1288,8 @@ class EditScreen(BaseScreen):
         # Restore the relation points
         self.relation_points = saved_relation_points
 
-        # Recreate the relation groups based on the relation points
-        if self.relation_points:
-            # Clear existing groups first
-            self.relation_component.groups = []
-
-            # Sort IDs numerically
-            sorted_ids = []
-            for id_key in self.relation_points.keys():
-                try:
-                    sorted_ids.append(int(id_key))
-                except ValueError:
-                    pass
-            sorted_ids.sort()
-
-            # Create a group for each ID
-            for id_value in sorted_ids:
-                # Create a new group at the appropriate position
-                new_y = self.relation_component.y + len(self.relation_component.groups) * self.relation_component.group_spacing
-                # Use the imported RelationGroup class
-                from edit_mode.ui_components import RelationGroup
-                self.relation_component.groups.append(
-                    RelationGroup(id_value, self.relation_component.x, new_y)
-                )
-
-            # If no groups were created, add the default group
-            if not self.relation_component.groups:
-                # Use the imported RelationGroup class
-                from edit_mode.ui_components import RelationGroup
-                self.relation_component.groups = [RelationGroup(1, self.relation_component.x, self.relation_component.y)]
-
-            # Reposition all groups
-            self.relation_component._reposition_groups()
-
-            # Set the selected group to the first one
-            self.relation_component.selected_group_index = 0
+        # Sync the relation component with the saved relation points
+        self.relation_component.sync_with_relation_points(saved_relation_points)
 
         # Always reposition tileset buttons with fixed start_y
         self.tileset_manager.position_tileset_buttons(self.selected_tileset_index, start_y=150)
