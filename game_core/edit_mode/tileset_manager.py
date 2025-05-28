@@ -295,7 +295,7 @@ class TilesetManager:
 
 
 
-    def position_tileset_buttons(self, selected_tileset_index, start_y=150):
+    def position_tileset_buttons(self, selected_tileset_index, start_y=155):
         """Position the tileset buttons in the sidebar to match original tileset layout"""
         if not self.tileset_buttons or not self.tileset_layouts or selected_tileset_index >= len(self.tileset_buttons):
             return
@@ -313,7 +313,7 @@ class TilesetManager:
 
         # Use a 1.5x scale factor as requested
         button_size = self.grid_cell_size
-        scale_factor = 1.3  # 1.5x scale up
+        scale_factor = 1.5  # 1.5x scale up
 
         # Calculate available width for the tileset
         available_width = self.sidebar_width - 60  # 30px padding on each side

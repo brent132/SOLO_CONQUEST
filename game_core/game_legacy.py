@@ -57,8 +57,8 @@ class Game:
     def load_from_player_location(self):
         """Load the map from player_location.json in SaveData folder"""
         try:
-            if os.path.exists("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json"):
-                with open("C:/Users/BR3NT3/Music/TEST/SaveData/player_location.json", 'r') as f:
+            if os.path.exists("SaveData/player_location.json"):
+                with open("SaveData/player_location.json", 'r') as f:
                     player_location_data = json.load(f)
 
                 # Check if this is the new format with multiple worlds

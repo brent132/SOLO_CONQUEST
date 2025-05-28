@@ -5,7 +5,7 @@ import pygame
 import os
 import json
 from settings import *
-from edit_mode.ui_components import SaveButton, TextInput, Button, ScrollableTextArea
+from edit_mode.ui_components import SaveButton, TextInput, ScrollableTextArea
 from edit_mode.tileset_manager import TilesetManager
 from edit_mode.map_saver import MapSaver
 from edit_mode.map_manager import MapManager
@@ -27,7 +27,7 @@ class EditScreen(BaseScreen):
         self.grid_cell_size = 16  # 16x16 grid cells
 
         # Sidebar settings
-        self.sidebar_width = 450  # Increased width to show full tileset at 1.5x scale
+        self.sidebar_width = 500  # Increased width to show full tileset at 1.5x scale
 
         # Map area (main editing area)
         self.map_area_width = self.width - self.sidebar_width
@@ -132,11 +132,33 @@ class EditScreen(BaseScreen):
         self.relation_points = {}
 
         # Mode buttons - position them at the top with proper spacing
-        button_scale = 0.7
-        self.edit_mode_button = Button(self.map_area_width + 5, 10, "edit_mode", scale=button_scale)
-        # Position the second button based on the width of the first button
-        second_button_x = self.map_area_width + 5 + self.edit_mode_button.rect.width + 5
-        self.browse_mode_button = Button(second_button_x, 10, "browse_map", scale=button_scale)
+        from edit_mode.ui_components import TextButton
+        mode_button_width = 80
+        mode_button_height = 30
+        mode_button_y = 10
+        mode_button_spacing = 5
+
+        self.edit_mode_button = TextButton(self.map_area_width + 5, mode_button_y, mode_button_width, mode_button_height, "Edit", 16)
+        self.browse_mode_button = TextButton(self.map_area_width + 5 + mode_button_width + mode_button_spacing, mode_button_y, mode_button_width, mode_button_height, "Browse", 16)
+
+        # Set edit mode as selected by default
+        self.edit_mode_button.is_selected = True
+
+        # Tileset switching buttons
+        from edit_mode.ui_components import TextButton
+        tileset_button_width = 30
+        tileset_button_height = 25
+        tileset_button_y = 120  # Position below the tab area
+        tileset_button_spacing = 5
+
+        self.tileset_buttons = [
+            TextButton(self.map_area_width + 20, tileset_button_y, tileset_button_width, tileset_button_height, "1", 16),
+            TextButton(self.map_area_width + 20 + tileset_button_width + tileset_button_spacing, tileset_button_y, tileset_button_width, tileset_button_height, "2", 16),
+            TextButton(self.map_area_width + 20 + 2 * (tileset_button_width + tileset_button_spacing), tileset_button_y, tileset_button_width, tileset_button_height, "3", 16)
+        ]
+
+        # Set the first tileset button as selected by default
+        self.tileset_buttons[0].is_selected = True
 
         # Current mode
         self.current_mode = "edit"  # "edit" or "browse"
@@ -169,6 +191,10 @@ class EditScreen(BaseScreen):
         self.edit_mode_button.update(mouse_pos)
         self.browse_mode_button.update(mouse_pos)
 
+        # Update tileset buttons
+        for button in self.tileset_buttons:
+            button.update(mouse_pos)
+
         # Handle common events (back and reload buttons)
         result = self.handle_common_events(event, mouse_pos)
         if result:
@@ -178,6 +204,9 @@ class EditScreen(BaseScreen):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.edit_mode_button.is_clicked(event):
                 self.current_mode = "edit"
+                # Update button selection states
+                self.edit_mode_button.is_selected = True
+                self.browse_mode_button.is_selected = False
                 return None
 
             if self.browse_mode_button.is_clicked(event):
@@ -186,6 +215,9 @@ class EditScreen(BaseScreen):
                 self.relation_points = {}
 
                 self.current_mode = "browse"
+                # Update button selection states
+                self.edit_mode_button.is_selected = False
+                self.browse_mode_button.is_selected = True
                 # Refresh map list and position items
                 self.map_manager.refresh_map_list()
                 self.map_manager.position_map_items(
@@ -195,6 +227,23 @@ class EditScreen(BaseScreen):
                     300
                 )
                 return None
+
+            # Handle tileset button clicks
+            for i, button in enumerate(self.tileset_buttons):
+                if button.is_clicked(event):
+                    # Deselect all tileset buttons
+                    for btn in self.tileset_buttons:
+                        btn.is_selected = False
+                    # Select the clicked button
+                    button.is_selected = True
+                    # Switch to the corresponding tileset
+                    self.selected_tileset_index = i
+                    self.selected_tile = None
+                    # Clear the brush manager's selected tile
+                    self.brush_manager.set_selected_tile(None)
+                    # Position the tileset buttons
+                    self.tileset_manager.position_tileset_buttons(self.selected_tileset_index)
+                    return None
 
         # Handle events based on current mode
         if self.current_mode == "edit":
@@ -344,26 +393,8 @@ class EditScreen(BaseScreen):
                         return None
 
             # Handle layer manager events if Tiles tab is active
-            if self.tab_manager.active_tab == "Tiles" and self.layer_manager.handle_event(event, mouse_pos):
-                # If a layer was removed, we need to shift the data
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    for button_idx, button in enumerate(self.layer_manager.layer_buttons):
-                        if button_idx < self.layer_manager.layer_count and button.collidepoint(mouse_pos):
-                            # Layer selection handled by layer manager
-                            pass
-
-                    # Check if remove layer button was clicked
-                    if self.layer_manager.remove_layer_button.collidepoint(mouse_pos):
-                        # Shift layer data if needed
-                        current_layer = self.layer_manager.current_layer
-                        if current_layer < self.layer_manager.layer_count:
-                            # Move all layers above the current one down
-                            for i in range(current_layer, self.layer_manager.layer_count):
-                                if i+1 < self.layer_manager.max_layers:
-                                    self.map_data[i] = self.map_data[i+1]
-
-                            # Clear the top layer
-                            self.map_data[self.layer_manager.layer_count] = {}
+            if self.tab_manager.active_tab == "Tiles" and self.layer_manager.handle_event(event, mouse_pos, self.map_data):
+                # Layer manager now handles map data cleanup automatically
                 return None
 
             # Update text input and save button only if Save tab is active
@@ -642,37 +673,7 @@ class EditScreen(BaseScreen):
                     self.keys_pressed[event.key] = True
                     self.key_press_time[event.key] = pygame.time.get_ticks()
                     self.current_camera_speed[event.key] = self.camera_speed  # Reset speed when key is first pressed
-                # Switch between tilesets with number keys
-                elif event.key in [pygame.K_1, pygame.K_2]:
-                    new_index = event.key - pygame.K_1  # 0 for K_1, 1 for K_2
-                    if 0 <= new_index < len(self.tileset_manager.tileset_buttons):
-                        self.selected_tileset_index = new_index
-                        self.selected_tile = None
-                        # Clear the brush manager's selected tile
-                        self.brush_manager.set_selected_tile(None)
-
-                        self.tileset_manager.position_tileset_buttons(self.selected_tileset_index)
-                # Special key 3 for key item animation
-                elif event.key == pygame.K_3:
-                    # Select the last tileset (which contains animated tiles)
-                    self.selected_tileset_index = len(self.tileset_manager.tileset_buttons) - 1
-                    self.selected_tile = None
-
-
-                    # Position the tileset buttons
-                    self.tileset_manager.position_tileset_buttons(self.selected_tileset_index)
-
-                    # Find the key item animation in the animated tile buttons
-                    for button_data in self.tileset_manager.animated_tile_buttons:
-                        if button_data.get("source_path") == "animated:key_item":
-                            # Select this tile
-                            self.selected_tile = button_data
-                            # Set it as the selected tile in the brush manager
-                            self.brush_manager.set_selected_tile(button_data)
-                            # Select the button
-                            if button_data.get("button"):
-                                button_data["button"].is_selected = True
-                            break
+                # Note: Tileset switching is now handled by buttons instead of keyboard shortcuts
                 # Toggle tile preview with P key
                 elif event.key == pygame.K_p:
                     self.show_tile_preview = not self.show_tile_preview
@@ -1265,10 +1266,25 @@ class EditScreen(BaseScreen):
         self.tileset_manager.map_area_width = self.map_area_width
 
         # Update mode buttons position with proper spacing
-        self.edit_mode_button.rect.topleft = (self.map_area_width + 15, 10)
-        # Position the second button based on the width of the first button
-        second_button_x = self.map_area_width + 15 + self.edit_mode_button.rect.width + 15
-        self.browse_mode_button.rect.topleft = (second_button_x, 10)
+        mode_button_width = 80
+        mode_button_height = 30
+        mode_button_y = 10
+        mode_button_spacing = 5
+
+        self.edit_mode_button.rect.topleft = (self.map_area_width + 5, mode_button_y)
+        self.browse_mode_button.rect.topleft = (self.map_area_width + 5 + mode_button_width + mode_button_spacing, mode_button_y)
+
+        # Update tileset button positions
+        tileset_button_width = 30
+        tileset_button_height = 25
+        tileset_button_y = 120
+        tileset_button_spacing = 5
+
+        for i, button in enumerate(self.tileset_buttons):
+            button.rect.topleft = (
+                self.map_area_width + 20 + i * (tileset_button_width + tileset_button_spacing),
+                tileset_button_y
+            )
 
         # Recreate tab manager first
         self.tab_manager = TabManager(self.map_area_width, self.sidebar_width)
@@ -1405,7 +1421,6 @@ class EditScreen(BaseScreen):
             "- Enter a name and click Save",
             "",
             "Keyboard Shortcuts:",
-            "- 1-3: Switch between tilesets",
             "- Ctrl+Z: Undo last action (not implemented yet)",
             "- Ctrl+Y: Redo last action (not implemented yet)",
             "- Ctrl+S: Quick save (not implemented yet)",

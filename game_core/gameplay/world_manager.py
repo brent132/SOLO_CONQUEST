@@ -9,7 +9,7 @@ class WorldManager:
     """Manages worlds and their metadata"""
     def __init__(self):
         self.worlds = {}  # Format: {folder_name: world_data}
-        self.worlds_file = "C:/Users/BR3NT3/Music/TEST/SaveData/worlds.json"
+        self.worlds_file = "SaveData/worlds.json"
         self.default_icon = None
         self.load_worlds()
 

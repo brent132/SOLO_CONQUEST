@@ -80,10 +80,10 @@ class EditScreenUI:
 
         # Draw content based on active tab
         if tab_manager.active_tab == "Tiles":
-            # Draw switch instructions
-            text = font.render("Press 1-3 to switch tilesets", True, (50, 50, 50))
-            text_rect = text.get_rect(topleft=(self.map_area_width + 20, content_y))
-            surface.blit(text, text_rect)
+            # Draw tileset switching buttons (handled by editor)
+            if editor and hasattr(editor, 'tileset_buttons'):
+                for button in editor.tileset_buttons:
+                    button.draw(surface)
 
             # Draw tileset buttons
             tileset_manager.draw_tileset(surface, selected_tileset_index)
@@ -107,15 +107,10 @@ class EditScreenUI:
             brush_manager.draw(surface, font)
 
         elif tab_manager.active_tab == "Collision" and collision_manager:
-            # Draw collision tab instructions
-            text = font.render("Press 1-3 to switch tilesets", True, (50, 50, 50))
-            text_rect = text.get_rect(topleft=(self.map_area_width + 20, content_y - 20))
-            surface.blit(text, text_rect)
-
-            # Draw instructions for collision dots
-            collision_text = font.render("Click dots to toggle collision", True, (50, 50, 50))
-            collision_text_rect = collision_text.get_rect(topleft=(self.map_area_width + 20, content_y))
-            surface.blit(collision_text, collision_text_rect)
+            # Draw tileset switching buttons (handled by editor)
+            if editor and hasattr(editor, 'tileset_buttons'):
+                for button in editor.tileset_buttons:
+                    button.draw(surface)
 
             # Draw tileset with collision dots
             tileset_manager.draw_tileset(surface, selected_tileset_index)

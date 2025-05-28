@@ -93,7 +93,7 @@ python editor_app.py
 - **Right click/drag**: Remove tiles
 - **Mouse wheel**: Cycle through tiles
 - **Arrow keys or WASD**: Move view
-- **1-3 keys**: Switch between tilesets
+- **Tileset buttons**: Click to switch between tilesets
 - **P key**: Toggle tile preview
 
 ## Getting Started

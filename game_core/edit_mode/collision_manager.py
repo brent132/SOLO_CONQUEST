@@ -14,7 +14,7 @@ class CollisionManager:
         self.collision_data = {}
 
         # Global collision database file path
-        self.global_collision_db_path = "C:/Users/BR3NT3/Music/TEST/SaveData/global_collision_data.json"
+        self.global_collision_db_path = "SaveData/global_collision_data.json"
 
         # Create data directory if it doesn't exist
         os.makedirs(os.path.dirname(self.global_collision_db_path), exist_ok=True)

@@ -154,7 +154,7 @@ class SettingsScreen(BaseScreen):
             "- Right click/drag: Remove tiles",
             "- Mouse wheel: Cycle through tiles",
             "- Arrow keys or WASD: Move view",
-            "- 1-3: Switch between tilesets",
+            "- Use tileset buttons to switch between tilesets",
             "",
             "Edit Mode Tips",
             "- Use layers to organize your map elements",

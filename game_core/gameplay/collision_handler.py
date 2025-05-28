@@ -12,7 +12,7 @@ class CollisionHandler:
         self.collision_data = {}
 
         # Global collision database file path
-        self.global_collision_db_path = "C:/Users/BR3NT3/Music/TEST/SaveData/global_collision_data.json"
+        self.global_collision_db_path = "SaveData/global_collision_data.json"
 
         # Load global collision data
         self.load_global_collision_data()

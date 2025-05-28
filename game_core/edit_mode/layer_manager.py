@@ -1,10 +1,11 @@
 """
-Layer Manager - handles layer operations for the edit mode
+Layer Manager - handles layer operations for the edit mode with Photoshop-style interface
 """
 import pygame
+from edit_mode.ui_components import LayerPanel, LayerItem
 
 class LayerManager:
-    """Manages layers for the edit mode"""
+    """Manages layers for the edit mode with Photoshop-style interface"""
     def __init__(self, sidebar_width, max_layers=5):
         self.sidebar_width = sidebar_width
         self.max_layers = max_layers
@@ -17,32 +18,46 @@ class LayerManager:
         self.select_all_mode = False  # Flag for editing all layers at once
         self.reference_layer = 0  # Reference layer when in select_all_mode
 
-        # UI properties
+        # Photoshop-style layer panel
+        self.layer_panel = None
+
+        # Legacy UI properties (kept for compatibility)
         self.layer_buttons = []
         self.layer_visibility_buttons = []
         self.add_layer_button = None
         self.remove_layer_button = None
         self.onion_skin_button = None
-        self.show_all_button = None  # Button for showing all layers without transparency
+        self.show_all_button = None
 
         # Font for layer labels
         self.font = pygame.font.SysFont(None, 20)
 
-        # Layer panel dimensions will be calculated based on buttons
-        self.panel_height = 0  # Will be set in create_ui
+        # Layer panel dimensions
+        self.panel_height = 0
 
     def create_ui(self, map_area_width, _height=None):
         """Create UI components for layer management"""
-        # Use a fixed position for the layer panel regardless of screen height
-        panel_y = 510  # Fixed position for layer panel
+        # Create Photoshop-style layer panel
+        panel_x = map_area_width + 10
+        panel_y = 510
+        panel_width = self.sidebar_width - 20
+        panel_height = 200
 
-        # Increase padding from the left edge
+        self.layer_panel = LayerPanel(panel_x, panel_y, panel_width, panel_height)
+
+        # Sync initial state
+        self.sync_to_panel()
+
+        # Legacy button creation for compatibility
+        self.create_legacy_ui(map_area_width)
+
+    def create_legacy_ui(self, map_area_width):
+        """Create legacy UI for compatibility"""
+        panel_y = 510
         left_padding = 30
-
-        # Create layer buttons
         button_width = 30
         button_height = 25
-        spacing = 8  # Increased spacing between buttons
+        spacing = 8
 
         # Clear previous buttons
         self.layer_buttons = []
@@ -50,61 +65,101 @@ class LayerManager:
 
         # Create layer selection buttons
         for i in range(self.max_layers):
-            # Layer button (for selection)
             button_x = map_area_width + left_padding
             button_y = panel_y + i * (button_height + spacing)
-
-            # Create a rect for the layer button
             layer_button = pygame.Rect(button_x, button_y, button_width, button_height)
             self.layer_buttons.append(layer_button)
 
-            # Layer visibility toggle button
             visibility_x = button_x + button_width + spacing
             visibility_button = pygame.Rect(visibility_x, button_y, button_width, button_height)
             self.layer_visibility_buttons.append(visibility_button)
 
-        # Add/Remove layer buttons - add more space before control buttons
+        # Control buttons
         control_y = panel_y + self.max_layers * (button_height + spacing) + 15
+        self.add_layer_button = pygame.Rect(map_area_width + left_padding, control_y, button_width, button_height)
+        self.remove_layer_button = pygame.Rect(map_area_width + left_padding + button_width + spacing, control_y, button_width, button_height)
 
-        # Add layer button
-        self.add_layer_button = pygame.Rect(
-            map_area_width + left_padding,
-            control_y,
-            button_width,
-            button_height
-        )
-
-        # Remove layer button
-        self.remove_layer_button = pygame.Rect(
-            map_area_width + left_padding + button_width + spacing,
-            control_y,
-            button_width,
-            button_height
-        )
-
-        # Onion skin toggle button - position it to the right of the layer 1 visibility button
+        # Toggle buttons
         self.onion_skin_button = pygame.Rect(
-            map_area_width + left_padding + (button_width + spacing) * 2 + 15,  # Position to the right of visibility button
-            panel_y,  # Same y as the first layer button (layer 1)
+            map_area_width + left_padding + (button_width + spacing) * 2 + 15,
+            panel_y,
             button_width * 2 + spacing,
             button_height
         )
-
-        # Show all layers button - position it to the right of the onion skin button
         self.show_all_button = pygame.Rect(
-            map_area_width + left_padding + (button_width + spacing) * 2 + (button_width * 2 + spacing) + 25,  # Further right
-            panel_y,  # Same y as the first layer button (layer 1)
+            map_area_width + left_padding + (button_width + spacing) * 2 + (button_width * 2 + spacing) + 25,
+            panel_y,
             button_width * 2 + spacing,
             button_height
         )
 
-        # Calculate panel height based on the buttons
         if self.show_all_button:
-            # Panel height is the distance from the first button to the last button plus padding
             self.panel_height = (self.show_all_button.bottom - panel_y) + 15
 
-    def handle_event(self, event, mouse_pos):
+    def sync_to_panel(self):
+        """Sync layer manager state to the layer panel"""
+        if not self.layer_panel:
+            return
+
+        # Clear existing items and rebuild
+        self.layer_panel.layer_items.clear()
+
+        # Add layers to match current state
+        for i in range(self.layer_count):
+            layer_name = f"Layer {i + 1}"
+            self.layer_panel.layer_items.append(
+                LayerItem(
+                    self.layer_panel.content_rect.x + 2,
+                    0,  # Will be positioned in reposition_items
+                    self.layer_panel.content_rect.width - 4,
+                    self.layer_panel.item_height,
+                    i,
+                    layer_name
+                )
+            )
+
+        # Sync visibility and selection
+        for i, item in enumerate(self.layer_panel.layer_items):
+            if i < len(self.layer_visibility):
+                item.is_visible = self.layer_visibility[i]
+
+        self.layer_panel.selected_layer = self.current_layer
+        self.layer_panel.update_selection()
+        self.layer_panel.reposition_items()
+        self.layer_panel.update_scroll_bounds()
+
+    def sync_from_panel(self):
+        """Sync layer panel state back to layer manager"""
+        if not self.layer_panel:
+            return
+
+        self.layer_count = len(self.layer_panel.layer_items)
+        self.current_layer = self.layer_panel.selected_layer
+
+        # Sync visibility
+        for i, item in enumerate(self.layer_panel.layer_items):
+            if i < len(self.layer_visibility):
+                self.layer_visibility[i] = item.is_visible
+
+    def handle_event(self, event, mouse_pos, map_data=None):
         """Handle mouse events for layer controls"""
+        # First try the new layer panel
+        if self.layer_panel:
+            result = self.layer_panel.handle_event(event, mouse_pos)
+            if result:
+                # Check if a layer was deleted and clean up map data
+                if result == "layer_deleted" and map_data is not None:
+                    # Use the tracked deleted layer index for proper data shifting
+                    if hasattr(self.layer_panel, 'last_deleted_layer') and self.layer_panel.last_deleted_layer is not None:
+                        self.delete_layer_with_data_cleanup(map_data, self.layer_panel.last_deleted_layer)
+                        self.layer_panel.last_deleted_layer = None  # Reset after use
+                    else:
+                        self.cleanup_map_data_after_deletion(map_data)
+                # Sync changes back to layer manager
+                self.sync_from_panel()
+                return True
+
+        # Fallback to legacy controls
         if event.type != pygame.MOUSEBUTTONDOWN:
             return False
 
@@ -121,12 +176,14 @@ class LayerManager:
                     # Turn off select all mode if it was on
                     self.select_all_mode = False
                     self.current_layer = i
+                    self.sync_to_panel()  # Sync to panel
                     return True
 
         # Check visibility toggle buttons
         for i, button in enumerate(self.layer_visibility_buttons):
             if i < self.layer_count and button.collidepoint(mouse_pos):
                 self.layer_visibility[i] = not self.layer_visibility[i]
+                self.sync_to_panel()  # Sync to panel
                 return True
 
         # Check add layer button
@@ -136,7 +193,11 @@ class LayerManager:
 
         # Check remove layer button
         if self.remove_layer_button.collidepoint(mouse_pos):
+            old_layer_count = self.layer_count
             self.remove_layer()
+            # Clean up map data if a layer was actually removed
+            if self.layer_count < old_layer_count and map_data is not None:
+                self.cleanup_map_data_after_deletion(map_data)
             return True
 
         # Check onion skin toggle button
@@ -151,12 +212,55 @@ class LayerManager:
 
         return False
 
+    def cleanup_map_data_after_deletion(self, map_data):
+        """Clean up map data after a layer is deleted"""
+        if not map_data:
+            return
+
+        # Get the current layer count after deletion
+        current_count = self.layer_count
+
+        # Clear all layers beyond the current count
+        for layer_index in range(current_count, self.max_layers):
+            if layer_index in map_data:
+                map_data[layer_index].clear()
+
+        # Ensure we have empty dictionaries for all valid layers
+        for layer_index in range(current_count):
+            if layer_index not in map_data:
+                map_data[layer_index] = {}
+
+    def delete_layer_with_data_cleanup(self, map_data, deleted_layer_index):
+        """Delete a layer and properly shift map data"""
+        if not map_data or self.layer_count <= 1:
+            return
+
+        # Store the current layer count before deletion
+        old_count = self.layer_count
+
+        # Shift map data down for layers above the deleted one
+        for layer_index in range(deleted_layer_index, old_count - 1):
+            if layer_index + 1 in map_data:
+                map_data[layer_index] = map_data[layer_index + 1].copy()
+            else:
+                map_data[layer_index] = {}
+
+        # Clear the top layer (which is now empty after shifting)
+        if old_count - 1 in map_data:
+            map_data[old_count - 1].clear()
+
+        # Update layer count and selection
+        self.layer_count -= 1
+        if self.current_layer >= self.layer_count:
+            self.current_layer = self.layer_count - 1
+
     def add_layer(self):
         """Add a new layer if under the maximum"""
         if self.layer_count < self.max_layers:
             self.layer_count += 1
             # Set the new layer as the current one
             self.current_layer = self.layer_count - 1
+            self.sync_to_panel()
 
     def remove_layer(self):
         """Remove the current layer if more than one exists"""
@@ -170,9 +274,20 @@ class LayerManager:
             # Adjust current layer if needed
             if self.current_layer >= self.layer_count:
                 self.current_layer = self.layer_count - 1
+            self.sync_to_panel()
 
     def draw(self, surface):
         """Draw the layer management UI"""
+        # Draw the new Photoshop-style layer panel
+        if self.layer_panel:
+            self.layer_panel.draw(surface)
+            return
+
+        # Fallback to legacy UI
+        self.draw_legacy_ui(surface)
+
+    def draw_legacy_ui(self, surface):
+        """Draw the legacy layer management UI"""
         # Check if buttons are initialized
         if not self.layer_buttons:
             return
