@@ -2,18 +2,18 @@
   "current_world": "test",
   "worlds": {
     "test": {
-      "map_name": "test",
-      "x": 459,
-      "y": 224,
-      "direction": "right",
+      "map_name": "test2",
+      "x": 384,
+      "y": 272,
+      "direction": "down",
       "health": 100,
       "shield_durability": 3
     },
     "map1": {
       "map_name": "map1",
-      "x": 487,
-      "y": 121,
-      "direction": "up",
+      "x": 303,
+      "y": 26,
+      "direction": "left",
       "health": 100,
       "shield_durability": 3
     }

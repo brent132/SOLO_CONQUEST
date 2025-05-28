@@ -1,5 +1,18 @@
 {
   "worlds": [
-    
+    {
+      "folder_name": "map1",
+      "display_name": "Map1",
+      "description": "World located in map1",
+      "icon": "",
+      "has_main_map": true
+    },
+    {
+      "folder_name": "test",
+      "display_name": "Test",
+      "description": "World located in test",
+      "icon": "",
+      "has_main_map": true
+    }
   ]
 }
