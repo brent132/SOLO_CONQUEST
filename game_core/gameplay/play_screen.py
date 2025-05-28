@@ -34,7 +34,13 @@ class PlayScreen(BaseScreen):
         super().__init__(width, height)
 
         # Grid settings
-        self.grid_cell_size = 16  # 16x16 grid cells
+        self.base_grid_cell_size = 16  # Base 16x16 grid cells
+        self.grid_cell_size = 16  # Current grid cell size (affected by zoom)
+
+        # Zoom settings - limited to 100% minimum
+        self.zoom_levels = [1.0, 1.5, 2.0, 3.0, 4.0]
+        self.current_zoom_index = 0  # Start at 1.0x zoom (index 0)
+        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
 
         # Camera/viewport for large maps
         self.camera_x = 0
@@ -683,6 +689,110 @@ class PlayScreen(BaseScreen):
             except Exception as e:
                 print(f"Error processing tile {key}: {e}")
 
+    def zoom_in(self):
+        """Zoom in to the next zoom level"""
+        if self.current_zoom_index < len(self.zoom_levels) - 1:
+            # Store the center point of the current view (player position)
+            if self.player:
+                center_x = self.player.rect.centerx
+                center_y = self.player.rect.centery
+            else:
+                center_x = self.camera_x + (self.width // 2)
+                center_y = self.camera_y + (self.height // 2)
+
+            # Update zoom
+            self.current_zoom_index += 1
+            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+            self.update_zoom()
+
+            # Recalculate camera position to maintain the same center point
+            if self.player:
+                # When zoomed, the effective screen size in logical coordinates is smaller
+                effective_screen_width = self.width / self.zoom_factor
+                effective_screen_height = self.height / self.zoom_factor
+
+                self.camera_x = center_x - (effective_screen_width // 2)
+                self.camera_y = center_y - (effective_screen_height // 2)
+
+                # Clamp camera to map boundaries (use base grid size for logical coordinates)
+                max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+                max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
+                self.camera_x = max(0, min(self.camera_x, max_camera_x))
+                self.camera_y = max(0, min(self.camera_y, max_camera_y))
+
+    def zoom_out(self):
+        """Zoom out to the previous zoom level"""
+        if self.current_zoom_index > 0:
+            # Store the center point of the current view (player position)
+            if self.player:
+                center_x = self.player.rect.centerx
+                center_y = self.player.rect.centery
+            else:
+                center_x = self.camera_x + (self.width // 2)
+                center_y = self.camera_y + (self.height // 2)
+
+            # Update zoom
+            self.current_zoom_index -= 1
+            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+            self.update_zoom()
+
+            # Recalculate camera position to maintain the same center point
+            if self.player:
+                # When zoomed, the effective screen size in logical coordinates is smaller
+                effective_screen_width = self.width / self.zoom_factor
+                effective_screen_height = self.height / self.zoom_factor
+
+                self.camera_x = center_x - (effective_screen_width // 2)
+                self.camera_y = center_y - (effective_screen_height // 2)
+
+                # Clamp camera to map boundaries (use base grid size for logical coordinates)
+                max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+                max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
+                self.camera_x = max(0, min(self.camera_x, max_camera_x))
+                self.camera_y = max(0, min(self.camera_y, max_camera_y))
+
+    def reset_zoom(self):
+        """Reset zoom to 1.0x (100%)"""
+        # Store the center point of the current view (player position)
+        if self.player:
+            center_x = self.player.rect.centerx
+            center_y = self.player.rect.centery
+        else:
+            center_x = self.camera_x + (self.width // 2)
+            center_y = self.camera_y + (self.height // 2)
+
+        # Reset zoom to 1.0x
+        self.current_zoom_index = 0  # 1.0x is at index 0
+        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+        self.update_zoom()
+
+        # Recalculate camera position to maintain the same center point
+        if self.player:
+            # When at 1.0x zoom, effective screen size equals actual screen size
+            effective_screen_width = self.width / self.zoom_factor
+            effective_screen_height = self.height / self.zoom_factor
+
+            self.camera_x = center_x - (effective_screen_width // 2)
+            self.camera_y = center_y - (effective_screen_height // 2)
+
+            # Clamp camera to map boundaries (use base grid size for logical coordinates)
+            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
+            self.camera_x = max(0, min(self.camera_x, max_camera_x))
+            self.camera_y = max(0, min(self.camera_y, max_camera_y))
+
+    def update_zoom(self):
+        """Update grid cell size and collision handler based on current zoom factor"""
+        self.grid_cell_size = int(self.base_grid_cell_size * self.zoom_factor)
+
+        # Keep collision handler with base grid size (logical coordinates)
+        # Collision detection should remain in the original coordinate space
+        if not hasattr(self, 'collision_handler') or self.collision_handler.grid_cell_size != self.base_grid_cell_size:
+            self.collision_handler = CollisionHandler(self.base_grid_cell_size)
+
+        # Update relation handler with base grid size for logical coordinates
+        self.relation_handler.grid_cell_size = self.base_grid_cell_size
+
     def handle_event(self, event):
         """Handle events for the play screen"""
         mouse_pos = pygame.mouse.get_pos()
@@ -772,8 +882,9 @@ class PlayScreen(BaseScreen):
                     print(f"Player rect: {self.player.rect}")
 
                     # Calculate grid position from mouse position
-                    grid_x = (mouse_pos[0] + self.camera_x) // self.grid_cell_size
-                    grid_y = (mouse_pos[1] + self.camera_y) // self.grid_cell_size
+                    # Use base grid size for logical coordinates
+                    grid_x = int((mouse_pos[0] + self.camera_x) // self.base_grid_cell_size)
+                    grid_y = int((mouse_pos[1] + self.camera_y) // self.base_grid_cell_size)
                     print(f"Calculated grid position: ({grid_x}, {grid_y})")
 
                     # Check if there's a lootchest at this position
@@ -802,7 +913,7 @@ class PlayScreen(BaseScreen):
                         adjusted_mouse_pos,
                         adjusted_camera_x,
                         adjusted_camera_y,
-                        self.grid_cell_size,
+                        self.base_grid_cell_size,
                         self.player.rect
                     )
                     print(f"Lootchest interaction result: {result}")
@@ -810,8 +921,24 @@ class PlayScreen(BaseScreen):
                 # Handle other mouse buttons
                 pass
 
-        # Handle keyboard events for inventory selection
+        # Handle keyboard events for inventory selection and zoom
         if event.type == pygame.KEYDOWN:
+            # Check for Ctrl key combinations first
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL]:
+                if event.key == pygame.K_EQUALS or event.key == pygame.K_PLUS:
+                    # Ctrl++ to zoom in
+                    self.zoom_in()
+                    return None
+                elif event.key == pygame.K_MINUS:
+                    # Ctrl+- to zoom out
+                    self.zoom_out()
+                    return None
+                elif event.key == pygame.K_0:
+                    # Ctrl+0 to reset zoom
+                    self.reset_zoom()
+                    return None
+
             # ESC key to toggle player inventory
             if event.key == pygame.K_ESCAPE:
                 # If chest inventory is visible, close both inventories
@@ -1395,12 +1522,16 @@ class PlayScreen(BaseScreen):
             player_center_y = self.player.rect.centery
 
             # Calculate desired camera position (centered on player)
-            target_camera_x = player_center_x - (self.width // 2)
-            target_camera_y = player_center_y - (self.height // 2)
+            # When zoomed, the effective screen size in logical coordinates is smaller
+            effective_screen_width = self.width / self.zoom_factor
+            effective_screen_height = self.height / self.zoom_factor
 
-            # Clamp camera to map boundaries
-            max_camera_x = max(0, self.map_width * self.grid_cell_size - self.width)
-            max_camera_y = max(0, self.map_height * self.grid_cell_size - self.height)
+            target_camera_x = player_center_x - (effective_screen_width // 2)
+            target_camera_y = player_center_y - (effective_screen_height // 2)
+
+            # Clamp camera to map boundaries (use base grid size for logical coordinates)
+            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
 
             # Ensure target is within map boundaries
             target_camera_x = max(0, min(target_camera_x, max_camera_x))
@@ -1452,11 +1583,11 @@ class PlayScreen(BaseScreen):
                 self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 1)
 
             # Draw enemies
-            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y)
+            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
 
             # Draw player character after second layer but before higher layers
             if self.player:
-                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y)
+                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
 
             # Draw relation points
             self.relation_handler.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
@@ -1487,11 +1618,11 @@ class PlayScreen(BaseScreen):
             self.crystal_item_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
 
             # Draw enemies first
-            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y)
+            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
 
             # Draw player character on top of enemies if it exists
             if self.player:
-                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y)
+                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
 
             # Draw relation points
             self.relation_handler.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
@@ -1503,6 +1634,14 @@ class PlayScreen(BaseScreen):
         # No tooltip for back button
 
 
+
+        # Draw zoom indicator in the bottom-left corner
+        if self.zoom_factor != 1.0:  # Only show when not at 100%
+            zoom_text = f"Zoom: {int(self.zoom_factor * 100)}%"
+            font = pygame.font.SysFont(None, 24)
+            zoom_surface = font.render(zoom_text, True, (255, 255, 255))
+            zoom_rect = zoom_surface.get_rect(bottomleft=(10, self.height - 10))
+            surface.blit(zoom_surface, zoom_rect)
 
         # Draw game over screen if showing
         if self.show_game_over:
@@ -1580,11 +1719,11 @@ class PlayScreen(BaseScreen):
 
         layer_data = layer["data"]
 
-        # Calculate visible area - convert camera positions to integers
-        start_x = int(self.camera_x // self.grid_cell_size)
-        end_x = min(self.map_width, start_x + (self.width // self.grid_cell_size) + 1)
-        start_y = int(self.camera_y // self.grid_cell_size)
-        end_y = min(self.map_height, start_y + (self.height // self.grid_cell_size) + 1)
+        # Calculate visible area - use base grid size for logical coordinates
+        start_x = int(self.camera_x // self.base_grid_cell_size)
+        end_x = min(self.map_width, start_x + (self.width // self.base_grid_cell_size) + 2)
+        start_y = int(self.camera_y // self.base_grid_cell_size)
+        end_y = min(self.map_height, start_y + (self.height // self.base_grid_cell_size) + 2)
 
         # Draw visible tiles in this layer
         for y in range(start_y, end_y):
@@ -1630,10 +1769,14 @@ class PlayScreen(BaseScreen):
                         "character/char_shield_" in path):
                         continue
 
-                # Calculate screen position - camera position is already an integer
-                # Add center offset for small maps
-                screen_x = x * self.grid_cell_size - self.camera_x + self.center_offset_x
-                screen_y = y * self.grid_cell_size - self.camera_y + self.center_offset_y
+                # Calculate screen position - use logical coordinates then scale for zoom
+                # First calculate logical position
+                logical_x = x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
+                logical_y = y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
+
+                # Scale for zoom
+                screen_x = logical_x * self.zoom_factor
+                screen_y = logical_y * self.zoom_factor
 
                 # Check if this is a key item and if it should be drawn
                 if tile_id == self.key_item_id and hasattr(self, 'key_item_id'):
@@ -1654,8 +1797,10 @@ class PlayScreen(BaseScreen):
                     # Get the current frame for this lootchest
                     lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
                     if lootchest_frame:
+                        # Scale the lootchest frame to match the grid cell size
+                        scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
                         # Draw the lootchest frame
-                        surface.blit(lootchest_frame, (screen_x, screen_y))
+                        surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
                         continue  # Skip the normal tile drawing
 
 
@@ -1665,12 +1810,16 @@ class PlayScreen(BaseScreen):
                     # Get the current frame of the animated tile
                     frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                     if frame:
+                        # Scale the frame to match the grid cell size
+                        scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
                         # Draw the animated tile frame
-                        surface.blit(frame, (screen_x, screen_y))
+                        surface.blit(scaled_frame, (screen_x, screen_y))
                 # Draw the tile if we have it loaded
                 elif tile_id in self.tiles:
+                    # Scale the tile to match the grid cell size
+                    scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
                     # Draw the static tile
-                    surface.blit(self.tiles[tile_id], (screen_x, screen_y))
+                    surface.blit(scaled_tile, (screen_x, screen_y))
 
     def draw_map_layers(self, surface, start_layer, end_layer):
         """Draw specific map layers from start_layer to end_layer (inclusive)"""
@@ -1755,8 +1904,10 @@ class PlayScreen(BaseScreen):
                         # Get the current frame for this lootchest
                         lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
                         if lootchest_frame:
+                            # Scale the lootchest frame to match the grid cell size
+                            scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
                             # Draw the lootchest frame
-                            surface.blit(lootchest_frame, (screen_x, screen_y))
+                            surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
                             continue  # Skip the normal tile drawing
 
 
@@ -1766,12 +1917,16 @@ class PlayScreen(BaseScreen):
                         # Get the current frame of the animated tile
                         frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                         if frame:
+                            # Scale the frame to match the grid cell size
+                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
                             # Draw the animated tile frame
-                            surface.blit(frame, (screen_x, screen_y))
+                            surface.blit(scaled_frame, (screen_x, screen_y))
                     # Draw the tile if we have it loaded
                     elif tile_id in self.tiles:
+                        # Scale the tile to match the grid cell size
+                        scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
                         # Draw the static tile
-                        surface.blit(self.tiles[tile_id], (screen_x, screen_y))
+                        surface.blit(scaled_tile, (screen_x, screen_y))
 
     def draw_map(self, surface, skip_player_enemy_tiles=False):
         """Draw the map tiles"""
@@ -1838,8 +1993,10 @@ class PlayScreen(BaseScreen):
                         # Get the current frame for this lootchest
                         lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
                         if lootchest_frame:
+                            # Scale the lootchest frame to match the grid cell size
+                            scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
                             # Draw the lootchest frame
-                            surface.blit(lootchest_frame, (screen_x, screen_y))
+                            surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
                             continue  # Skip the normal tile drawing
 
 
@@ -1849,12 +2006,16 @@ class PlayScreen(BaseScreen):
                         # Get the current frame of the animated tile
                         frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                         if frame:
+                            # Scale the frame to match the grid cell size
+                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
                             # Draw the animated tile frame
-                            surface.blit(frame, (screen_x, screen_y))
+                            surface.blit(scaled_frame, (screen_x, screen_y))
                     # Draw the tile if we have it loaded
                     elif tile_id in self.tiles:
+                        # Scale the tile to match the grid cell size
+                        scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
                         # Draw the static tile
-                        surface.blit(self.tiles[tile_id], (screen_x, screen_y))
+                        surface.blit(scaled_tile, (screen_x, screen_y))
             return
 
         # If we have layers, draw all of them
@@ -2397,10 +2558,11 @@ class PlayScreen(BaseScreen):
 
         # Calculate grid position from mouse position
         # Adjust for camera position and center offset
+        # Use base grid size for logical coordinates
         adjusted_mouse_x = mouse_pos[0] + self.camera_x - self.center_offset_x
         adjusted_mouse_y = mouse_pos[1] + self.camera_y - self.center_offset_y
-        grid_x = adjusted_mouse_x // self.grid_cell_size
-        grid_y = adjusted_mouse_y // self.grid_cell_size
+        grid_x = int(adjusted_mouse_x // self.base_grid_cell_size)
+        grid_y = int(adjusted_mouse_y // self.base_grid_cell_size)
         position = (grid_x, grid_y)
 
         # Use exact position matching for cursor changes - no search range
@@ -2468,12 +2630,15 @@ class PlayScreen(BaseScreen):
         # This prevents the view from jumping when resizing
         if self.player:
             # Update camera to center on player
-            self.camera_x = self.player.rect.centerx - (self.width // 2)
-            self.camera_y = self.player.rect.centery - (self.height // 2)
+            effective_screen_width = self.width / self.zoom_factor
+            effective_screen_height = self.height / self.zoom_factor
 
-            # Clamp camera to map boundaries
-            max_camera_x = max(0, self.map_width * self.grid_cell_size - self.width)
-            max_camera_y = max(0, self.map_height * self.grid_cell_size - self.height)
+            self.camera_x = self.player.rect.centerx - (effective_screen_width // 2)
+            self.camera_y = self.player.rect.centery - (effective_screen_height // 2)
+
+            # Clamp camera to map boundaries (use base grid size for logical coordinates)
+            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
             self.camera_x = max(0, min(self.camera_x, max_camera_x))
             self.camera_y = max(0, min(self.camera_y, max_camera_y))
         else:
@@ -2485,9 +2650,11 @@ class PlayScreen(BaseScreen):
             self.camera_x -= delta_offset_x
             self.camera_y -= delta_offset_y
 
-            # Clamp camera to map boundaries
-            max_camera_x = max(0, self.map_width * self.grid_cell_size - self.width)
-            max_camera_y = max(0, self.map_height * self.grid_cell_size - self.height)
+            # Clamp camera to map boundaries (use base grid size for logical coordinates)
+            effective_screen_width = self.width / self.zoom_factor
+            effective_screen_height = self.height / self.zoom_factor
+            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
             self.camera_x = max(0, min(self.camera_x, max_camera_x))
             self.camera_y = max(0, min(self.camera_y, max_camera_y))
 

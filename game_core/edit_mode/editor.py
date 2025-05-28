@@ -24,7 +24,13 @@ class EditScreen(BaseScreen):
         super().__init__(width, height)
 
         # Grid settings
-        self.grid_cell_size = 16  # 16x16 grid cells
+        self.base_grid_cell_size = 16  # Base 16x16 grid cells
+        self.grid_cell_size = 16  # Current grid cell size (affected by zoom)
+
+        # Zoom settings - limited to 100% minimum
+        self.zoom_levels = [1.0, 1.5, 2.0, 3.0, 4.0]
+        self.current_zoom_index = 0  # Start at 1.0x zoom (index 0)
+        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
 
         # Sidebar settings
         self.sidebar_width = 500  # Increased width to show full tileset at 1.5x scale
@@ -79,9 +85,9 @@ class EditScreen(BaseScreen):
         self.camera_y = 0
 
         # Camera movement settings
-        self.camera_speed = self.grid_cell_size * 0.5  # Base speed (pixels per update) - reduced by half
+        self.camera_speed = self.base_grid_cell_size * 0.5  # Base speed (pixels per update) - reduced by half
         self.camera_acceleration = 0.1  # How quickly the camera speeds up when key is held - reduced
-        self.camera_max_speed = self.grid_cell_size * 1.5  # Maximum camera speed - reduced
+        self.camera_max_speed = self.base_grid_cell_size * 1.5  # Maximum camera speed - reduced
 
         # Key state tracking for smooth camera movement
         self.keys_pressed = {
@@ -491,9 +497,10 @@ class EditScreen(BaseScreen):
                         button = button_data['button']
                         if button and button.rect.collidepoint(mouse_pos):
                             # Check if click was on a collision dot
+                            # Note: Collision dots in sidebar don't need zoom scaling since they're UI elements
                             source_path = button_data.get('source_path', '')
                             if source_path:
-                                if self.collision_manager.handle_collision_click(mouse_pos, button.rect, source_path):
+                                if self.collision_manager.handle_collision_click(mouse_pos, button.rect, source_path, 1.0):
                                     return None
 
                     # Check if click was on an animated tile (only if we're on the last tileset)
@@ -502,15 +509,23 @@ class EditScreen(BaseScreen):
                             button = button_data['button']
                             if button and button.rect.collidepoint(mouse_pos):
                                 # Check if click was on a collision dot
+                                # Note: Collision dots in sidebar don't need zoom scaling since they're UI elements
                                 source_path = button_data.get('source_path', '')
                                 if source_path:
-                                    if self.collision_manager.handle_collision_click(mouse_pos, button.rect, source_path):
+                                    if self.collision_manager.handle_collision_click(mouse_pos, button.rect, source_path, 1.0):
                                         return None
 
             # Handle mouse wheel events
             if event.type == pygame.MOUSEWHEEL:
                 keys = pygame.key.get_pressed()
-                if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+                if keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL]:
+                    # Ctrl + scroll for zooming
+                    if event.y > 0:
+                        self.zoom_in()
+                    elif event.y < 0:
+                        self.zoom_out()
+                    return None
+                elif keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
                     # Shift + scroll for horizontal tile selection movement
                     self._move_tile_selection_horizontal(-event.y)  # Negative for natural scrolling
                     return None
@@ -1008,6 +1023,77 @@ class EditScreen(BaseScreen):
             move_amount = max(1, int(speed)) if speed > 0.1 else 0
             self.camera_x += move_amount
 
+    def zoom_in(self):
+        """Zoom in to the next zoom level"""
+        if self.current_zoom_index < len(self.zoom_levels) - 1:
+            # Store the center point of the current view
+            center_x = self.camera_x + (self.map_area_width // 2)
+            center_y = self.camera_y + (self.map_area_height // 2)
+
+            # Update zoom
+            self.current_zoom_index += 1
+            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+            self.update_zoom()
+
+            # Adjust camera to keep the same center point
+            self.camera_x = center_x - (self.map_area_width // 2)
+            self.camera_y = center_y - (self.map_area_height // 2)
+
+            # Ensure camera stays within bounds
+            self.camera_x = max(0, self.camera_x)
+            self.camera_y = max(0, self.camera_y)
+
+    def zoom_out(self):
+        """Zoom out to the previous zoom level"""
+        if self.current_zoom_index > 0:
+            # Store the center point of the current view
+            center_x = self.camera_x + (self.map_area_width // 2)
+            center_y = self.camera_y + (self.map_area_height // 2)
+
+            # Update zoom
+            self.current_zoom_index -= 1
+            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+            self.update_zoom()
+
+            # Adjust camera to keep the same center point
+            self.camera_x = center_x - (self.map_area_width // 2)
+            self.camera_y = center_y - (self.map_area_height // 2)
+
+            # Ensure camera stays within bounds
+            self.camera_x = max(0, self.camera_x)
+            self.camera_y = max(0, self.camera_y)
+
+    def reset_zoom(self):
+        """Reset zoom to 1.0x (100%)"""
+        # Store the center point of the current view
+        center_x = self.camera_x + (self.map_area_width // 2)
+        center_y = self.camera_y + (self.map_area_height // 2)
+
+        # Reset zoom to 1.0x
+        self.current_zoom_index = 0  # 1.0x is at index 0
+        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+        self.update_zoom()
+
+        # Adjust camera to keep the same center point
+        self.camera_x = center_x - (self.map_area_width // 2)
+        self.camera_y = center_y - (self.map_area_height // 2)
+
+        # Ensure camera stays within bounds
+        self.camera_x = max(0, self.camera_x)
+        self.camera_y = max(0, self.camera_y)
+
+    def update_zoom(self):
+        """Update grid cell size and camera speed based on current zoom factor"""
+        self.grid_cell_size = int(self.base_grid_cell_size * self.zoom_factor)
+
+        # Update camera speeds based on new grid size
+        self.camera_speed = self.grid_cell_size * 0.5
+        self.camera_max_speed = self.grid_cell_size * 1.5
+
+        # Update current camera speeds for all keys
+        for key in self.current_camera_speed:
+            self.current_camera_speed[key] = self.camera_speed
+
     def draw(self, surface):
         """Draw the edit screen"""
         if self.current_mode == "edit":
@@ -1015,7 +1101,7 @@ class EditScreen(BaseScreen):
             surface.fill((255, 255, 255))
 
             # Draw the grid
-            self.ui_manager.draw_grid(surface, self.camera_x, self.camera_y, self.map_area_height)
+            self.ui_manager.draw_grid(surface, self.camera_x, self.camera_y, self.map_area_height, self.grid_cell_size)
 
             # Draw placed tiles
             self.ui_manager.draw_map_tiles(
@@ -1043,9 +1129,9 @@ class EditScreen(BaseScreen):
                     screen_x = grid_x * self.grid_cell_size - self.camera_x
                     screen_y = grid_y * self.grid_cell_size - self.camera_y
 
-                    # Draw the tile with semi-transparency
-                    preview_image = self.selected_tile['image'].copy()
-                    preview_image.set_alpha(128)  # Semi-transparent
+                    # Scale and draw the tile with semi-transparency
+                    scaled_preview = pygame.transform.scale(self.selected_tile['image'], (self.grid_cell_size, self.grid_cell_size))
+                    scaled_preview.set_alpha(128)  # Semi-transparent
 
                     # If using brush, draw all tiles in the brush
                     if self.tab_manager.active_tab == "Brush" or self.brush_manager.brush_size > 1:
@@ -1056,10 +1142,10 @@ class EditScreen(BaseScreen):
                             tile_screen_y = tile_y * self.grid_cell_size - self.camera_y
 
                             # Draw the tile preview
-                            surface.blit(preview_image, (tile_screen_x, tile_screen_y))
+                            surface.blit(scaled_preview, (tile_screen_x, tile_screen_y))
                     else:
                         # Draw single tile preview
-                        surface.blit(preview_image, (screen_x, screen_y))
+                        surface.blit(scaled_preview, (screen_x, screen_y))
 
             # Draw relation points if they exist (always draw them regardless of active tab)
             for id_key, points in self.relation_points.items():
@@ -1148,6 +1234,13 @@ class EditScreen(BaseScreen):
                 self.brush_manager,
                 self  # Pass self as the editor instance
             )
+
+            # Draw zoom indicator in the bottom-left corner of the map area
+            zoom_text = f"Zoom: {int(self.zoom_factor * 100)}%"
+            font = pygame.font.SysFont(None, 24)
+            zoom_surface = font.render(zoom_text, True, (50, 50, 50))
+            zoom_rect = zoom_surface.get_rect(bottomleft=(10, self.map_area_height - 10))
+            surface.blit(zoom_surface, zoom_rect)
 
         elif self.current_mode == "browse":
             # Fill the background with a light color
@@ -1333,6 +1426,7 @@ class EditScreen(BaseScreen):
             "P key: Toggle tile preview following cursor",
             "Shift + scroll: Move selection horizontally",
             "Alt + scroll: Move selection vertically",
+            "Ctrl + scroll: Zoom in/out",
             "",
             "Brush:",
             "- Brush controls are integrated into the Tiles tab",

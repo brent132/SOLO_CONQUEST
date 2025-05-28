@@ -647,11 +647,16 @@ class PlayerCharacter(pygame.sprite.Sprite):
             # Update the current speed
             self.speed = self.base_speed * self.speed_multiplier
 
-    def draw(self, surface, camera_x=0, camera_y=0):
-        """Draw the character on the given surface, accounting for camera position"""
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
+        """Draw the character on the given surface, accounting for camera position and zoom"""
         # Calculate screen position for the character's feet (midbottom)
-        screen_x = self.rect.midbottom[0] - camera_x
-        screen_y = self.rect.midbottom[1] - camera_y
+        # Keep logical coordinates, only scale for visual representation
+        logical_screen_x = self.rect.midbottom[0] - camera_x
+        logical_screen_y = self.rect.midbottom[1] - camera_y
+
+        # Scale the screen position for zoom
+        screen_x = logical_screen_x * zoom_factor
+        screen_y = logical_screen_y * zoom_factor
 
         # Determine the animation type based on the current state
         animation_type = "idle"
@@ -671,13 +676,24 @@ class PlayerCharacter(pygame.sprite.Sprite):
         # Use the current animation image directly
         draw_image = self.current_animation_image
 
+        # Scale the image if zoom factor is not 1.0
+        if zoom_factor != 1.0:
+            # Calculate new size based on zoom factor
+            original_size = draw_image.get_size()
+            new_width = int(original_size[0] * zoom_factor)
+            new_height = int(original_size[1] * zoom_factor)
+            draw_image = pygame.transform.scale(draw_image, (new_width, new_height))
+
+        # Calculate scaled base size for alignment
+        scaled_base_size = (int(16 * zoom_factor), int(16 * zoom_factor))
+
         # Draw the character with custom alignment based on animation type and direction
         # Use the potentially modified image while self.rect maintains a consistent 16x16 collision box
         blit_aligned(
             surface,
             draw_image,
             (screen_x, screen_y),
-            (16, 16),  # Base size (idle animation size)
+            scaled_base_size,  # Scaled base size for proper alignment
             animation_type,
             self.direction
         )
@@ -733,10 +749,10 @@ class PlayerCharacter(pygame.sprite.Sprite):
             surface.blit(aura_surface, (aura_x, aura_y))
 
             # Draw shield durability indicator
-            durability_width = 20
-            durability_height = 3
+            durability_width = int(20 * zoom_factor)  # Scale with zoom
+            durability_height = int(3 * zoom_factor)  # Scale with zoom
             durability_x = screen_x - durability_width // 2
-            durability_y = screen_y - 20  # Position above the character
+            durability_y = screen_y - (20 * zoom_factor)  # Position above the character, scaled
 
             # Draw background bar (dark blue)
             pygame.draw.rect(surface, (20, 50, 100),
@@ -751,10 +767,10 @@ class PlayerCharacter(pygame.sprite.Sprite):
 
         elif self.shield_cooldown > 0:
             # Draw a small cooldown indicator at the bottom of the character
-            cooldown_width = 16
-            cooldown_height = 2
+            cooldown_width = int(16 * zoom_factor)  # Scale with zoom
+            cooldown_height = int(2 * zoom_factor)  # Scale with zoom
             cooldown_x = screen_x - cooldown_width // 2
-            cooldown_y = screen_y + 2  # Just below the character's feet
+            cooldown_y = screen_y + (2 * zoom_factor)  # Just below the character's feet, scaled
 
             # Calculate cooldown progress (0.0 to 1.0)
             cooldown_progress = self.shield_cooldown / self.shield_cooldown_duration

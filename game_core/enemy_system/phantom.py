@@ -388,43 +388,57 @@ class Phantom(Enemy):
         self.state = "death"
         self.velocity = [0, 0]  # Stop movement
 
-    def draw(self, surface, camera_x=0, camera_y=0):
-        """Draw the enemy on the given surface, accounting for camera position"""
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
+        """Draw the enemy on the given surface, accounting for camera position and zoom"""
         # Draw detection range circle if enabled
         if self.show_detection_range:
             # Calculate screen position for circle center
-            screen_center_x = self.rect.centerx - camera_x
-            screen_center_y = self.rect.centery - camera_y
+            # Keep logical coordinates, only scale for visual representation
+            logical_center_x = self.rect.centerx - camera_x
+            logical_center_y = self.rect.centery - camera_y
+
+            # Scale the screen position for zoom
+            screen_center_x = logical_center_x * zoom_factor
+            screen_center_y = logical_center_y * zoom_factor
+
+            # Scale the detection range with zoom factor
+            scaled_detection_range = int(self.detection_range * zoom_factor)
 
             # Draw a red circle with the detection range
             pygame.draw.circle(
                 surface,
                 (255, 0, 0),  # Red color
                 (screen_center_x, screen_center_y),
-                self.detection_range,  # Radius
-                1  # Line width (1 pixel)
+                scaled_detection_range,  # Scaled radius
+                max(1, int(1 * zoom_factor))  # Scale line width, minimum 1
             )
 
         # Call the parent class draw method to draw the enemy sprite
-        super().draw(surface, camera_x, camera_y)
+        super().draw(surface, camera_x, camera_y, zoom_factor)
 
         # Draw health bar if needed
         if self.show_health_bar and not self.is_dead and self.health_bar_bg and self.health_indicator:
-            # Calculate screen position for health bar (centered above the enemy)
-            screen_x = self.rect.centerx - (self.health_bar_bg.get_width() // 2) - camera_x
-            screen_y = self.rect.y - self.health_bar_bg.get_height() - 5 - camera_y  # 5 pixels above enemy
+            # Calculate the entity's screen position accounting for zoom
+            entity_screen_x = (self.rect.centerx - camera_x) * zoom_factor
+            entity_screen_y = (self.rect.y - camera_y) * zoom_factor
+
+            # Calculate health bar position relative to the scaled entity position
+            health_bar_width = self.health_bar_bg.get_width()
+            health_bar_height = self.health_bar_bg.get_height()
+            screen_x = entity_screen_x - (health_bar_width // 2)
+            screen_y = entity_screen_y - health_bar_height - (5 * zoom_factor)  # 5 pixels above enemy, scaled
 
             # Calculate health percentage
             health_percent = max(0, min(1, self.current_health / self.max_health))
 
             # Calculate width of health_hud (background) based on current health
-            health_width = int(self.health_bar_bg.get_width() * health_percent)
+            health_width = int(health_bar_width * health_percent)
 
             if health_width > 0:
                 # Create a subsurface of the health_hud (background) with the appropriate width
                 try:
                     # Create a subsurface of the background (health_hud) with the appropriate width
-                    health_rect = pygame.Rect(0, 0, health_width, self.health_bar_bg.get_height())
+                    health_rect = pygame.Rect(0, 0, health_width, health_bar_height)
                     health_bg_part = self.health_bar_bg.subsurface(health_rect)
 
                     # Draw the health_hud (background) first
@@ -440,7 +454,7 @@ class Phantom(Enemy):
                         screen_x,
                         screen_y,
                         health_width,
-                        self.health_bar_bg.get_height()
+                        health_bar_height
                     )
 
                     # Draw the health_hud (background) with clipping

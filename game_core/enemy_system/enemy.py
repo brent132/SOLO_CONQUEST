@@ -265,17 +265,34 @@ class Enemy(pygame.sprite.Sprite):
 
         return True
 
-    def draw(self, surface, camera_x=0, camera_y=0):
-        """Draw the enemy on the given surface, accounting for camera position"""
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
+        """Draw the enemy on the given surface, accounting for camera position and zoom"""
         # Calculate screen position
-        screen_x = self.rect.x - camera_x
-        screen_y = self.rect.y - camera_y
+        # Keep logical coordinates, only scale for visual representation
+        logical_screen_x = self.rect.x - camera_x
+        logical_screen_y = self.rect.y - camera_y
 
-        # Draw the enemy
-        surface.blit(self.image, (screen_x, screen_y))
+        # Scale the screen position for zoom
+        screen_x = logical_screen_x * zoom_factor
+        screen_y = logical_screen_y * zoom_factor
+
+        # Scale the image if zoom factor is not 1.0
+        if zoom_factor != 1.0:
+            # Calculate new size based on zoom factor
+            original_size = self.image.get_size()
+            new_width = int(original_size[0] * zoom_factor)
+            new_height = int(original_size[1] * zoom_factor)
+            scaled_image = pygame.transform.scale(self.image, (new_width, new_height))
+            # Draw the scaled enemy
+            surface.blit(scaled_image, (screen_x, screen_y))
+        else:
+            # Draw the enemy at normal size
+            surface.blit(self.image, (screen_x, screen_y))
 
         # Draw a rectangle around the enemy for debugging
         if self.debug_mode:
+            debug_width = int(self.rect.width * zoom_factor)
+            debug_height = int(self.rect.height * zoom_factor)
             pygame.draw.rect(surface, (255, 0, 0),
-                            pygame.Rect(screen_x, screen_y, self.rect.width, self.rect.height),
+                            pygame.Rect(screen_x, screen_y, debug_width, debug_height),
                             1)

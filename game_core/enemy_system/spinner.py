@@ -941,13 +941,14 @@ class Spinner(Enemy):
                     # Set knockback cooldown to prevent continuous damage
                     self.knockback_cooldown = self.knockback_cooldown_time
 
-    def draw(self, surface, camera_x=0, camera_y=0):
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw the spinner on the given surface
 
         Args:
             surface: Surface to draw on
             camera_x (int, optional): Camera X offset
             camera_y (int, optional): Camera Y offset
+            zoom_factor (float, optional): Zoom factor for scaling
         """
         # Calculate screen position
         screen_x = self.rect.x - camera_x
@@ -993,15 +994,21 @@ class Spinner(Enemy):
 
         # Draw health bar if needed
         if self.show_health_bar and not self.is_dead and self.health_bar_bg and self.health_indicator:
-            # Calculate screen position for health bar (centered above the enemy)
-            health_bar_x = self.rect.centerx - (self.health_bar_bg.get_width() // 2) - camera_x
-            health_bar_y = self.rect.y - self.health_bar_bg.get_height() - 5 - camera_y  # 5 pixels above enemy
+            # Calculate the entity's screen position accounting for zoom
+            entity_screen_x = (self.rect.centerx - camera_x) * zoom_factor
+            entity_screen_y = (self.rect.y - camera_y) * zoom_factor
+
+            # Calculate health bar position relative to the scaled entity position
+            health_bar_width = self.health_bar_bg.get_width()
+            health_bar_height = self.health_bar_bg.get_height()
+            health_bar_x = entity_screen_x - (health_bar_width // 2)
+            health_bar_y = entity_screen_y - health_bar_height - (5 * zoom_factor)  # 5 pixels above enemy, scaled
 
             # Calculate health percentage
             health_percent = max(0, min(1, self.current_health / self.max_health))
 
             # Calculate width of health bar based on current health
-            health_width = int(self.health_bar_bg.get_width() * health_percent)
+            health_width = int(health_bar_width * health_percent)
 
             if health_width > 0:
                 try:

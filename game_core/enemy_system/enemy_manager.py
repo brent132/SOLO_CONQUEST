@@ -238,7 +238,7 @@ class EnemyManager:
 
         return attack_rect
 
-    def draw(self, surface, camera_x=0, camera_y=0):
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw all enemies"""
         for enemy in self.enemies:
-            enemy.draw(surface, camera_x, camera_y)
+            enemy.draw(surface, camera_x, camera_y, zoom_factor)

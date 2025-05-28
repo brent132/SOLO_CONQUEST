@@ -16,8 +16,7 @@ class EditScreenUI:
         self.sidebar_color = (240, 240, 240)  # Light gray sidebar
         self.sidebar_border_color = (180, 180, 180)
 
-        # Grid settings
-        self.grid_cell_size = 16  # 16x16 grid cells
+        # Grid settings (will be updated dynamically based on zoom)
         self.grid_color = (200, 200, 200)  # Light gray grid lines
         self.grid_line_width = 1
 
@@ -28,17 +27,17 @@ class EditScreenUI:
         # Position title below the mode buttons
         self.title_rect = self.title_surf.get_rect(topleft=(self.map_area_width + 20, 80))
 
-    def draw_grid(self, surface, camera_x, camera_y, map_area_height):
+    def draw_grid(self, surface, camera_x, camera_y, map_area_height, grid_cell_size):
         """Draw the grid lines"""
         # Draw vertical lines
-        for x in range(0, self.map_area_width + 1, self.grid_cell_size):
-            adjusted_x = x - (camera_x % self.grid_cell_size)
+        for x in range(0, self.map_area_width + 1, grid_cell_size):
+            adjusted_x = x - (camera_x % grid_cell_size)
             pygame.draw.line(surface, self.grid_color, (adjusted_x, 0),
                             (adjusted_x, map_area_height), self.grid_line_width)
 
         # Draw horizontal lines
-        for y in range(0, map_area_height + 1, self.grid_cell_size):
-            adjusted_y = y - (camera_y % self.grid_cell_size)
+        for y in range(0, map_area_height + 1, grid_cell_size):
+            adjusted_y = y - (camera_y % grid_cell_size)
             pygame.draw.line(surface, self.grid_color, (0, adjusted_y),
                             (self.map_area_width, adjusted_y), self.grid_line_width)
 
@@ -116,12 +115,13 @@ class EditScreenUI:
             tileset_manager.draw_tileset(surface, selected_tileset_index)
 
             # Draw collision dots on each regular tile
+            # Note: Collision dots in the sidebar don't need zoom scaling since they're UI elements
             for button_data in tileset_manager.tileset_buttons[selected_tileset_index]:
                 button = button_data['button']
                 if button:
                     source_path = button_data.get('source_path', '')
                     if source_path:
-                        collision_manager.draw_collision_dots(surface, button.rect, source_path)
+                        collision_manager.draw_collision_dots(surface, button.rect, source_path, 1.0)
 
             # Draw collision dots on animated tiles if we're on the last tileset
             if selected_tileset_index == len(tileset_manager.tileset_buttons) - 1 and tileset_manager.animated_tile_buttons:
@@ -130,7 +130,7 @@ class EditScreenUI:
                     if button:
                         source_path = button_data.get('source_path', '')
                         if source_path:
-                            collision_manager.draw_collision_dots(surface, button.rect, source_path)
+                            collision_manager.draw_collision_dots(surface, button.rect, source_path, 1.0)
 
             # Toggle dots visibility button removed
 
@@ -291,23 +291,29 @@ class EditScreenUI:
                     frame = animated_tile_manager.get_animated_tile_frame(animated_tile_id)
 
                     if frame:
+                        # Scale the frame to match the grid cell size
+                        scaled_frame = pygame.transform.scale(frame, (grid_cell_size, grid_cell_size))
+
                         # Draw the animated tile frame with appropriate alpha
                         if alpha == 255:
                             # Full opacity - draw directly
-                            surface.blit(frame, (screen_x, screen_y))
+                            surface.blit(scaled_frame, (screen_x, screen_y))
                         else:
                             # Create a copy with adjusted alpha for onion skin effect
-                            frame_copy = frame.copy()
+                            frame_copy = scaled_frame.copy()
                             frame_copy.set_alpha(alpha)
                             surface.blit(frame_copy, (screen_x, screen_y))
                 else:
-                    # Regular tile - draw with appropriate alpha
+                    # Regular tile - scale to match grid cell size
+                    scaled_image = pygame.transform.scale(tile_data['image'], (grid_cell_size, grid_cell_size))
+
+                    # Draw with appropriate alpha
                     if alpha == 255:
                         # Full opacity - draw directly
-                        surface.blit(tile_data['image'], (screen_x, screen_y))
+                        surface.blit(scaled_image, (screen_x, screen_y))
                     else:
                         # Create a copy with adjusted alpha for onion skin effect
-                        tile_copy = tile_data['image'].copy()
+                        tile_copy = scaled_image.copy()
                         tile_copy.set_alpha(alpha)
                         surface.blit(tile_copy, (screen_x, screen_y))
 

@@ -64,14 +64,17 @@ class CollisionManager:
 
         return self.collision_data[tile_path][corner_index]
 
-    def draw_collision_dots(self, surface, tile_rect, tile_path):
+    def draw_collision_dots(self, surface, tile_rect, tile_path, zoom_factor=1.0):
         """Draw collision dots on a tile"""
         if not self.show_collision_dots:
             return
 
         # Calculate dot positions (one in each corner, moved more inward)
-        # Define inset amount (how far from the edge)
-        inset = 3  # Pixels from the edge (reduced from 4)
+        # Define inset amount (how far from the edge) - scale with zoom
+        inset = max(2, int(3 * zoom_factor))  # Scale inset with zoom, minimum 2 pixels
+
+        # Scale dot radius with zoom
+        scaled_dot_radius = max(1, int(self.dot_radius * zoom_factor))
 
         dot_positions = [
             (tile_rect.left + inset, tile_rect.top + inset),                       # Top-left
@@ -86,24 +89,27 @@ class CollisionManager:
             color = self.active_color if is_solid else self.inactive_color
 
             # Create a transparent surface for the dot
-            dot_surface = pygame.Surface((self.dot_radius * 2 + 2, self.dot_radius * 2 + 2), pygame.SRCALPHA)
+            dot_surface = pygame.Surface((scaled_dot_radius * 2 + 2, scaled_dot_radius * 2 + 2), pygame.SRCALPHA)
 
             # Draw the dot on the transparent surface
             pygame.draw.circle(
                 dot_surface,
                 color,
-                (self.dot_radius + 1, self.dot_radius + 1),
-                self.dot_radius
+                (scaled_dot_radius + 1, scaled_dot_radius + 1),
+                scaled_dot_radius
             )
 
             # Blit the transparent dot onto the main surface
-            surface.blit(dot_surface, (pos[0] - self.dot_radius - 1, pos[1] - self.dot_radius - 1))
+            surface.blit(dot_surface, (pos[0] - scaled_dot_radius - 1, pos[1] - scaled_dot_radius - 1))
 
-    def handle_collision_click(self, mouse_pos, tile_rect, tile_path):
+    def handle_collision_click(self, mouse_pos, tile_rect, tile_path, zoom_factor=1.0):
         """Handle clicks on collision dots"""
         # Calculate dot positions and check if any was clicked
         # Define inset amount (how far from the edge) - same as in draw_collision_dots
-        inset = 3  # Pixels from the edge (reduced from 4)
+        inset = max(2, int(3 * zoom_factor))  # Scale inset with zoom, minimum 2 pixels
+
+        # Scale dot radius with zoom
+        scaled_dot_radius = max(1, int(self.dot_radius * zoom_factor))
 
         dot_positions = [
             (tile_rect.left + inset, tile_rect.top + inset),                       # Top-left
@@ -115,8 +121,8 @@ class CollisionManager:
         # Check if any dot was clicked
         for i, pos in enumerate(dot_positions):
             # Create a small rect around the dot for easier clicking
-            dot_rect = pygame.Rect(pos[0] - self.dot_radius - 2, pos[1] - self.dot_radius - 2,
-                                  (self.dot_radius + 2) * 2, (self.dot_radius + 2) * 2)
+            dot_rect = pygame.Rect(pos[0] - scaled_dot_radius - 2, pos[1] - scaled_dot_radius - 2,
+                                  (scaled_dot_radius + 2) * 2, (scaled_dot_radius + 2) * 2)
 
             if dot_rect.collidepoint(mouse_pos):
                 # Toggle collision for this corner

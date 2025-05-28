@@ -1014,37 +1014,59 @@ class Spider(Enemy):
             self.frame < len(self.sprites[current_animation_key])):
             self.image = self.sprites[current_animation_key][self.frame]
 
-    def draw(self, surface, camera_x=0, camera_y=0):
+    def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw the spider
 
         Args:
             surface (pygame.Surface): The surface to draw on
             camera_x (int): Camera x offset
             camera_y (int): Camera y offset
+            zoom_factor (float): Zoom factor for scaling
         """
         # Skip drawing if dead (but not if dying - we want to show the death animation)
         if self.is_dead and not self.is_dying:
             return
 
         # Calculate position with camera offset
-        draw_x = self.rect.x - camera_x
-        draw_y = self.rect.y - camera_y
-        draw_rect = pygame.Rect(draw_x, draw_y, self.rect.width, self.rect.height)
+        # Keep logical coordinates, only scale for visual representation
+        logical_draw_x = self.rect.x - camera_x
+        logical_draw_y = self.rect.y - camera_y
 
-        # Draw the spider
-        surface.blit(self.image, draw_rect)
+        # Scale the screen position for zoom
+        draw_x = logical_draw_x * zoom_factor
+        draw_y = logical_draw_y * zoom_factor
+
+        # Scale the image if zoom factor is not 1.0
+        if zoom_factor != 1.0:
+            # Calculate new size based on zoom factor
+            original_size = self.image.get_size()
+            new_width = int(original_size[0] * zoom_factor)
+            new_height = int(original_size[1] * zoom_factor)
+            scaled_image = pygame.transform.scale(self.image, (new_width, new_height))
+            # Draw the scaled spider
+            surface.blit(scaled_image, (draw_x, draw_y))
+        else:
+            # Draw the spider at normal size
+            draw_rect = pygame.Rect(draw_x, draw_y, self.rect.width, self.rect.height)
+            surface.blit(self.image, draw_rect)
 
         # Draw health bar if needed
         if self.show_health_bar and not self.is_dead and self.health_bar_bg and self.health_indicator:
-            # Calculate screen position for health bar (centered above the enemy)
-            screen_x = self.rect.centerx - (self.health_bar_bg.get_width() // 2) - camera_x
-            screen_y = self.rect.y - self.health_bar_bg.get_height() - 5 - camera_y  # 5 pixels above enemy
+            # Calculate the entity's screen position accounting for zoom
+            entity_screen_x = (self.rect.centerx - camera_x) * zoom_factor
+            entity_screen_y = (self.rect.y - camera_y) * zoom_factor
+
+            # Calculate health bar position relative to the scaled entity position
+            health_bar_width = self.health_bar_bg.get_width()
+            health_bar_height = self.health_bar_bg.get_height()
+            screen_x = entity_screen_x - (health_bar_width // 2)
+            screen_y = entity_screen_y - health_bar_height - (5 * zoom_factor)  # 5 pixels above enemy, scaled
 
             # Calculate health percentage
             health_percent = max(0, min(1, self.current_health / self.max_health))
 
             # Calculate width of health indicator based on percentage
-            health_width = int(self.health_bar_bg.get_width() * health_percent)
+            health_width = int(health_bar_width * health_percent)
 
             if health_width > 0:
                 try:

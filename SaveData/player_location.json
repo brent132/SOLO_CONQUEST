@@ -1,4 +1,13 @@
 {
   "current_world": "main",
-  "worlds": {}
+  "worlds": {
+    "main": {
+      "map_name": "main",
+      "x": 507,
+      "y": 332,
+      "direction": "left",
+      "health": 90,
+      "shield_durability": 3
+    }
+  }
 }
