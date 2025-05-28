@@ -831,6 +831,10 @@ class EditScreen(BaseScreen):
                                                 self.map_data[0][(grid_x, grid_y)] = tile_data
                                                 break
 
+                        # Sync layer manager state to the layer panel UI
+                        # This ensures the layer panel shows the correct number of layers
+                        self.layer_manager.sync_to_panel()
+
                         # Load collision data if available
                         if "collision_data" in map_data:
                             self.collision_manager.load_collision_data(map_data["collision_data"])
