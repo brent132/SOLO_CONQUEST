@@ -42,18 +42,8 @@ class PlayerInventory:
         # Hovered slot
         self.hovered_slot = -1
 
-        # Dragging state
-        self.dragging = False
-        self.drag_item = None
-        self.drag_source = -1
-        self.drag_offset_x = 0
-        self.drag_offset_y = 0
-
-        # Picked up item state (for right-click picking)
-        self.picked_item = None
-        self.picked_source = -1
-        self.picked_count = 0
-        self.cursor_item = None  # Item that follows the cursor
+        # Cursor item state (Terraria-style)
+        self.cursor_item = None  # Item currently held by cursor (None or item dict)
 
         # Create slot rects for collision detection
         self.slot_rects = []
@@ -129,11 +119,7 @@ class PlayerInventory:
                 self.hovered_slot = i
                 break
 
-        # Update drag position if dragging
-        if self.dragging:
-            # Update the drag position to follow the mouse
-            self.drag_offset_x = mouse_pos[0]
-            self.drag_offset_y = mouse_pos[1]
+
 
     def draw(self, surface, skip_background=False):
         """Draw the inventory on the given surface
@@ -200,79 +186,33 @@ class PlayerInventory:
                         # Draw the count text directly without background
                         surface.blit(count_text, (count_x, count_y))
 
-        # Don't draw dragged or picked items here
-        # They will be drawn separately by the play_screen to ensure proper layering
+        # Draw cursor item if holding one
+        if self.cursor_item:
+            mouse_pos = pygame.mouse.get_pos()
+            if "image" in self.cursor_item:
+                cursor_image = self.cursor_item["image"]
+                cursor_x = mouse_pos[0] - cursor_image.get_width() // 2
+                cursor_y = mouse_pos[1] - cursor_image.get_height() // 2
 
-    def draw_dragged_item(self, surface):
-        """Draw the dragged item on the surface
+                # Draw with semi-transparency
+                temp_surface = pygame.Surface((cursor_image.get_width(), cursor_image.get_height()), pygame.SRCALPHA)
+                temp_surface.blit(cursor_image, (0, 0))
+                temp_surface.set_alpha(180)
+                surface.blit(temp_surface, (cursor_x, cursor_y))
 
-        Args:
-            surface: The surface to draw on
-        """
-        if not self.dragging or not self.drag_item:
-            return
+                # Draw count
+                count = self.cursor_item.get("count", 1)
+                if count > 1:
+                    font = pygame.font.SysFont(None, 16)
+                    count_text = font.render(str(count), True, (255, 255, 255))
+                    count_rect = count_text.get_rect(bottomright=(cursor_x + cursor_image.get_width(), cursor_y + cursor_image.get_height()))
+                    surface.blit(count_text, count_rect)
 
-        # Get the item image
-        item_image = self.drag_item["image"]
-
-        # Calculate position to center the item on the mouse cursor
-        item_x = self.drag_offset_x - item_image.get_width() // 2
-        item_y = self.drag_offset_y - item_image.get_height() // 2
-
-        # Draw the item with semi-transparency
-        temp_surface = pygame.Surface((item_image.get_width(), item_image.get_height()), pygame.SRCALPHA)
-        temp_surface.blit(item_image, (0, 0))
-        temp_surface.set_alpha(180)  # Semi-transparent
-        surface.blit(temp_surface, (item_x, item_y))
-
-        # Draw item count if more than 1
-        if "count" in self.drag_item and self.drag_item["count"] > 1:
-            # Use a small font for the count
-            font = pygame.font.SysFont(None, 16)
-            count_text = font.render(str(self.drag_item["count"]), True, (255, 255, 255))
-
-            # Position at bottom right of the item
-            count_x = item_x + item_image.get_width() - count_text.get_width() - 2
-            count_y = item_y + item_image.get_height() - count_text.get_height() - 2
-
-            # Draw the count text directly without background
-            surface.blit(count_text, (count_x, count_y))
-
-    def draw_picked_item(self, surface):
-        """Draw the picked up item on the surface
-
-        Args:
-            surface: The surface to draw on
-        """
-        if not self.cursor_item or self.picked_count <= 0:
-            return
-
-        # Get mouse position
-        mouse_pos = pygame.mouse.get_pos()
-
-        # Get the item image
-        item_image = self.cursor_item["image"]
-
-        # Calculate position to center the item on the mouse cursor
-        item_x = mouse_pos[0] - item_image.get_width() // 2
-        item_y = mouse_pos[1] - item_image.get_height() // 2
-
-        # Draw the item with semi-transparency
-        temp_surface = pygame.Surface((item_image.get_width(), item_image.get_height()), pygame.SRCALPHA)
-        temp_surface.blit(item_image, (0, 0))
-        temp_surface.set_alpha(180)  # Semi-transparent
-        surface.blit(temp_surface, (item_x, item_y))
-
-        # Draw item count
-        font = pygame.font.SysFont(None, 16)
-        count_text = font.render(str(self.picked_count), True, (255, 255, 255))
-
-        # Position at bottom right of the item
-        count_x = item_x + item_image.get_width() - count_text.get_width() - 2
-        count_y = item_y + item_image.get_height() - count_text.get_height() - 2
-
-        # Draw the count text directly without background
-        surface.blit(count_text, (count_x, count_y))
+    def draw_cursor_item(self, surface):
+        """Draw the cursor item (for compatibility with play_screen)"""
+        _ = surface  # Unused parameter
+        # This method is called by play_screen, but we already draw cursor item in main draw method
+        pass
 
     def show(self, hud_inventory=None):
         """Show the player inventory
@@ -333,259 +273,139 @@ class PlayerInventory:
         """Check if the player inventory is visible"""
         return self.visible
 
-    def handle_click(self, mouse_pos, right_click=False):
-        """Handle a click in the inventory
+    def handle_click(self, mouse_pos, right_click=False, shift_held=False, chest_inventory=None):
+        """Handle a click in the inventory (Terraria-style)
 
         Args:
             mouse_pos: Mouse position (x, y)
-            right_click: Whether this was a right click (for picking up one item at a time)
+            right_click: Whether this was a right click
+            shift_held: Whether shift key is held (for quick transfer)
+            chest_inventory: Optional chest inventory for quick transfer
         """
-        # Check if a slot was clicked
+        # Find which slot was clicked
+        clicked_slot = -1
         for i, rect in enumerate(self.slot_rects):
             if rect.collidepoint(mouse_pos):
-                # If there's an item in this slot
-                if self.inventory_items[i]:
-                    if right_click:
-                        # Handle right-click to pick up one item at a time
-                        self._handle_right_click_pickup(i)
-                    else:
-                        # Left-click to start dragging the whole stack
-                        self.dragging = True
-                        self.drag_item = self.inventory_items[i].copy()  # Make a copy of the item
-                        self.drag_source = i
-                        self.drag_offset_x = mouse_pos[0]
-                        self.drag_offset_y = mouse_pos[1]
-                        # Don't remove the item yet, wait until drop
-                elif right_click and self.picked_count > 0:
-                    # Right-click on empty slot with picked items - place one item
-                    self._place_one_picked_item(i)
-                return
+                clicked_slot = i
+                break
 
-    def _handle_right_click_pickup(self, slot_index):
-        """Handle right-click to pick up one item at a time
+        if clicked_slot == -1:
+            return  # No slot clicked
 
-        Args:
-            slot_index: Index of the slot that was right-clicked
-        """
-        # Get the item in the slot
-        item = self.inventory_items[slot_index]
+        # Handle the click based on the current state
+        if shift_held and chest_inventory and chest_inventory.is_visible():
+            # Shift+click: Quick transfer to chest
+            self._quick_transfer_to_chest(clicked_slot, chest_inventory)
+        elif right_click:
+            # Right-click: Pick up/place half stack
+            self._handle_right_click(clicked_slot)
+        else:
+            # Left-click: Pick up/place entire stack
+            self._handle_left_click(clicked_slot)
 
-        # If we don't have a picked item yet, or it's a different item
-        if self.picked_item is None or self.picked_item.get("name") != item.get("name"):
-            # Start a new picked item
-            self.picked_item = item
-            self.picked_source = slot_index
-            self.picked_count = 1
-            self.cursor_item = item.copy()
+    def _handle_left_click(self, slot_index):
+        """Handle left-click: pick up/place entire stack"""
+        slot_item = self.inventory_items[slot_index]
 
-            # Reduce the count in the source slot
-            if item.get("count", 1) > 1:
-                item["count"] -= 1
-            else:
-                # If this was the last item, remove it from the slot
+        if self.cursor_item is None:
+            # No item in cursor, pick up the entire stack from slot
+            if slot_item:
+                self.cursor_item = slot_item.copy()
                 self.inventory_items[slot_index] = None
         else:
-            # We already have a picked item of the same type
-            # Add one more to the picked count
-            self.picked_count += 1
+            # Have item in cursor
+            if slot_item is None:
+                # Empty slot, place entire cursor stack
+                self.inventory_items[slot_index] = self.cursor_item.copy()
+                self.cursor_item = None
+            elif slot_item.get("name") == self.cursor_item.get("name"):
+                # Same item type, try to merge
+                slot_count = slot_item.get("count", 1)
+                cursor_count = self.cursor_item.get("count", 1)
 
-            # Reduce the count in the source slot
-            if item.get("count", 1) > 1:
-                item["count"] -= 1
+                # Add cursor items to slot
+                slot_item["count"] = slot_count + cursor_count
+                self.cursor_item = None
             else:
-                # If this was the last item, remove it from the slot
-                self.inventory_items[slot_index] = None
+                # Different items, swap them
+                temp_item = slot_item.copy()
+                self.inventory_items[slot_index] = self.cursor_item.copy()
+                self.cursor_item = temp_item
 
-    def _place_one_picked_item(self, slot_index):
-        """Place one picked item into the specified slot
+    def _handle_right_click(self, slot_index):
+        """Handle right-click: pick up/place half stack"""
+        slot_item = self.inventory_items[slot_index]
 
-        Args:
-            slot_index: Index of the slot to place the item in
-        """
-        # Make sure we have a picked item and the target slot is empty
-        if self.picked_count <= 0 or self.inventory_items[slot_index] is not None:
-            return
-
-        # Create a new item with count of 1
-        new_item = self.cursor_item.copy()
-        new_item["count"] = 1
-
-        # Place it in the slot
-        self.inventory_items[slot_index] = new_item
-
-        # Reduce the picked count
-        self.picked_count -= 1
-
-        # If no more picked items, clear the cursor
-        if self.picked_count <= 0:
-            self.picked_item = None
-            self.picked_source = -1
-            self.cursor_item = None
-
-    def handle_mouse_up(self, mouse_pos, chest_inventory=None):
-        """Handle mouse button up in the inventory
-
-        Args:
-            mouse_pos: Mouse position (x, y)
-            chest_inventory: Optional chest inventory to transfer items to
-        """
-        # If not dragging and no picked items, nothing to do
-        if not self.dragging and self.picked_count <= 0:
-            return
-
-        # If we have picked items, handle placing them
-        if self.picked_count > 0:
-            self._handle_place_picked_items(mouse_pos, chest_inventory)
-            return
-
-        # Otherwise, handle normal dragging
-
-        # Check if dropping on a slot in this inventory
-        target_slot = -1
-        for i, rect in enumerate(self.slot_rects):
-            if rect.collidepoint(mouse_pos):
-                target_slot = i
-                break
-
-        # If dropping on a valid slot in this inventory
-        if target_slot != -1:
-            # If dropping on a different slot than source
-            if target_slot != self.drag_source:
-                # Get source and target items
-                source_item = self.inventory_items[self.drag_source]
-                target_item = self.inventory_items[target_slot]
-
-                # If target slot is empty, just move the item
-                if not target_item:
-                    self.inventory_items[target_slot] = source_item
-                    self.inventory_items[self.drag_source] = None
+        if self.cursor_item is None:
+            # No item in cursor, pick up half the stack from slot
+            if slot_item:
+                slot_count = slot_item.get("count", 1)
+                if slot_count == 1:
+                    # Only 1 item, take it all
+                    self.cursor_item = slot_item.copy()
+                    self.inventory_items[slot_index] = None
                 else:
-                    # Check if items are the same type (can be merged)
-                    if target_item.get("name") == source_item.get("name"):
-                        # Same item type, merge them by adding counts
-                        target_count = target_item.get("count", 1)
-                        source_count = source_item.get("count", 1)
-
-                        # Update the target item count
-                        target_item["count"] = target_count + source_count
-
-                        # Remove the source item
-                        self.inventory_items[self.drag_source] = None
-                    else:
-                        # Different items, swap them
-                        self.inventory_items[target_slot] = source_item
-                        self.inventory_items[self.drag_source] = target_item
-        # Check if dropping on chest inventory
-        elif chest_inventory and chest_inventory.is_visible():
-            # Check if dropping on a slot in chest inventory
-            chest_target_slot = chest_inventory.get_slot_at_position(mouse_pos)
-            if chest_target_slot != -1:
-                # Get source and target items
-                source_item = self.inventory_items[self.drag_source]
-                target_item = chest_inventory.inventory_items[chest_target_slot]
-
-                # Transfer item from player to chest inventory
-                if not target_item:
-                    # Target slot is empty, move the item
-                    chest_inventory.inventory_items[chest_target_slot] = source_item
-                    self.inventory_items[self.drag_source] = None
+                    # Take half (rounded up)
+                    take_count = (slot_count + 1) // 2
+                    self.cursor_item = slot_item.copy()
+                    self.cursor_item["count"] = take_count
+                    slot_item["count"] = slot_count - take_count
+        else:
+            # Have item in cursor
+            if slot_item is None:
+                # Empty slot, place one item from cursor
+                cursor_count = self.cursor_item.get("count", 1)
+                if cursor_count == 1:
+                    # Only 1 item in cursor, place it all
+                    self.inventory_items[slot_index] = self.cursor_item.copy()
+                    self.cursor_item = None
                 else:
-                    # Check if items are the same type (can be merged)
-                    if target_item.get("name") == source_item.get("name"):
-                        # Same item type, merge them by adding counts
-                        target_count = target_item.get("count", 1)
-                        source_count = source_item.get("count", 1)
-
-                        # Update the target item count
-                        target_item["count"] = target_count + source_count
-
-                        # Remove the source item
-                        self.inventory_items[self.drag_source] = None
-                    else:
-                        # Different items, swap them
-                        chest_inventory.inventory_items[chest_target_slot] = source_item
-                        self.inventory_items[self.drag_source] = target_item
-
-        # Reset dragging state
-        self.dragging = False
-        self.drag_item = None
-        self.drag_source = -1
-
-    def _handle_place_picked_items(self, mouse_pos, chest_inventory=None):
-        """Handle placing picked items when mouse button is released
-
-        Args:
-            mouse_pos: Mouse position (x, y)
-            chest_inventory: Optional chest inventory to transfer items to
-        """
-        # Check if dropping on a slot in this inventory
-        target_slot = -1
-        for i, rect in enumerate(self.slot_rects):
-            if rect.collidepoint(mouse_pos):
-                target_slot = i
-                break
-
-        # If dropping on a valid slot in this inventory
-        if target_slot != -1:
-            # Get the target item
-            target_item = self.inventory_items[target_slot]
-
-            # If target slot is empty, place all picked items
-            if not target_item:
-                # Create a new item with the full count
-                new_item = self.cursor_item.copy()
-                new_item["count"] = self.picked_count
-
-                # Place it in the slot
-                self.inventory_items[target_slot] = new_item
-
-                # Clear the cursor
-                self.picked_count = 0
-                self.picked_item = None
-                self.picked_source = -1
-                self.cursor_item = None
-            # If target has same item type, add all to the stack
-            elif target_item.get("name") == self.cursor_item.get("name"):
-                # Add all picked items to the target count
-                target_item["count"] = target_item.get("count", 1) + self.picked_count
-
-                # Clear the cursor
-                self.picked_count = 0
-                self.picked_item = None
-                self.picked_source = -1
-                self.cursor_item = None
-        # Check if dropping on chest inventory
-        elif chest_inventory and chest_inventory.is_visible():
-            # Check if dropping on a slot in chest inventory
-            chest_target_slot = chest_inventory.get_slot_at_position(mouse_pos)
-            if chest_target_slot != -1:
-                # Get the target item
-                target_item = chest_inventory.inventory_items[chest_target_slot]
-
-                # If target slot is empty, place all picked items in chest
-                if not target_item:
-                    # Create a new item with the full count
+                    # Place 1 item
                     new_item = self.cursor_item.copy()
-                    new_item["count"] = self.picked_count
-
-                    # Place it in the chest slot
-                    chest_inventory.inventory_items[chest_target_slot] = new_item
-
-                    # Clear the cursor
-                    self.picked_count = 0
-                    self.picked_item = None
-                    self.picked_source = -1
+                    new_item["count"] = 1
+                    self.inventory_items[slot_index] = new_item
+                    self.cursor_item["count"] = cursor_count - 1
+            elif slot_item.get("name") == self.cursor_item.get("name"):
+                # Same item type, add one from cursor to slot
+                cursor_count = self.cursor_item.get("count", 1)
+                slot_item["count"] = slot_item.get("count", 1) + 1
+                if cursor_count == 1:
                     self.cursor_item = None
-                # If target has same item type, add all to the stack
-                elif target_item.get("name") == self.cursor_item.get("name"):
-                    # Add all picked items to the target count
-                    target_item["count"] = target_item.get("count", 1) + self.picked_count
+                else:
+                    self.cursor_item["count"] = cursor_count - 1
+            else:
+                # Different items, swap them
+                temp_item = slot_item.copy()
+                self.inventory_items[slot_index] = self.cursor_item.copy()
+                self.cursor_item = temp_item
 
-                    # Clear the cursor
-                    self.picked_count = 0
-                    self.picked_item = None
-                    self.picked_source = -1
-                    self.cursor_item = None
+    def _quick_transfer_to_chest(self, slot_index, chest_inventory):
+        """Quick transfer item from player to chest (Shift+click)"""
+        if not self.inventory_items[slot_index]:
+            return  # No item to transfer
+
+        item_to_transfer = self.inventory_items[slot_index]
+
+        # Try to find a slot with the same item type first
+        for i, chest_item in enumerate(chest_inventory.inventory_items):
+            if chest_item and chest_item.get("name") == item_to_transfer.get("name"):
+                # Found matching item, merge them
+                chest_item["count"] = chest_item.get("count", 1) + item_to_transfer.get("count", 1)
+                self.inventory_items[slot_index] = None
+                return
+
+        # No matching item found, try to find an empty slot
+        for i, chest_item in enumerate(chest_inventory.inventory_items):
+            if chest_item is None:
+                # Found empty slot, move item there
+                chest_inventory.inventory_items[i] = item_to_transfer.copy()
+                self.inventory_items[slot_index] = None
+                return
+
+    def handle_mouse_up(self, mouse_pos):
+        """Handle mouse button up - not needed in Terraria-style system"""
+        _ = mouse_pos  # Unused parameter
+        pass  # All interactions are handled in handle_click
 
     def get_slot_at_position(self, mouse_pos):
         """Get the slot index at the given position

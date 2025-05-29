@@ -80,11 +80,18 @@ class PlayScreen(BaseScreen):
         # Lootchest manager
         self.lootchest_manager = LootchestManager()
 
+        # Initialize shared cursor state for Terraria-style inventory system
+        self.shared_cursor_item = None
+
         # Chest inventory (for displaying chest contents)
         self.chest_inventory = ChestInventory(self.width, self.height)
 
         # Player inventory (for displaying full inventory when ESC is pressed)
         self.player_inventory = PlayerInventory(self.width, self.height)
+
+        # Set up shared cursor system - both inventories will use shared cursor methods
+        # We'll override their cursor access to use our shared state
+        self._setup_shared_cursor_system()
 
         # Set the callback for when a chest is opened
         print("Setting lootchest_manager callback to self.on_chest_opened")
@@ -821,22 +828,8 @@ class PlayScreen(BaseScreen):
         if result:
             return result
 
-        # Handle mouse button up events
-        if event.type == pygame.MOUSEBUTTONUP:
-            # Handle mouse up for player inventory (for drag and drop)
-            if self.player_inventory.is_visible() and event.button == 1:  # Left mouse button
-                self.player_inventory.handle_mouse_up(mouse_pos, self.chest_inventory)
-
-            # Handle mouse up for chest inventory (for drag and drop)
-            if self.chest_inventory.is_visible() and event.button == 1:  # Left mouse button
-                self.chest_inventory.handle_mouse_up(mouse_pos, self.player_inventory)
-
-                # Update the chest contents in the lootchest manager
-                if self.chest_inventory.current_chest_pos:
-                    self.lootchest_manager.set_chest_contents(
-                        self.chest_inventory.current_chest_pos,
-                        self.chest_inventory.inventory_items
-                    )
+        # Mouse button up events are no longer needed in Terraria-style system
+        # All interactions are handled in mouse button down events
 
         # Pass mouse events to player character for attack handling
         if self.player and event.type == pygame.MOUSEBUTTONDOWN:
@@ -847,17 +840,21 @@ class PlayScreen(BaseScreen):
                 self.hud.inventory.selected_slot = (self.hud.inventory.selected_slot + 1) % self.hud.inventory.num_slots
             # Handle left-click for inventory slots, player inventory, and attacks
             elif event.button == 1:  # Left mouse button
+                # Check for shift key
+                keys = pygame.key.get_pressed()
+                shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+
                 # Check if chest inventory is visible and handle clicks
                 if self.chest_inventory.is_visible():
                     # Handle click in chest inventory
-                    self.chest_inventory.handle_click(mouse_pos)
+                    self.chest_inventory.handle_click(mouse_pos, shift_held=shift_held, player_inventory=self.player_inventory)
                     # Also check player inventory if it's visible
                     if self.player_inventory.is_visible():
-                        self.player_inventory.handle_click(mouse_pos)
+                        self.player_inventory.handle_click(mouse_pos, shift_held=shift_held, chest_inventory=self.chest_inventory)
                 # Check if only player inventory is visible and handle clicks
                 elif self.player_inventory.is_visible():
                     # Handle click in player inventory (but don't close it on click outside)
-                    self.player_inventory.handle_click(mouse_pos)
+                    self.player_inventory.handle_click(mouse_pos, shift_held=shift_held)
                 # Check if clicking on an inventory slot
                 elif self.hud.inventory.hovered_slot != -1:
                     # Select the clicked slot
@@ -867,17 +864,21 @@ class PlayScreen(BaseScreen):
                     self.player.handle_mouse_event(event)
             # Handle right-click for inventory item picking or lootchest interaction
             elif event.button == 3:  # Right mouse button
+                # Check for shift key
+                keys = pygame.key.get_pressed()
+                shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+
                 # Check if chest inventory is visible and handle right-clicks
                 if self.chest_inventory.is_visible():
                     # Handle right-click in chest inventory
-                    self.chest_inventory.handle_click(mouse_pos, right_click=True)
+                    self.chest_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held, player_inventory=self.player_inventory)
                     # Also check player inventory if it's visible
                     if self.player_inventory.is_visible():
-                        self.player_inventory.handle_click(mouse_pos, right_click=True)
+                        self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held, chest_inventory=self.chest_inventory)
                 # Check if only player inventory is visible and handle right-clicks
                 elif self.player_inventory.is_visible():
                     # Handle right-click in player inventory
-                    self.player_inventory.handle_click(mouse_pos, right_click=True)
+                    self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held)
                 # Check if clicking on a lootchest (only when inventories are not visible)
                 elif not self.chest_inventory.is_visible() and not self.player_inventory.is_visible() and self.player and not self.player.is_dead:
                     # Debug output before trying to interact with a lootchest
@@ -1656,11 +1657,7 @@ class PlayScreen(BaseScreen):
         if self.show_game_over:
             self.game_over_screen.draw(surface)
 
-        # Draw HUD elements if player exists (moved to be drawn last, on top of everything)
-        if self.player:
-            # Draw HUD normally
-            self.hud.draw(surface, self.player)
-
+        # Draw inventories FIRST to ensure proper layering
         # If both inventories are visible, draw a shared background
         if self.chest_inventory.is_visible() and self.player_inventory.is_visible():
             # Draw shared semi-transparent black background
@@ -1668,44 +1665,27 @@ class PlayScreen(BaseScreen):
             bg_surface.fill((0, 0, 0, 180))  # Semi-transparent black
             surface.blit(bg_surface, (0, 0))
 
-            # Draw inventories in the correct order (player inventory on top)
+            # Draw inventories in the correct order (chest inventory first, player inventory on top)
             # First draw chest inventory without its own background
             self.chest_inventory.draw(surface, skip_background=True)
 
             # Then draw player inventory without its own background (on top)
             self.player_inventory.draw(surface, skip_background=True)
 
-            # Draw any picked up or dragged items from both inventories
-            # This ensures dragged items are always on top
-            # First draw chest inventory dragged/picked items
-            if self.chest_inventory.dragging and self.chest_inventory.drag_item:
-                self.chest_inventory.draw_dragged_item(surface)
-            elif hasattr(self.chest_inventory, 'cursor_item') and self.chest_inventory.cursor_item and self.chest_inventory.picked_count > 0:
-                self.chest_inventory.draw_picked_item(surface)
-
-            # Then draw player inventory dragged/picked items (on top)
-            if self.player_inventory.dragging and self.player_inventory.drag_item:
-                self.player_inventory.draw_dragged_item(surface)
-            elif hasattr(self.player_inventory, 'cursor_item') and self.player_inventory.cursor_item and self.player_inventory.picked_count > 0:
-                self.player_inventory.draw_picked_item(surface)
+            # Cursor items are now drawn automatically by the inventory draw methods
         else:
             # Draw chest inventory if visible
             if self.chest_inventory.is_visible():
                 self.chest_inventory.draw(surface)
-                # Draw chest inventory dragged/picked items
-                if self.chest_inventory.dragging and self.chest_inventory.drag_item:
-                    self.chest_inventory.draw_dragged_item(surface)
-                elif hasattr(self.chest_inventory, 'cursor_item') and self.chest_inventory.cursor_item and self.chest_inventory.picked_count > 0:
-                    self.chest_inventory.draw_picked_item(surface)
 
             # Draw player inventory if visible
             if self.player_inventory.is_visible():
                 self.player_inventory.draw(surface)
-                # Draw player inventory dragged/picked items
-                if self.player_inventory.dragging and self.player_inventory.drag_item:
-                    self.player_inventory.draw_dragged_item(surface)
-                elif hasattr(self.player_inventory, 'cursor_item') and self.player_inventory.cursor_item and self.player_inventory.picked_count > 0:
-                    self.player_inventory.draw_picked_item(surface)
+
+        # Draw HUD elements if player exists (on top of inventories)
+        if self.player:
+            # Draw HUD normally
+            self.hud.draw(surface, self.player)
 
         # No status messages
 
@@ -2461,7 +2441,7 @@ class PlayScreen(BaseScreen):
         print("Player inventory shown")
 
         # Show the chest inventory with the chest contents
-        self.chest_inventory.show(chest_pos, chest_contents, self.player_inventory)
+        self.chest_inventory.show(chest_pos, chest_contents)
         print("Chest inventory shown")
 
         # Position inventories side by side in the center of the screen
@@ -2723,3 +2703,22 @@ class PlayScreen(BaseScreen):
         self.game_over_screen.resize(new_width, new_height)
 
         # No need to update popup message position as it's calculated in the draw method
+
+    def _setup_shared_cursor_system(self):
+        """Set up the shared cursor system for Terraria-style inventory interactions"""
+        # Replace the cursor_item property in both inventories with our shared system
+
+        # Store original cursor_item attributes as private
+        self.player_inventory._original_cursor_item = self.player_inventory.cursor_item
+        self.chest_inventory._original_cursor_item = self.chest_inventory.cursor_item
+
+        # Replace cursor_item with property that uses shared state
+        def get_shared_cursor(inventory_self):
+            return self.shared_cursor_item
+
+        def set_shared_cursor(inventory_self, value):
+            self.shared_cursor_item = value
+
+        # Monkey patch both inventories to use shared cursor
+        self.player_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)
+        self.chest_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)

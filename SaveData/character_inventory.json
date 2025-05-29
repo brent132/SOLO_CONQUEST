@@ -2,23 +2,23 @@
   "version": 1,
   "inventory": [
     {
-      "slot": 50,
-      "name": "Key",
-      "count": 2
-    },
-    {
-      "slot": 60,
+      "slot": 28,
       "name": "Crystal",
       "count": 7
     },
     {
-      "slot": 62,
+      "slot": 60,
+      "name": "Key",
+      "count": 1
+    },
+    {
+      "slot": 61,
       "name": "Crystal",
       "count": 2
     },
     {
       "slot": 69,
-      "name": "Crystal",
+      "name": "Key",
       "count": 2
     }
   ]

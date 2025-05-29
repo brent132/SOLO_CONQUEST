@@ -302,16 +302,15 @@
       }
   },
   "game_state": {
-      "camera": {
-          "x": 0,
-          "y": 0
-      },
-      "enemies": [],
-      "inventory": [],
-      "player_inventory": [],
-      "collected_keys": [],
-      "collected_crystals": [],
-      "opened_lootchests": [],
-      "chest_contents": {}
+    "camera": {
+      "x": 0,
+      "y": 0
+    },
+    "enemies": [],
+    "inventory": [],
+    "collected_keys": [],
+    "collected_crystals": [],
+    "opened_lootchests": [],
+    "chest_contents": {}
   }
 }
