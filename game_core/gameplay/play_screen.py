@@ -1438,14 +1438,14 @@ class PlayScreen(BaseScreen):
 
                 if load_success and self.player and self.is_teleporting:
                     # Position the player exactly at the center of the target relation point
-                    # Convert grid coordinates to pixel coordinates
+                    # Convert grid coordinates to pixel coordinates using base grid size (logical coordinates)
                     grid_x, grid_y = target_position
-                    pixel_x = grid_x * self.grid_cell_size
-                    pixel_y = grid_y * self.grid_cell_size
+                    pixel_x = grid_x * self.base_grid_cell_size
+                    pixel_y = grid_y * self.base_grid_cell_size
 
                     # Calculate the exact center of the teleport point
-                    point_center_x = pixel_x + (self.grid_cell_size // 2)
-                    point_center_y = pixel_y + (self.grid_cell_size // 2)
+                    point_center_x = pixel_x + (self.base_grid_cell_size // 2)
+                    point_center_y = pixel_y + (self.base_grid_cell_size // 2)
 
                     # Set player position directly at the center of the teleport point
                     # Use the center of the player's rect to align with the center of the point
@@ -1479,24 +1479,28 @@ class PlayScreen(BaseScreen):
                     # Reset teleporting flag
                     self.is_teleporting = False
 
-                    # Set map boundaries for the player
+                    # Set map boundaries for the player using base grid size (logical coordinates)
                     self.player.set_map_boundaries(
                         0, 0,  # Min X, Min Y
-                        self.map_width * self.grid_cell_size,  # Max X
-                        self.map_height * self.grid_cell_size  # Max Y
+                        self.map_width * self.base_grid_cell_size,  # Max X
+                        self.map_height * self.base_grid_cell_size  # Max Y
                     )
 
                     # Update the player's position in the physics system
                     # This ensures animations and collision detection work correctly
                     self.player.update_position()
 
-                    # Update camera to center on player
-                    self.camera_x = self.player.rect.centerx - (self.width // 2)
-                    self.camera_y = self.player.rect.centery - (self.height // 2)
+                    # Update camera to center on player using zoom-aware positioning
+                    # When zoomed, the effective screen size in logical coordinates is smaller
+                    effective_screen_width = self.width / self.zoom_factor
+                    effective_screen_height = self.height / self.zoom_factor
 
-                    # Clamp camera to map boundaries
-                    max_camera_x = max(0, self.map_width * self.grid_cell_size - self.width)
-                    max_camera_y = max(0, self.map_height * self.grid_cell_size - self.height)
+                    self.camera_x = self.player.rect.centerx - (effective_screen_width // 2)
+                    self.camera_y = self.player.rect.centery - (effective_screen_height // 2)
+
+                    # Clamp camera to map boundaries using base grid size (logical coordinates)
+                    max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
+                    max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
                     self.camera_x = max(0, min(self.camera_x, max_camera_x))
                     self.camera_y = max(0, min(self.camera_y, max_camera_y))
                     print(f"Camera position: ({self.camera_x}, {self.camera_y})")
@@ -2568,28 +2572,16 @@ class PlayScreen(BaseScreen):
         # Use exact position matching for cursor changes - no search range
         # We want the cursor to change only when directly over a chest
 
-        # Debug output - only print occasionally to avoid console spam
-        if pygame.time.get_ticks() % 60 == 0:  # Only print once per second (assuming 60 FPS)
-            print("\n--- Lootchest Hover Debug ---")
-            print(f"Mouse position: {mouse_pos}")
-            print(f"Camera position: ({self.camera_x}, {self.camera_y})")
-            print(f"Center offset: ({self.center_offset_x}, {self.center_offset_y})")
-            print(f"Adjusted mouse position: ({adjusted_mouse_x}, {adjusted_mouse_y})")
-            print(f"Grid position: ({grid_x}, {grid_y})")
-            print(f"Available lootchests: {list(self.lootchest_manager.lootchests.keys())}")
+
 
         # First check if this position is in the lootchests dictionary
         if position in self.lootchest_manager.lootchests:
             # Found a lootchest at this position in the lootchests dictionary
-            if pygame.time.get_ticks() % 60 == 0:
-                print(f"Found lootchest at exact position {position}")
             return True
 
         # Check if this position is in the opened chests list
         # This ensures we detect opened chests even if they've been replaced in the layer data
         if position in self.lootchest_manager.opened_chests:
-            if pygame.time.get_ticks() % 60 == 0:
-                print(f"Found opened chest at exact position {position}")
             return True
 
         # Check each layer for a lootchest at this position
@@ -2599,16 +2591,12 @@ class PlayScreen(BaseScreen):
                 # Check if this is a lootchest and at the mouse position
                 if layer_data[grid_y][grid_x] == lootchest_id:
                     # Found a lootchest at the mouse position
-                    if pygame.time.get_ticks() % 60 == 0:
-                        print(f"Found lootchest in layer {layer_idx} at position {position}")
                     return True
 
         # For cursor changes, we only want exact position matches
         # No nearby chest detection for cursor changes
         # This ensures the cursor only changes when directly over a chest
 
-        if pygame.time.get_ticks() % 60 == 0:
-            print("No lootchest found near mouse position")
         return False
 
     def resize(self, new_width, new_height):

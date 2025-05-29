@@ -43,7 +43,7 @@ class EditScreenUI:
 
     def draw_sidebar(self, surface, tab_manager, tileset_manager, layer_manager,
                     map_saver, map_name_input, save_button, edit_mode_button,
-                    browse_mode_button, selected_tileset_index, collision_manager=None,
+                    browse_mode_button, new_map_button, selected_tileset_index, collision_manager=None,
                     collision_toggle_rect=None, brush_manager=None, editor=None):
         """Draw the sidebar with tabs and content based on active tab"""
         # Draw sidebar background
@@ -55,6 +55,7 @@ class EditScreenUI:
         # Draw mode buttons
         edit_mode_button.draw(surface)
         browse_mode_button.draw(surface)
+        new_map_button.draw(surface)
 
         # Draw tabs first
         tab_manager.draw(surface)
@@ -226,7 +227,7 @@ class EditScreenUI:
 
         return None  # collision_toggle_rect removed
 
-    def draw_browser_sidebar(self, surface, map_manager, edit_mode_button, browse_mode_button):
+    def draw_browser_sidebar(self, surface, map_manager, edit_mode_button, browse_mode_button, new_map_button):
         """Draw the sidebar for the map browser"""
         # Draw sidebar background
         sidebar_rect = pygame.Rect(0, 0, self.map_area_width + self.sidebar_width, self.height)
@@ -235,6 +236,7 @@ class EditScreenUI:
         # Draw mode buttons
         edit_mode_button.draw(surface)
         browse_mode_button.draw(surface)
+        new_map_button.draw(surface)
 
         # Draw map browser
         font = font_manager.get_font('regular', FONT_SIZE_MEDIUM)

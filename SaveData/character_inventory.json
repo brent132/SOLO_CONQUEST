@@ -1,4 +1,15 @@
 {
   "version": 1,
-  "inventory": []
+  "inventory": [
+    {
+      "slot": 50,
+      "name": "Crystal",
+      "count": 1
+    },
+    {
+      "slot": 52,
+      "name": "Key",
+      "count": 1
+    }
+  ]
 }

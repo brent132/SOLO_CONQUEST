@@ -33,7 +33,7 @@ class GameStateSaver:
                     "y": enemy.rect.y
                 },
                 "direction": enemy.direction,
-                "health": enemy.health,
+                "health": getattr(enemy, 'current_health', getattr(enemy, 'health', 100)),  # Use current_health if available, fallback to health, default to 100
                 "state": enemy.state
             }
 
@@ -202,335 +202,102 @@ class GameStateSaver:
                 "chest_contents": play_screen.lootchest_manager.get_chest_contents_data()
             }
 
-            # We'll write the game state directly to the file
+            # Update the map data with game state and save using proper JSON serialization
 
-            # Save the updated map data with proper formatting
+            # Update relation points if available
+            if hasattr(play_screen, 'relation_handler') and play_screen.relation_handler.current_map:
+                current_map = play_screen.relation_handler.current_map
+                if current_map in play_screen.relation_handler.relation_points:
+                    map_data["relation_points"] = play_screen.relation_handler.relation_points[current_map]
+
+            # Add game state to the map data
+            map_data["game_state"] = game_state
+
+            # Save the updated map data using compact JSON serialization like house.json
             with open(map_path, 'w') as f:
-                # Start the JSON object
-                f.write('{\n')
-
-                # Write the basic properties
-                f.write(f'  "name": "{map_data["name"]}",\n')
-                f.write(f'  "width": {map_data["width"]},\n')
-                f.write(f'  "height": {map_data["height"]},\n')
-                f.write(f'  "tile_size": {map_data["tile_size"]},\n')
-
-                # Preserve the is_main property if it exists
-                if "is_main" in map_data:
-                    f.write(f'  "is_main": {str(map_data["is_main"]).lower()},\n')
-
-                # Write the tile mapping
-                f.write('  "tile_mapping": ')
-                f.write(json.dumps(map_data["tile_mapping"], indent=4).replace('\n', '\n  '))
-
-                # Write the layers
-                f.write(',\n  "layers": [\n')
-
-                # Write each layer
-                for i, layer in enumerate(map_data["layers"]):
-                    f.write('    {\n')
-                    f.write('      "visible": true,\n')
-                    f.write('      "map_data": ')
-
-                    # Format the map data with each row on its own line
-                    map_data_str = "[\n"
-
-                    # Format each row
-                    for row_idx, row in enumerate(layer["map_data"]):
-                        row_str = "        [" + ", ".join(str(tile) for tile in row) + "]"
-                        if row_idx < len(layer["map_data"]) - 1:
-                            row_str += ","
-                        map_data_str += row_str + "\n"
-
-                    map_data_str += "      ]"
-                    f.write(map_data_str)
-
-                    if i < len(map_data["layers"]) - 1:
-                        f.write('\n    },\n')
-                    else:
-                        f.write('\n    }\n')
-
-                f.write('  ]')
-
-                # Add collision data if available
-                if "collision_data" in map_data and map_data["collision_data"]:
-                    f.write(',\n  "collision_data": ')
-
-                    # Check if collision data is a list of lists or a more complex structure
-                    if isinstance(map_data["collision_data"], list) and all(isinstance(item, list) for item in map_data["collision_data"]):
-                        # Simple list of coordinates
-                        f.write('[\n')
-
-                        # Format each collision point
-                        for col_idx, col_point in enumerate(map_data["collision_data"]):
-                            if isinstance(col_point, list) and len(col_point) >= 2:
-                                f.write(f'    [{col_point[0]}, {col_point[1]}]')
-                                if col_idx < len(map_data["collision_data"]) - 1:
-                                    f.write(',\n')
-                                else:
-                                    f.write('\n')
-
-                        f.write('  ]')
-                    else:
-                        # More complex structure - use json.dumps with proper indentation
-                        collision_str = json.dumps(map_data["collision_data"], indent=4).replace('\n', '\n  ')
-                        f.write(collision_str)
-
-                # Add player start position if available
-                if "player_start" in map_data and map_data["player_start"]:
-                    f.write(',\n  "player_start": {\n')
-                    f.write(f'    "x": {map_data["player_start"]["x"]},\n')
-                    f.write(f'    "y": {map_data["player_start"]["y"]},\n')
-                    f.write(f'    "direction": "{map_data["player_start"]["direction"]}"\n')
-                    f.write('  }')
-
-                # Add enemy data if available
-                if "enemies" in map_data and map_data["enemies"]:
-                    f.write(',\n  "enemies": [\n')
-
-                    # Format each enemy
-                    for enemy_idx, enemy in enumerate(map_data["enemies"]):
-                        f.write('    {\n')
-                        f.write(f'      "x": {enemy["x"]},\n')
-                        f.write(f'      "y": {enemy["y"]},\n')
-                        f.write(f'      "type": "{enemy["type"]}"\n')
-
-                        if enemy_idx < len(map_data["enemies"]) - 1:
-                            f.write('    },\n')
-                        else:
-                            f.write('    }\n')
-
-                    f.write('  ]')
-
-                # Add relation points if available in the map data
-                if "relation_points" in map_data:
-                    f.write(',\n  "relation_points": ')
-
-                    # Get relation points from the current map data
-                    relation_points = map_data["relation_points"]
-
-                    # Update with any relation points from the play screen
-                    if hasattr(play_screen, 'relation_handler') and play_screen.relation_handler.current_map:
-                        current_map = play_screen.relation_handler.current_map
-                        if current_map in play_screen.relation_handler.relation_points:
-                            relation_points = play_screen.relation_handler.relation_points[current_map]
-
-                    # Check if relation_points is empty
-                    if not relation_points:
-                        f.write('{}')  # Empty object
-                    else:
-                        # Check if it's in the new format with IDs
-                        if any(isinstance(relation_points.get(key), dict) for key in relation_points):
-                            # New format with IDs - use json.dumps with proper indentation
-                            relation_str = json.dumps(relation_points, indent=4).replace('\n', '\n  ')
-                            f.write(relation_str)
-                        else:
-                            # Old format without IDs - write manually
-                            f.write('{\n')
-
-                            # Write point A if available
-                            if 'a' in relation_points:
-                                f.write(f'    "a": [{relation_points["a"][0]}, {relation_points["a"][1]}]')
-
-                                # Add comma if point B is also available
-                                if 'b' in relation_points:
-                                    f.write(',\n')
-                                else:
-                                    f.write('\n')
-
-                            # Write point B if available
-                            if 'b' in relation_points:
-                                f.write(f'    "b": [{relation_points["b"][0]}, {relation_points["b"][1]}]\n')
-
-                            f.write('  }')
-
-                # Add game state data
-                f.write(',\n  "game_state": {\n')
-
-                # Write camera data
-                f.write('    "camera": {\n')
-                f.write(f'      "x": {game_state["camera"]["x"]},\n')
-                f.write(f'      "y": {game_state["camera"]["y"]}\n')
-                f.write('    },\n')
-
-                # Write enemies data
-                f.write('    "enemies": [\n')
-
-                # Format each enemy
-                for enemy_idx, enemy in enumerate(game_state["enemies"]):
-                    f.write('      {\n')
-                    f.write(f'        "type": "{enemy["type"]}",\n')
-                    f.write('        "position": {\n')
-                    f.write(f'          "x": {enemy["position"]["x"]},\n')
-                    f.write(f'          "y": {enemy["position"]["y"]}\n')
-                    f.write('        },\n')
-                    f.write(f'        "direction": "{enemy["direction"]}",\n')
-                    f.write(f'        "health": {enemy["health"]},\n')
-                    f.write(f'        "state": "{enemy["state"]}"')
-
-                    # Add float position if available
-                    if "float_position" in enemy:
-                        f.write(',\n')
-                        f.write('        "float_position": {\n')
-                        f.write(f'          "x": {enemy["float_position"]["x"]},\n')
-                        f.write(f'          "y": {enemy["float_position"]["y"]}\n')
-                        f.write('        }\n')
-                    else:
-                        f.write('\n')
-
-                    if enemy_idx < len(game_state["enemies"]) - 1:
-                        f.write('      },\n')
-                    else:
-                        f.write('      }\n')
-
-                f.write('    ],\n')
-
-                # Write inventory data
-                f.write('    "inventory": [\n')
-
-                # Format each inventory item
-                for item_idx, item in enumerate(game_state["inventory"]):
-                    f.write('      {\n')
-                    f.write(f'        "slot": {item["slot"]},\n')
-                    f.write(f'        "name": "{item["name"]}",\n')
-                    f.write(f'        "count": {item["count"]}\n')
-
-                    if item_idx < len(game_state["inventory"]) - 1:
-                        f.write('      },\n')
-                    else:
-                        f.write('      }\n')
-
-                f.write('    ],\n')
-
-                # Write player inventory data
-                f.write('    "player_inventory": [\n')
-
-                # Format each player inventory item
-                for item_idx, item in enumerate(game_state["player_inventory"]):
-                    f.write('      {\n')
-                    f.write(f'        "slot": {item["slot"]},\n')
-                    f.write(f'        "name": "{item["name"]}",\n')
-                    f.write(f'        "count": {item["count"]}\n')
-
-                    if item_idx < len(game_state["player_inventory"]) - 1:
-                        f.write('      },\n')
-                    else:
-                        f.write('      }\n')
-
-                f.write('    ],\n')
-
-                # Write collected keys data
-                f.write('    "collected_keys": [\n')
-
-                # Format each collected key position
-                for key_idx, key_pos in enumerate(game_state["collected_keys"]):
-                    f.write(f'      [{key_pos[0]}, {key_pos[1]}]')
-
-                    if key_idx < len(game_state["collected_keys"]) - 1:
-                        f.write(',\n')
-                    else:
-                        f.write('\n')
-
-                f.write('    ],\n')
-
-                # Write collected crystals data
-                f.write('    "collected_crystals": [\n')
-
-                # Format each collected crystal position
-                for crystal_idx, crystal_pos in enumerate(game_state["collected_crystals"]):
-                    f.write(f'      [{crystal_pos[0]}, {crystal_pos[1]}]')
-
-                    if crystal_idx < len(game_state["collected_crystals"]) - 1:
-                        f.write(',\n')
-                    else:
-                        f.write('\n')
-
-                f.write('    ],\n')
-
-                # Write opened lootchests data
-                f.write('    "opened_lootchests": [\n')
-
-                # Format each opened lootchest position
-                for chest_idx, chest_pos in enumerate(game_state["opened_lootchests"]):
-                    f.write(f'      [{chest_pos[0]}, {chest_pos[1]}]')
-
-                    if chest_idx < len(game_state["opened_lootchests"]) - 1:
-                        f.write(',\n')
-                    else:
-                        f.write('\n')
-
-                f.write('    ],\n')
-
-                # Write chest contents data
-                f.write('    "chest_contents": {\n')
-
-                # Format each chest's contents
-                chest_positions = list(game_state["chest_contents"].keys())
-                for pos_idx, pos_str in enumerate(chest_positions):
-                    contents = game_state["chest_contents"][pos_str]
-
-                    # Write position
-                    f.write(f'      "{pos_str}": ')
-
-                    # Check if we're using the new compact format (dictionary) or old format (list)
-                    if isinstance(contents, dict):
-                        # New compact format - dictionary with slot indices as keys
-                        f.write('{\n')
-
-                        # Get all slot indices
-                        slot_indices = list(contents.keys())
-                        for slot_idx, slot in enumerate(slot_indices):
-                            item = contents[slot]
-
-                            # Write slot index
-                            f.write(f'        "{slot}": ')
-
-                            # Convert item to JSON
-                            item_json = json.dumps(item)
-                            f.write(item_json)
-
-                            if slot_idx < len(slot_indices) - 1:
-                                f.write(',\n')
-                            else:
-                                f.write('\n')
-
-                        f.write('      }')
-                    else:
-                        # Old format - list of items (possibly with nulls)
-                        # Write contents as JSON array
-                        if not contents:
-                            f.write('[]')  # Empty array
-                        else:
-                            f.write('[\n')
-
-                            # Format each item
-                            for item_idx, item in enumerate(contents):
-                                # Convert item to JSON
-                                item_json = json.dumps(item, indent=8)
-                                # Fix indentation (json.dumps adds too much)
-                                item_json = item_json.replace('\n        ', '\n          ')
-
-                                f.write(f'          {item_json}')
-
-                                if item_idx < len(contents) - 1:
-                                    f.write(',\n')
-                                else:
-                                    f.write('\n')
-
-                            f.write('        ]')
-
-                    if pos_idx < len(chest_positions) - 1:
-                        f.write(',\n')
-                    else:
-                        f.write('\n')
-
-                f.write('    }')
-
-                f.write('\n  }')
-
-                # Close the JSON object
-                f.write('\n}')
+                # Use custom JSON formatting to match house.json structure
+                self._write_compact_json(f, map_data)
 
             return True, None
         except Exception as e:
             return False, str(e)
+
+    def _write_compact_json(self, f, map_data):
+        """Write JSON in compact format matching house.json structure"""
+        f.write('{\n')
+
+        # Write basic properties first
+        f.write(f'  "name": "{map_data["name"]}",\n')
+        f.write(f'  "width": {map_data["width"]},\n')
+        f.write(f'  "height": {map_data["height"]},\n')
+        f.write(f'  "tile_size": {map_data["tile_size"]},\n')
+
+        # Write is_main if it exists
+        if "is_main" in map_data:
+            f.write(f'  "is_main": {str(map_data["is_main"]).lower()},\n')
+
+        # Write tile_mapping with proper indentation
+        f.write('  "tile_mapping": ')
+        tile_mapping_json = json.dumps(map_data["tile_mapping"], indent=4)
+        # Adjust indentation to match the structure
+        tile_mapping_json = tile_mapping_json.replace('\n', '\n  ')
+        f.write(tile_mapping_json)
+        f.write(',\n')
+
+        # Write layers with compact map_data arrays
+        f.write('  "layers": [\n')
+        for layer_idx, layer in enumerate(map_data["layers"]):
+            f.write('    {\n')
+            f.write('      "visible": true,\n')
+            f.write('      "map_data": [\n')
+
+            # Write each row on a single line (compact format like house.json)
+            for row_idx, row in enumerate(layer["map_data"]):
+                row_str = "        [" + ", ".join(str(tile) for tile in row) + "]"
+                if row_idx < len(layer["map_data"]) - 1:
+                    row_str += ","
+                f.write(row_str + '\n')
+
+            f.write('      ]\n')
+            if layer_idx < len(map_data["layers"]) - 1:
+                f.write('    },\n')
+            else:
+                f.write('    }\n')
+        f.write('  ],\n')
+
+        # Write collision_data with proper indentation
+        f.write('  "collision_data": ')
+        collision_data_json = json.dumps(map_data["collision_data"], indent=4)
+        # Adjust indentation to match the structure
+        collision_data_json = collision_data_json.replace('\n', '\n  ')
+        f.write(collision_data_json)
+
+        # Write other sections if they exist
+        sections_to_write = []
+
+        # Add player_start if it exists
+        if "player_start" in map_data:
+            sections_to_write.append(("player_start", map_data["player_start"]))
+
+        # Add enemies if it exists
+        if "enemies" in map_data:
+            sections_to_write.append(("enemies", map_data["enemies"]))
+
+        # Add relation_points if it exists
+        if "relation_points" in map_data:
+            sections_to_write.append(("relation_points", map_data["relation_points"]))
+
+        # Add game_state if it exists
+        if "game_state" in map_data:
+            sections_to_write.append(("game_state", map_data["game_state"]))
+
+        # Write all sections
+        for section_name, section_data in sections_to_write:
+            f.write(',\n')
+            f.write(f'  "{section_name}": ')
+            section_json = json.dumps(section_data, indent=4)
+            # Adjust indentation to match the structure
+            section_json = section_json.replace('\n', '\n  ')
+            f.write(section_json)
+
+        f.write('\n}\n')

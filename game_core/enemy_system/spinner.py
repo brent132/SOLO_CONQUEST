@@ -950,12 +950,18 @@ class Spinner(Enemy):
             camera_y (int, optional): Camera Y offset
             zoom_factor (float, optional): Zoom factor for scaling
         """
-        # Calculate screen position
-        screen_x = self.rect.x - camera_x
-        screen_y = self.rect.y - camera_y
+        # Calculate screen position accounting for zoom
+        screen_x = (self.rect.x - camera_x) * zoom_factor
+        screen_y = (self.rect.y - camera_y) * zoom_factor
 
-        # Draw the spinner
-        surface.blit(self.image, (screen_x, screen_y))
+        # Draw the spinner (scale with zoom)
+        if zoom_factor != 1.0:
+            scaled_width = int(self.image.get_width() * zoom_factor)
+            scaled_height = int(self.image.get_height() * zoom_factor)
+            scaled_image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
+            surface.blit(scaled_image, (screen_x, screen_y))
+        else:
+            surface.blit(self.image, (screen_x, screen_y))
 
         # Draw wall hit effect if active
         if self.is_showing_wall_hit:
@@ -971,7 +977,17 @@ class Spinner(Enemy):
                 # Get the wall hit image
                 wall_hit_image = self.sprites[wall_hit_key][frame_index]
 
-                # Position the wall hit effect based on direction
+                # Scale the wall hit image with zoom
+                if zoom_factor != 1.0:
+                    scaled_width = int(wall_hit_image.get_width() * zoom_factor)
+                    scaled_height = int(wall_hit_image.get_height() * zoom_factor)
+                    wall_hit_image = pygame.transform.scale(wall_hit_image, (scaled_width, scaled_height))
+
+                # Calculate scaled rect dimensions
+                scaled_rect_width = int(self.rect.width * zoom_factor)
+                scaled_rect_height = int(self.rect.height * zoom_factor)
+
+                # Position the wall hit effect based on direction (accounting for zoom)
                 if self.wall_hit_direction == "up":
                     # Position above the spinner
                     wall_hit_x = screen_x
@@ -979,14 +995,14 @@ class Spinner(Enemy):
                 elif self.wall_hit_direction == "down":
                     # Position below the spinner
                     wall_hit_x = screen_x
-                    wall_hit_y = screen_y + self.rect.height
+                    wall_hit_y = screen_y + scaled_rect_height
                 elif self.wall_hit_direction == "left":
                     # Position to the left of the spinner
                     wall_hit_x = screen_x - wall_hit_image.get_width()
                     wall_hit_y = screen_y
                 else:  # right
                     # Position to the right of the spinner
-                    wall_hit_x = screen_x + self.rect.width
+                    wall_hit_x = screen_x + scaled_rect_width
                     wall_hit_y = screen_y
 
                 # Draw the wall hit effect

@@ -1173,15 +1173,18 @@ class Bomberplant(Enemy):
 
     def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw the bomberplant on the given surface, accounting for camera position and zoom"""
-        # Calculate screen position
-        screen_x = self.rect.x - camera_x
-        screen_y = self.rect.y - camera_y
+        # Calculate screen position accounting for zoom
+        screen_x = (self.rect.x - camera_x) * zoom_factor
+        screen_y = (self.rect.y - camera_y) * zoom_factor
 
         # Draw the attack range circle if enabled
         if self.show_range and not self.is_dead:
+            # Scale the attack range with zoom
+            scaled_attack_range = int(self.attack_range * zoom_factor)
+
             # Create a transparent surface for the range circle
             # The surface needs to be large enough to contain the entire circle
-            circle_diameter = self.attack_range * 2
+            circle_diameter = scaled_attack_range * 2
             circle_surface = pygame.Surface((circle_diameter, circle_diameter), pygame.SRCALPHA)
 
             # Draw the circle on the transparent surface
@@ -1196,32 +1199,41 @@ class Bomberplant(Enemy):
             else:
                 circle_color = (0, 200, 0, 70)  # Green with lower alpha (more transparent)
 
-            # Draw the circle outline with a width of 1 pixel (thin line)
+            # Draw the circle outline with a width scaled with zoom
+            line_width = max(1, int(1 * zoom_factor))  # Scale line width but keep minimum of 1
             pygame.draw.circle(
                 circle_surface,
                 circle_color,
                 (circle_diameter // 2, circle_diameter // 2),  # Center of the circle
-                self.attack_range,  # Radius
-                1  # Width of the outline (thin for subtlety)
+                scaled_attack_range,  # Scaled radius
+                line_width  # Scaled width
             )
 
             # Calculate the position to blit the circle surface
-            # Center the circle on the bomberplant
-            circle_x = screen_x + (self.rect.width // 2) - (circle_diameter // 2)
-            circle_y = screen_y + (self.rect.height // 2) - (circle_diameter // 2)
+            # Center the circle on the bomberplant (accounting for zoom)
+            scaled_rect_width = int(self.rect.width * zoom_factor)
+            scaled_rect_height = int(self.rect.height * zoom_factor)
+            circle_x = screen_x + (scaled_rect_width // 2) - (circle_diameter // 2)
+            circle_y = screen_y + (scaled_rect_height // 2) - (circle_diameter // 2)
 
             # Blit the circle surface onto the main surface
             surface.blit(circle_surface, (circle_x, circle_y))
 
             # Draw the mark if it's active, mark animation is loaded, and bomb is not in explosion state
             if self.mark_active and self.show_mark and self.mark_sprites and len(self.mark_sprites) > 0 and self.bomb_state != "explosion":
-                # Calculate screen position for the mark
-                mark_screen_x = self.mark_position[0] - camera_x
-                mark_screen_y = self.mark_position[1] - camera_y
+                # Calculate screen position for the mark (accounting for zoom)
+                mark_screen_x = (self.mark_position[0] - camera_x) * zoom_factor
+                mark_screen_y = (self.mark_position[1] - camera_y) * zoom_factor
 
                 # Get the current frame of the mark animation
                 mark_frame = min(self.mark_frame, len(self.mark_sprites) - 1)
                 mark_image = self.mark_sprites[mark_frame]
+
+                # Scale the mark image with zoom
+                if zoom_factor != 1.0:
+                    scaled_width = int(mark_image.get_width() * zoom_factor)
+                    scaled_height = int(mark_image.get_height() * zoom_factor)
+                    mark_image = pygame.transform.scale(mark_image, (scaled_width, scaled_height))
 
                 # Center the mark on the fixed position
                 mark_rect = mark_image.get_rect()
@@ -1230,8 +1242,14 @@ class Bomberplant(Enemy):
                 # Draw the mark
                 surface.blit(mark_image, mark_rect)
 
-        # Draw the enemy
-        surface.blit(self.image, (screen_x, screen_y))
+        # Draw the enemy (scale with zoom)
+        if zoom_factor != 1.0:
+            scaled_width = int(self.image.get_width() * zoom_factor)
+            scaled_height = int(self.image.get_height() * zoom_factor)
+            scaled_image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
+            surface.blit(scaled_image, (screen_x, screen_y))
+        else:
+            surface.blit(self.image, (screen_x, screen_y))
 
         # Draw bomb animations if active and not in a special state
         if self.bomb_state != "none" and not self.is_dead and not self.is_dying:
@@ -1241,9 +1259,9 @@ class Bomberplant(Enemy):
                 self.bomb_state = "none"
                 return
 
-            # Calculate screen position for the bomb
-            bomb_screen_x = self.bomb_position[0] - camera_x
-            bomb_screen_y = self.bomb_position[1] - camera_y
+            # Calculate screen position for the bomb (accounting for zoom)
+            bomb_screen_x = (self.bomb_position[0] - camera_x) * zoom_factor
+            bomb_screen_y = (self.bomb_position[1] - camera_y) * zoom_factor
 
             # Get the current frame of the bomb animation based on state
             bomb_image = None
@@ -1275,6 +1293,12 @@ class Bomberplant(Enemy):
 
             # Draw the bomb if we have a valid image
             if bomb_image:
+                # Scale the bomb image with zoom
+                if zoom_factor != 1.0:
+                    scaled_width = int(bomb_image.get_width() * zoom_factor)
+                    scaled_height = int(bomb_image.get_height() * zoom_factor)
+                    bomb_image = pygame.transform.scale(bomb_image, (scaled_width, scaled_height))
+
                 # Center the bomb on its position
                 bomb_rect = bomb_image.get_rect()
                 bomb_rect.center = (bomb_screen_x, bomb_screen_y)

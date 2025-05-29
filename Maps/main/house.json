@@ -1,0 +1,317 @@
+{
+  "name": "house",
+  "width": 31,
+  "height": 15,
+  "tile_size": 16,
+  "is_main": false,
+  "tile_mapping": {
+      "tileset_0": {
+          "type": "loop",
+          "start_id": 0,
+          "count": 156,
+          "pattern": {
+              "prefix": "Tilesets/Dungeon\\tile",
+              "digits": 3,
+              "start": 0,
+              "suffix": ".png"
+          }
+      },
+      "tileset_1": {
+          "type": "loop",
+          "start_id": 156,
+          "count": 234,
+          "pattern": {
+              "prefix": "Tilesets/Overworld\\tile",
+              "digits": 3,
+              "start": 0,
+              "suffix": ".png"
+          }
+      },
+      "390": {
+          "path": "character/char_idle_down/tile000.png",
+          "tileset": 2
+      },
+      "391": {
+          "path": "Enemies_Sprites/Phantom_Sprites/phantom_idle_anim_right/tile000.png",
+          "tileset": 2
+      },
+      "392": {
+          "path": "Enemies_Sprites/Phantom_Sprites/phantom_idle_anim_left/tile000.png",
+          "tileset": 2
+      },
+      "393": {
+          "path": "Enemies_Sprites/Bomberplant_Sprites/bomberplant_idle_anim_all_dir/tile000.png",
+          "tileset": 2
+      },
+      "394": {
+          "path": "Enemies_Sprites/Spinner_Sprites/spinner_idle_anim_all_dir/tile000.png",
+          "tileset": 2
+      },
+      "395": {
+          "path": "Enemies_Sprites/Spider_Sprites/spider_idle_anim_all_dir/tile000.png",
+          "tileset": 2
+      },
+      "396": {
+          "path": "Enemies_Sprites/Pinkslime_Sprites/pinkslime_idle_anim_all_dir/tile000.png",
+          "tileset": 2
+      },
+      "397": {
+          "path": "Enemies_Sprites/Pinkbat_Sprites/pinkbat_idle_left_anim/tile000.png",
+          "tileset": 2
+      },
+      "398": {
+          "path": "Enemies_Sprites/Pinkbat_Sprites/pinkbat_idle_right_anim/tile000.png",
+          "tileset": 2
+      },
+      "1000": {
+          "path": "animated:edge_water_tile",
+          "tileset": -1
+      },
+      "1001": {
+          "path": "animated:regia_waterplant_tile",
+          "tileset": -1
+      },
+      "1002": {
+          "path": "animated:waterplant_tile",
+          "tileset": -1
+      },
+      "1003": {
+          "path": "animated:water_tile",
+          "tileset": -1
+      },
+      "1004": {
+          "path": "animated:key_item",
+          "tileset": -1
+      },
+      "1005": {
+          "path": "animated:crystal_item",
+          "tileset": -1
+      },
+      "1006": {
+          "path": "animated:lootchest_item",
+          "tileset": -1
+      }
+  },
+  "layers": [
+    {
+      "visible": true,
+      "map_data": [
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180]
+      ]
+    }
+  ],
+  "collision_data": {
+      "Tilesets/Overworld\\tile096.png": [
+          0,
+          1
+      ],
+      "animated:edge_water_tile": [
+          0,
+          1
+      ],
+      "animated:water_tile": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile000.png": [
+          0,
+          1,
+          2
+      ],
+      "Tilesets/Overworld\\tile001.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile003.png": [
+          0,
+          1,
+          3
+      ],
+      "Tilesets/Overworld\\tile004.png": [
+          0,
+          1,
+          2
+      ],
+      "Tilesets/Overworld\\tile005.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile007.png": [
+          0,
+          1,
+          3
+      ],
+      "Tilesets/Overworld\\tile018.png": [
+          0,
+          2
+      ],
+      "Tilesets/Overworld\\tile021.png": [
+          1,
+          3
+      ],
+      "Tilesets/Overworld\\tile022.png": [
+          0,
+          2
+      ],
+      "Tilesets/Overworld\\tile025.png": [
+          1,
+          3
+      ],
+      "Tilesets/Overworld\\tile036.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile037.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile039.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile040.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile041.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile043.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile058.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile059.png": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile078.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile095.png": [
+          1
+      ],
+      "Tilesets/Overworld\\tile097.png": [
+          0,
+          2
+      ],
+      "Tilesets/Overworld\\tile201.png": [
+          3
+      ],
+      "Tilesets/Overworld\\tile202.png": [
+          2
+      ],
+      "animated:lootchest_item": [
+          0,
+          1,
+          2,
+          3
+      ],
+      "Tilesets/Overworld\\tile183.png": [
+          3
+      ],
+      "Tilesets/Overworld\\tile184.png": [
+          2
+      ],
+      "Tilesets/Overworld\\tile135.png": [
+          1,
+          3
+      ],
+      "Tilesets/Overworld\\tile136.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile137.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile138.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile139.png": [
+          0,
+          2
+      ],
+      "Tilesets/Overworld\\tile153.png": [
+          1
+      ],
+      "Tilesets/Overworld\\tile154.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile155.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile156.png": [
+          0,
+          1
+      ],
+      "Tilesets/Overworld\\tile157.png": [
+          0
+      ],
+      "Tilesets/Dungeon\\tile001.png": [
+          1,
+          3
+      ]
+  },
+  "relation_points": {
+      "1": {
+          "b": [
+              21,
+              9
+          ]
+      }
+  },
+  "game_state": {
+      "camera": {
+          "x": 0,
+          "y": 0
+      },
+      "enemies": [],
+      "inventory": [],
+      "player_inventory": [],
+      "collected_keys": [],
+      "collected_crystals": [],
+      "opened_lootchests": [],
+      "chest_contents": {}
+  }
+}

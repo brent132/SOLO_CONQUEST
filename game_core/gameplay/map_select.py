@@ -22,12 +22,12 @@ class WorldItem:
         self.title_font = pygame.font.SysFont(None, font_size)
         self.desc_font = pygame.font.SysFont(None, font_size - 8)
 
-        # Create text surfaces
+        # Create text surfaces (positioned without icon space)
         self.title_surf = self.title_font.render(self.display_name, True, (0, 0, 0))
-        self.title_rect = self.title_surf.get_rect(topleft=(self.rect.x + 80, self.rect.y + 15))
+        self.title_rect = self.title_surf.get_rect(topleft=(self.rect.x + 20, self.rect.y + 15))
 
         # Create description text (limited to one line)
-        max_desc_width = width - 100  # Leave space for icon and margins
+        max_desc_width = width - 40  # Leave space for margins (no icon space needed)
         desc_text = self.description
         self.desc_surf = self.desc_font.render(desc_text, True, (80, 80, 80))
         if self.desc_surf.get_width() > max_desc_width:
@@ -36,15 +36,13 @@ class WorldItem:
                 desc_text = desc_text[:-4] + "..."
                 self.desc_surf = self.desc_font.render(desc_text, True, (80, 80, 80))
 
-        self.desc_rect = self.desc_surf.get_rect(topleft=(self.rect.x + 80, self.rect.y + 40))
+        self.desc_rect = self.desc_surf.get_rect(topleft=(self.rect.x + 20, self.rect.y + 40))
 
         # State
         self.is_hovered = False
         self.is_selected = False
 
-        # Load icon
-        self.icon = None
-        self.icon_rect = pygame.Rect(self.rect.x + 10, self.rect.y + 10, 60, 60)
+        # Icon removed - no longer used
 
         # Count maps in this folder
         import os
@@ -66,7 +64,7 @@ class WorldItem:
         """Update button state based on mouse position"""
         self.is_hovered = self.rect.collidepoint(mouse_pos)
 
-    def draw(self, surface, world_manager=None):
+    def draw(self, surface):
         """Draw the world item"""
         # Draw background
         if self.is_selected:
@@ -81,20 +79,7 @@ class WorldItem:
         border_color = (100, 150, 255) if self.is_selected else (200, 200, 200)
         pygame.draw.rect(surface, border_color, self.rect, 2)
 
-        # Draw icon
-        if self.icon is None and world_manager is not None:
-            # Try to load icon from world manager
-            world_data = world_manager.get_world(self.folder_name)
-            if world_data:
-                self.icon = world_manager.load_world_icon(world_data)
-
-        if self.icon:
-            # Draw the icon
-            surface.blit(self.icon, self.icon_rect)
-        else:
-            # Draw a placeholder icon
-            pygame.draw.rect(surface, (150, 150, 150), self.icon_rect)
-            pygame.draw.rect(surface, (100, 100, 100), self.icon_rect, 2)
+        # World icon removed - no longer displayed
 
         # Draw title and description
         surface.blit(self.title_surf, self.title_rect)
@@ -357,7 +342,7 @@ class WorldSelectScreen(BaseScreen):
         else:
             # Draw world items
             for item in self.world_items:
-                item.draw(surface, self.world_manager)
+                item.draw(surface)
 
             # Draw play button (only visible if worlds are available)
             self.play_button.draw(surface)

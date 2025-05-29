@@ -146,6 +146,7 @@ class EditScreen(BaseScreen):
 
         self.edit_mode_button = TextButton(self.map_area_width + 5, mode_button_y, mode_button_width, mode_button_height, "Edit", 16)
         self.browse_mode_button = TextButton(self.map_area_width + 5 + mode_button_width + mode_button_spacing, mode_button_y, mode_button_width, mode_button_height, "Browse", 16)
+        self.new_map_button = TextButton(self.map_area_width + 5 + 2 * (mode_button_width + mode_button_spacing), mode_button_y, mode_button_width, mode_button_height, "New Map", 16)
 
         # Set edit mode as selected by default
         self.edit_mode_button.is_selected = True
@@ -196,6 +197,7 @@ class EditScreen(BaseScreen):
         # Update mode buttons
         self.edit_mode_button.update(mouse_pos)
         self.browse_mode_button.update(mouse_pos)
+        self.new_map_button.update(mouse_pos)
 
         # Update tileset buttons
         for button in self.tileset_buttons:
@@ -213,6 +215,7 @@ class EditScreen(BaseScreen):
                 # Update button selection states
                 self.edit_mode_button.is_selected = True
                 self.browse_mode_button.is_selected = False
+                self.new_map_button.is_selected = False
                 return None
 
             if self.browse_mode_button.is_clicked(event):
@@ -224,6 +227,7 @@ class EditScreen(BaseScreen):
                 # Update button selection states
                 self.edit_mode_button.is_selected = False
                 self.browse_mode_button.is_selected = True
+                self.new_map_button.is_selected = False
                 # Refresh map list and position items
                 self.map_manager.refresh_map_list()
                 self.map_manager.position_map_items(
@@ -232,6 +236,16 @@ class EditScreen(BaseScreen):
                     self.sidebar_width - 40,
                     300
                 )
+                return None
+
+            if self.new_map_button.is_clicked(event):
+                # Create a new map - clear all data and switch to edit mode
+                self.create_new_map()
+                self.current_mode = "edit"
+                # Update button selection states
+                self.edit_mode_button.is_selected = True
+                self.browse_mode_button.is_selected = False
+                self.new_map_button.is_selected = False
                 return None
 
             # Handle tileset button clicks
@@ -1228,6 +1242,7 @@ class EditScreen(BaseScreen):
                 self.save_button,
                 self.edit_mode_button,
                 self.browse_mode_button,
+                self.new_map_button,
                 self.selected_tileset_index,
                 self.collision_manager,
                 None,  # collision_toggle_rect removed
@@ -1251,7 +1266,8 @@ class EditScreen(BaseScreen):
                 surface,
                 self.map_manager,
                 self.edit_mode_button,
-                self.browse_mode_button
+                self.browse_mode_button,
+                self.new_map_button
             )
 
         # Draw common elements (back and reload buttons)
@@ -1316,6 +1332,59 @@ class EditScreen(BaseScreen):
         # Both maps must be found and in the same folder
         return folder1 is not None and folder1 == folder2
 
+    def create_new_map(self):
+        """Create a new empty map by clearing all data"""
+        # Clear map data for all layers
+        for layer in range(self.layer_manager.layer_count):
+            self.map_data[layer] = {}
+
+        # Clear relation points
+        self.relation_points = {}
+
+        # Clear the map name input
+        self.map_name_input.text = ""
+        self.map_name_input.text_surf = self.map_name_input.font.render("", True, (0, 0, 0))
+
+        # Reset to main map mode
+        self.save_mode = "main"
+        self.main_map_button.is_selected = True
+        self.related_map_button.is_selected = False
+
+        # Clear current main map reference
+        self.current_main_map = None
+
+        # Reset selected tile
+        self.selected_tile = None
+
+        # Clear brush manager selection
+        self.brush_manager.set_selected_tile(None)
+
+        # Deselect all tileset buttons
+        for tileset_buttons in self.tileset_manager.tileset_buttons:
+            for button_data in tileset_buttons:
+                if button_data['button']:
+                    button_data['button'].is_selected = False
+
+        # Deselect animated tile buttons
+        for button_data in self.tileset_manager.animated_tile_buttons:
+            if button_data['button']:
+                button_data['button'].is_selected = False
+
+        # Reset camera position
+        self.camera_x = 0
+        self.camera_y = 0
+
+        # Reset zoom to 100%
+        self.reset_zoom()
+
+        # Clear any status messages
+        self.map_saver.status_message = ""
+        self.map_saver.status_timer = 0
+
+        # Reset relation component to initial state by recreating it
+        from edit_mode.ui_components import RelationComponent
+        self.relation_component = RelationComponent(self.map_area_width + 20, 150)
+
     def resize(self, new_width, new_height):
         """Handle screen resize"""
         # Call the base class resize method
@@ -1339,6 +1408,7 @@ class EditScreen(BaseScreen):
 
         self.edit_mode_button.rect.topleft = (self.map_area_width + 5, mode_button_y)
         self.browse_mode_button.rect.topleft = (self.map_area_width + 5 + mode_button_width + mode_button_spacing, mode_button_y)
+        self.new_map_button.rect.topleft = (self.map_area_width + 5 + 2 * (mode_button_width + mode_button_spacing), mode_button_y)
 
         # Update tileset button positions
         tileset_button_width = 30
