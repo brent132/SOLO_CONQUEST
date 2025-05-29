@@ -3,9 +3,9 @@
   "worlds": {
     "main": {
       "map_name": "main",
-      "x": 272,
-      "y": 128,
-      "direction": "down",
+      "x": 183,
+      "y": 367,
+      "direction": "left",
       "health": 100,
       "shield_durability": 3
     }

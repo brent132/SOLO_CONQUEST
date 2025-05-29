@@ -367,9 +367,14 @@ class PlayScreen(BaseScreen):
                     self._load_enemies_from_game_state(game_state["e"])
                     enemies_loaded = True
 
-                # Load inventory data if available
+                # Load inventory data if available (HUD inventory only)
                 if "inventory" in game_state:
                     self._load_inventory_from_game_state(game_state["inventory"])
+
+                # NOTE: Player inventory is now loaded separately from SaveData/character_inventory.json
+                # Ignore any old "player_inventory" data that might exist in map files
+                if "player_inventory" in game_state:
+                    print("INFO: Ignoring old player_inventory data in map file - now loaded from separate file")
 
                 # Load collected keys data if available
                 if "collected_keys" in game_state:
@@ -2259,8 +2264,30 @@ class PlayScreen(BaseScreen):
         if not self.player_inventory:
             return False, "Player inventory not initialized"
 
+        # IMPORTANT: Sync HUD inventory to player inventory before saving
+        # This ensures that items in the HUD hotbar are saved even if the player
+        # never opened the full inventory screen
+        self._sync_hud_to_player_inventory()
+
         # Save the inventory data
         return self.character_inventory_saver.save_inventory(self.player_inventory)
+
+    def _sync_hud_to_player_inventory(self):
+        """Sync HUD inventory items to the bottom row of player inventory
+
+        This ensures that items in the HUD hotbar are transferred to the player inventory
+        before saving, even if the player never opened the full inventory screen.
+        """
+        if not self.player_inventory or not self.hud or not self.hud.inventory:
+            return
+
+        # Calculate the starting index for the bottom row of player inventory
+        bottom_row_start = self.player_inventory.grid_width * (self.player_inventory.grid_height - 1)
+
+        # Copy items from HUD inventory to the bottom row of player inventory
+        for i in range(min(self.hud.inventory.num_slots, self.player_inventory.grid_width)):
+            # Copy HUD inventory item to corresponding slot in bottom row
+            self.player_inventory.inventory_items[bottom_row_start + i] = self.hud.inventory.inventory_items[i]
 
     def load_character_inventory(self):
         """Load the character's inventory from the save file"""

@@ -188,10 +188,10 @@ class GameStateSaver:
                 },
                 # Enemy data
                 "enemies": self._get_enemies_data(play_screen.enemy_manager.enemies),
-                # HUD Inventory data
+                # HUD Inventory data (hotbar items for this specific map session)
                 "inventory": self._get_inventory_data(play_screen.hud.inventory),
-                # Full player inventory data
-                "player_inventory": self._get_inventory_data(play_screen.player_inventory) if play_screen.player_inventory.is_visible() else [],
+                # NOTE: Player inventory is now saved separately to SaveData/character_inventory.json
+                # and should not be included in map files to avoid duplication
                 # Collected keys data
                 "collected_keys": self._get_collected_keys_data(play_screen.key_item_manager),
                 # Collected crystals data
@@ -295,9 +295,131 @@ class GameStateSaver:
         for section_name, section_data in sections_to_write:
             f.write(',\n')
             f.write(f'  "{section_name}": ')
-            section_json = json.dumps(section_data, indent=4)
-            # Adjust indentation to match the structure
-            section_json = section_json.replace('\n', '\n  ')
-            f.write(section_json)
+
+            # Use custom formatting for game_state to make arrays more compact
+            if section_name == "game_state":
+                self._write_compact_game_state(f, section_data)
+            else:
+                section_json = json.dumps(section_data, indent=4)
+                # Adjust indentation to match the structure
+                section_json = section_json.replace('\n', '\n  ')
+                f.write(section_json)
 
         f.write('\n}\n')
+
+    def _write_compact_game_state(self, f, game_state):
+        """Write game state with compact formatting for arrays"""
+        f.write('{\n')
+
+        # List of keys to write in order
+        keys_order = ["camera", "enemies", "inventory", "collected_keys", "collected_crystals", "opened_lootchests", "chest_contents"]
+
+        # Write each key in order
+        for i, key in enumerate(keys_order):
+            if key in game_state:
+                f.write(f'    "{key}": ')
+
+                # Handle different data types with appropriate formatting
+                if key in ["collected_keys", "collected_crystals", "opened_lootchests"]:
+                    # Write arrays compactly - each position on one line
+                    self._write_compact_position_array(f, game_state[key])
+                elif key == "inventory":
+                    # Write inventory array compactly
+                    self._write_compact_array(f, game_state[key])
+                elif key == "enemies":
+                    # Write enemies with proper indentation but not too spread out
+                    self._write_compact_enemies(f, game_state[key])
+                else:
+                    # For other objects (camera, chest_contents), use standard JSON with proper indentation
+                    value_json = json.dumps(game_state[key], indent=2)
+                    # Adjust indentation to match our structure (add 4 spaces)
+                    value_json = value_json.replace('\n', '\n    ')
+                    f.write(value_json)
+
+                # Add comma if not the last item
+                if i < len([k for k in keys_order if k in game_state]) - 1:
+                    f.write(',')
+                f.write('\n')
+
+        f.write('  }')
+
+    def _write_compact_position_array(self, f, positions):
+        """Write position arrays in compact format - 10 positions per line"""
+        if not positions:
+            f.write('[]')
+            return
+
+        f.write('[\n')
+
+        # Group positions into rows of 10
+        items_per_row = 10
+        for row_start in range(0, len(positions), items_per_row):
+            row_end = min(row_start + items_per_row, len(positions))
+            row_positions = positions[row_start:row_end]
+
+            f.write('      ')
+            for i, pos in enumerate(row_positions):
+                f.write(f'[{pos[0]}, {pos[1]}]')
+                # Add comma if not the last item in the entire array
+                if row_start + i < len(positions) - 1:
+                    f.write(',')
+
+            # Add newline if not the last row
+            if row_end < len(positions):
+                f.write('\n')
+            else:
+                f.write('\n')
+
+        f.write('    ]')
+
+    def _write_compact_array(self, f, array):
+        """Write simple arrays in compact format"""
+        if not array:
+            f.write('[]')
+            return
+
+        # For simple arrays, write on one line if short, otherwise compact format
+        if len(array) == 0:
+            f.write('[]')
+        elif len(str(array)) < 80:  # If the array is short, write on one line
+            f.write(json.dumps(array))
+        else:
+            # Write in compact format
+            f.write('[\n')
+            for i, item in enumerate(array):
+                f.write(f'      {json.dumps(item)}')
+                if i < len(array) - 1:
+                    f.write(',')
+                f.write('\n')
+            f.write('    ]')
+
+    def _write_compact_enemies(self, f, enemies):
+        """Write enemies array with compact formatting"""
+        if not enemies:
+            f.write('[]')
+            return
+
+        f.write('[\n')
+        for i, enemy in enumerate(enemies):
+            f.write('      {\n')
+
+            # Write enemy properties in a specific order
+            enemy_keys = ["type", "position", "direction", "health", "state", "float_position"]
+            for j, key in enumerate(enemy_keys):
+                if key in enemy:
+                    if key in ["position", "float_position"]:
+                        # Write position objects on one line
+                        f.write(f'        "{key}": {json.dumps(enemy[key])}')
+                    else:
+                        f.write(f'        "{key}": {json.dumps(enemy[key])}')
+
+                    # Add comma if not the last property
+                    if j < len([k for k in enemy_keys if k in enemy]) - 1:
+                        f.write(',')
+                    f.write('\n')
+
+            f.write('      }')
+            if i < len(enemies) - 1:
+                f.write(',')
+            f.write('\n')
+        f.write('    ]')
