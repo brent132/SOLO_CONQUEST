@@ -126,6 +126,7 @@ class LayerManager:
                 item.is_visible = self.layer_visibility[i]
 
         self.layer_panel.selected_layer = self.current_layer
+        self.layer_panel.show_all_layers = self.show_all_layers
         self.layer_panel.update_selection()
         self.layer_panel.reposition_items()
         self.layer_panel.update_scroll_bounds()
@@ -137,6 +138,7 @@ class LayerManager:
 
         self.layer_count = len(self.layer_panel.layer_items)
         self.current_layer = self.layer_panel.selected_layer
+        self.show_all_layers = self.layer_panel.show_all_layers
 
         # Sync visibility
         for i, item in enumerate(self.layer_panel.layer_items):
@@ -157,6 +159,9 @@ class LayerManager:
                         self.layer_panel.last_deleted_layer = None  # Reset after use
                     else:
                         self.cleanup_map_data_after_deletion(map_data)
+                # Handle show all layers toggle
+                elif result == "toggle_show_all":
+                    self.show_all_layers = not self.show_all_layers
                 # Sync changes back to layer manager
                 self.sync_from_panel()
                 return True

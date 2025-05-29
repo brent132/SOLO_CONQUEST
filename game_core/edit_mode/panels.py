@@ -128,7 +128,7 @@ class LayerPanel:
         button_y = y + 5
         self.add_button = pygame.Rect(x + width - 70, button_y, button_size, button_size)
         self.delete_button = pygame.Rect(x + width - 45, button_y, button_size, button_size)
-        self.duplicate_button = pygame.Rect(x + width - 95, button_y, button_size, button_size)
+        self.show_all_button = pygame.Rect(x + width - 95, button_y, button_size, button_size)
 
         # Layer item dimensions
         self.item_height = 42
@@ -142,6 +142,9 @@ class LayerPanel:
 
         # Track deleted layers for data cleanup
         self.last_deleted_layer = None
+
+        # Show all layers state
+        self.show_all_layers = False
 
         # Initialize with one layer
         self.add_layer()
@@ -189,11 +192,10 @@ class LayerPanel:
             self.reposition_items()
             self.update_scroll_bounds()
 
-    def duplicate_layer(self):
-        """Duplicate the selected layer"""
-        if len(self.layer_items) < self.max_layers and self.selected_layer < len(self.layer_items):
-            original = self.layer_items[self.selected_layer]
-            self.add_layer(f"{original.layer_name} copy")
+    def toggle_show_all_layers(self):
+        """Toggle show all layers mode"""
+        self.show_all_layers = not self.show_all_layers
+        return "toggle_show_all"
 
     def update_selection(self):
         """Update selection state of all layer items"""
@@ -248,9 +250,8 @@ class LayerPanel:
             elif self.delete_button.collidepoint(mouse_pos):
                 self.delete_layer()
                 return "layer_deleted"
-            elif self.duplicate_button.collidepoint(mouse_pos):
-                self.duplicate_layer()
-                return "layer_duplicated"
+            elif self.show_all_button.collidepoint(mouse_pos):
+                return self.toggle_show_all_layers()
 
             # Check layer items (only if they're visible in the content area)
             for i, item in enumerate(self.layer_items):
@@ -306,12 +307,13 @@ class LayerPanel:
         minus_rect = minus_text.get_rect(center=self.delete_button.center)
         surface.blit(minus_text, minus_rect)
 
-        # Duplicate button (copy icon)
-        pygame.draw.rect(surface, (80, 80, 80), self.duplicate_button)
-        pygame.draw.rect(surface, self.border_color, self.duplicate_button, 1)
-        copy_text = plus_font.render("⧉", True, self.text_color)
-        copy_rect = copy_text.get_rect(center=self.duplicate_button.center)
-        surface.blit(copy_text, copy_rect)
+        # Show all layers button (eye icon)
+        button_color = (120, 180, 120) if self.show_all_layers else (80, 80, 80)
+        pygame.draw.rect(surface, button_color, self.show_all_button)
+        pygame.draw.rect(surface, self.border_color, self.show_all_button, 1)
+        eye_text = plus_font.render("👁", True, self.text_color)
+        eye_rect = eye_text.get_rect(center=self.show_all_button.center)
+        surface.blit(eye_text, eye_rect)
 
         # Content area background
         pygame.draw.rect(surface, (45, 45, 45), self.content_rect)
