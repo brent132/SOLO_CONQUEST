@@ -169,6 +169,10 @@ class CrystalItemManager:
         if not self.collection_frames:
             return
 
+        # Calculate zoom factor from grid cell size
+        base_grid_size = 16
+        zoom_factor = grid_cell_size / base_grid_size
+
         # Draw collection animations for items being collected on this layer
         for pos, item_data in self.collected_items.items():
             # Skip if not on the requested layer
@@ -182,16 +186,34 @@ class CrystalItemManager:
             if 0 <= frame_index < len(self.collection_frames):
                 frame = self.collection_frames[frame_index]
 
-                # Calculate the center position of the grid cell
-                center_x = (grid_x * grid_cell_size + grid_cell_size // 2) - camera_x
-                center_y = (grid_y * grid_cell_size + grid_cell_size // 2) - camera_y
+                # Calculate screen position - use the same method as tiles
+                # First calculate logical position
+                logical_x = grid_x * base_grid_size - camera_x
+                logical_y = grid_y * base_grid_size - camera_y
 
-                # Calculate the position to center the frame on the grid cell
-                frame_x = center_x - frame.get_width() // 2
-                frame_y = center_y - frame.get_height() // 2
+                # Scale for zoom
+                screen_x = logical_x * zoom_factor
+                screen_y = logical_y * zoom_factor
+
+                # Calculate the center position of the grid cell
+                center_x = screen_x + grid_cell_size // 2
+                center_y = screen_y + grid_cell_size // 2
+
+                # Scale the frame to match the zoom level
+                if zoom_factor != 1.0:
+                    original_size = frame.get_size()
+                    new_width = int(original_size[0] * zoom_factor)
+                    new_height = int(original_size[1] * zoom_factor)
+                    scaled_frame = pygame.transform.scale(frame, (new_width, new_height))
+                else:
+                    scaled_frame = frame
+
+                # Calculate the position to center the scaled frame on the grid cell
+                frame_x = center_x - scaled_frame.get_width() // 2
+                frame_y = center_y - scaled_frame.get_height() // 2
 
                 # Draw the collection animation centered on the grid cell
-                surface.blit(frame, (frame_x, frame_y))
+                surface.blit(scaled_frame, (frame_x, frame_y))
 
     def draw(self, surface, camera_x, camera_y, grid_cell_size):
         """Draw all collection animations (legacy method, kept for compatibility)"""

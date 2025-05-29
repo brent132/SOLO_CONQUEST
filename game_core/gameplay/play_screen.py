@@ -1292,7 +1292,7 @@ class PlayScreen(BaseScreen):
             self.player.update()
 
             # Check for collisions with key items
-            collected_key = self.key_item_manager.check_player_collision(self.player.rect, self.grid_cell_size)
+            collected_key = self.key_item_manager.check_player_collision(self.player.rect, self.base_grid_cell_size)
             if collected_key:
                 # Key item collected, add to inventory
                 grid_x, grid_y = collected_key
@@ -1328,7 +1328,7 @@ class PlayScreen(BaseScreen):
                 # Key collection message removed
 
             # Check for collisions with crystal items
-            collected_crystal = self.crystal_item_manager.check_player_collision(self.player.rect, self.grid_cell_size)
+            collected_crystal = self.crystal_item_manager.check_player_collision(self.player.rect, self.base_grid_cell_size)
             if collected_crystal:
                 # Crystal item collected, add to inventory
                 grid_x, grid_y = collected_crystal

@@ -5,6 +5,11 @@
       "slot": 60,
       "name": "Key",
       "count": 4
+    },
+    {
+      "slot": 61,
+      "name": "Crystal",
+      "count": 2
     }
   ]
 }
