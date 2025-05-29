@@ -472,11 +472,11 @@
     "enemies": [
       {
         "type": "phantom",
-        "position": {"x": 688, "y": 48},
+        "position": {"x": 416, "y": 416},
         "direction": "left",
         "health": 100,
         "state": "idle",
-        "float_position": {"x": 688.0, "y": 48.0}
+        "float_position": {"x": 416.2068020401017, "y": 416.01461821725263}
       },
       {
         "type": "bomberplant",
@@ -488,42 +488,44 @@
       },
       {
         "type": "spinner",
-        "position": {"x": 720, "y": 48},
-        "direction": "right",
+        "position": {"x": 345, "y": 16},
+        "direction": "left",
         "health": 60,
-        "state": "idle",
-        "float_position": {"x": 720.0, "y": 48.0}
+        "state": "run",
+        "float_position": {"x": 345.5757020004148, "y": 16.931229290476036}
       },
       {
         "type": "spider",
-        "position": {"x": 736, "y": 48},
-        "direction": "right",
+        "position": {"x": 416, "y": 369},
+        "direction": "down",
         "health": 100,
         "state": "idle",
-        "float_position": {"x": 736.0, "y": 48.0}
+        "float_position": {"x": 416.0413944823381, "y": 369.4912699201051}
       },
       {
         "type": "pinkslime",
-        "position": {"x": 752, "y": 48},
-        "direction": "right",
+        "position": {"x": 416, "y": 335},
+        "direction": "down",
         "health": 100,
         "state": "idle",
-        "float_position": {"x": 752.0, "y": 48.0}
+        "float_position": {"x": 416.05593362106686, "y": 335.5025192833769}
       },
       {
         "type": "pinkbat_left",
-        "position": {"x": 768, "y": 48},
+        "position": {"x": 290, "y": 158},
         "direction": "left",
         "health": 100,
-        "state": "idle",
-        "float_position": {"x": 768.0, "y": 48.0}
+        "state": "run",
+        "float_position": {"x": 290.4838584891708, "y": 158.74420291275504}
       }
     ],
     "inventory": [],
     "collected_keys": [
       [19, 21],[18, 21],[17, 21],[16, 21],[15, 21],[21, 12],[14, 21],[13, 21],[12, 21],[11, 21]
     ],
-    "collected_crystals": [],
+    "collected_crystals": [
+      [17, 23]
+    ],
     "opened_lootchests": [
       [18, 13],[19, 13],[20, 13]
     ],

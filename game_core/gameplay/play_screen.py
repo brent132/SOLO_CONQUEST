@@ -717,6 +717,9 @@ class PlayScreen(BaseScreen):
             self.zoom_factor = self.zoom_levels[self.current_zoom_index]
             self.update_zoom()
 
+            # Recalculate center offset for small maps
+            self.calculate_center_offset()
+
             # Recalculate camera position to maintain the same center point
             if self.player:
                 # When zoomed, the effective screen size in logical coordinates is smaller
@@ -748,6 +751,9 @@ class PlayScreen(BaseScreen):
             self.zoom_factor = self.zoom_levels[self.current_zoom_index]
             self.update_zoom()
 
+            # Recalculate center offset for small maps
+            self.calculate_center_offset()
+
             # Recalculate camera position to maintain the same center point
             if self.player:
                 # When zoomed, the effective screen size in logical coordinates is smaller
@@ -777,6 +783,9 @@ class PlayScreen(BaseScreen):
         self.current_zoom_index = 0  # 1.0x is at index 0
         self.zoom_factor = self.zoom_levels[self.current_zoom_index]
         self.update_zoom()
+
+        # Recalculate center offset for small maps
+        self.calculate_center_offset()
 
         # Recalculate camera position to maintain the same center point
         if self.player:
@@ -1156,25 +1165,29 @@ class PlayScreen(BaseScreen):
         # Find the bounds of the used area in the map
         min_x, max_x, min_y, max_y = self.find_used_area_bounds()
 
-        # Calculate the size of the used area in pixels
-        used_width = (max_x - min_x + 1) * self.grid_cell_size if max_x >= min_x else 0
-        used_height = (max_y - min_y + 1) * self.grid_cell_size if max_y >= min_y else 0
+        # Calculate the size of the used area in pixels (use base grid size for logical coordinates)
+        used_width = (max_x - min_x + 1) * self.base_grid_cell_size if max_x >= min_x else 0
+        used_height = (max_y - min_y + 1) * self.base_grid_cell_size if max_y >= min_y else 0
 
-        # Calculate the offset to the start of the used area
-        area_offset_x = min_x * self.grid_cell_size
-        area_offset_y = min_y * self.grid_cell_size
+        # Calculate the offset to the start of the used area (use base grid size for logical coordinates)
+        area_offset_x = min_x * self.base_grid_cell_size
+        area_offset_y = min_y * self.base_grid_cell_size
 
-        # Check if the used area is smaller than the screen
-        if used_width < self.width:
+        # Calculate effective screen size in logical coordinates (accounting for zoom)
+        effective_screen_width = self.width / self.zoom_factor
+        effective_screen_height = self.height / self.zoom_factor
+
+        # Check if the used area is smaller than the effective screen
+        if used_width < effective_screen_width:
             # Center horizontally
-            self.center_offset_x = (self.width - used_width) // 2 - area_offset_x
+            self.center_offset_x = (effective_screen_width - used_width) // 2 - area_offset_x
         else:
             # Used area is wider than or equal to the screen, no horizontal centering needed
             self.center_offset_x = 0
 
-        if used_height < self.height:
+        if used_height < effective_screen_height:
             # Center vertically
-            self.center_offset_y = (self.height - used_height) // 2 - area_offset_y
+            self.center_offset_y = (effective_screen_height - used_height) // 2 - area_offset_y
         else:
             # Used area is taller than or equal to the screen, no vertical centering needed
             self.center_offset_y = 0
