@@ -885,12 +885,19 @@ class PlayScreen(BaseScreen):
                     print(f"Right-click at mouse position: {mouse_pos}")
                     print(f"Camera position: ({self.camera_x}, {self.camera_y})")
                     print(f"Grid cell size: {self.grid_cell_size}")
+                    print(f"Zoom factor: {self.zoom_factor}")
                     print(f"Player rect: {self.player.rect}")
 
-                    # Calculate grid position from mouse position
+                    # Convert screen coordinates to world coordinates accounting for zoom
+                    # When zoomed, screen coordinates need to be divided by zoom factor
+                    world_mouse_x = mouse_pos[0] / self.zoom_factor
+                    world_mouse_y = mouse_pos[1] / self.zoom_factor
+
+                    # Calculate grid position from world mouse position
                     # Use base grid size for logical coordinates
-                    grid_x = int((mouse_pos[0] + self.camera_x) // self.base_grid_cell_size)
-                    grid_y = int((mouse_pos[1] + self.camera_y) // self.base_grid_cell_size)
+                    grid_x = int((world_mouse_x + self.camera_x) // self.base_grid_cell_size)
+                    grid_y = int((world_mouse_y + self.camera_y) // self.base_grid_cell_size)
+                    print(f"World mouse position: ({world_mouse_x}, {world_mouse_y})")
                     print(f"Calculated grid position: ({grid_x}, {grid_y})")
 
                     # Check if there's a lootchest at this position
@@ -902,10 +909,10 @@ class PlayScreen(BaseScreen):
                         print(f"Available lootchests: {list(self.lootchest_manager.lootchests.keys())}")
 
                     # Try to interact with a lootchest
-                    # Adjust mouse position for center offset
+                    # Adjust world mouse position for center offset
                     adjusted_mouse_pos = (
-                        mouse_pos[0],
-                        mouse_pos[1]
+                        world_mouse_x - self.center_offset_x,
+                        world_mouse_y - self.center_offset_y
                     )
 
                     # Adjust camera position for center offset
@@ -1781,16 +1788,9 @@ class PlayScreen(BaseScreen):
                     if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
                         continue
 
-                # Check if this is a lootchest item and if it should be drawn
+                # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
                 if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                    # Get the current frame for this lootchest
-                    lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
-                    if lootchest_frame:
-                        # Scale the lootchest frame to match the grid cell size
-                        scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
-                        # Draw the lootchest frame
-                        surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
-                        continue  # Skip the normal tile drawing
+                    continue  # Skip drawing - lootchest_manager handles this
 
 
 
@@ -1888,16 +1888,9 @@ class PlayScreen(BaseScreen):
                         if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
                             continue
 
-                    # Check if this is a lootchest item and if it should be drawn
+                    # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
                     if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                        # Get the current frame for this lootchest
-                        lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
-                        if lootchest_frame:
-                            # Scale the lootchest frame to match the grid cell size
-                            scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
-                            # Draw the lootchest frame
-                            surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
-                            continue  # Skip the normal tile drawing
+                        continue  # Skip drawing - lootchest_manager handles this
 
 
 
@@ -1977,16 +1970,9 @@ class PlayScreen(BaseScreen):
                         if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
                             continue
 
-                    # Check if this is a lootchest item and if it should be drawn
+                    # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
                     if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                        # Get the current frame for this lootchest
-                        lootchest_frame = self.lootchest_manager.get_chest_frame(x, y)
-                        if lootchest_frame:
-                            # Scale the lootchest frame to match the grid cell size
-                            scaled_lootchest_frame = pygame.transform.scale(lootchest_frame, (self.grid_cell_size, self.grid_cell_size))
-                            # Draw the lootchest frame
-                            surface.blit(scaled_lootchest_frame, (screen_x, screen_y))
-                            continue  # Skip the normal tile drawing
+                        continue  # Skip drawing - lootchest_manager handles this
 
 
 
@@ -2568,10 +2554,15 @@ class PlayScreen(BaseScreen):
             return False
 
         # Calculate grid position from mouse position
+        # Convert screen coordinates to world coordinates accounting for zoom
+        # When zoomed, screen coordinates need to be divided by zoom factor
+        world_mouse_x = mouse_pos[0] / self.zoom_factor
+        world_mouse_y = mouse_pos[1] / self.zoom_factor
+
         # Adjust for camera position and center offset
         # Use base grid size for logical coordinates
-        adjusted_mouse_x = mouse_pos[0] + self.camera_x - self.center_offset_x
-        adjusted_mouse_y = mouse_pos[1] + self.camera_y - self.center_offset_y
+        adjusted_mouse_x = world_mouse_x + self.camera_x - self.center_offset_x
+        adjusted_mouse_y = world_mouse_y + self.camera_y - self.center_offset_y
         grid_x = int(adjusted_mouse_x // self.base_grid_cell_size)
         grid_y = int(adjusted_mouse_y // self.base_grid_cell_size)
         position = (grid_x, grid_y)

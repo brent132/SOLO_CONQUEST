@@ -344,9 +344,13 @@ class LootchestManager:
             surface: Surface to draw on
             camera_x: Camera X position
             camera_y: Camera Y position
-            grid_cell_size: Size of grid cells
+            grid_cell_size: Size of grid cells (already scaled for zoom)
             layer_idx: Layer index to draw
         """
+        # Calculate zoom factor from grid cell size
+        base_grid_size = 16
+        zoom_factor = grid_cell_size / base_grid_size
+
         # Draw opening animations for this layer
         for pos, chest_data in self.opening_chests.items():
             # Skip if not on this layer
@@ -360,12 +364,20 @@ class LootchestManager:
             if 0 <= frame_index < len(self.opening_frames):
                 frame = self.opening_frames[frame_index]
 
-                # Calculate screen position
-                screen_x = grid_x * grid_cell_size - camera_x
-                screen_y = grid_y * grid_cell_size - camera_y
+                # Calculate screen position - use the same method as tiles
+                # First calculate logical position
+                logical_x = grid_x * base_grid_size - camera_x
+                logical_y = grid_y * base_grid_size - camera_y
+
+                # Scale for zoom
+                screen_x = logical_x * zoom_factor
+                screen_y = logical_y * zoom_factor
+
+                # Scale the frame to match the grid cell size (for zoom)
+                scaled_frame = pygame.transform.scale(frame, (grid_cell_size, grid_cell_size))
 
                 # Draw the opening animation
-                surface.blit(frame, (screen_x, screen_y))
+                surface.blit(scaled_frame, (screen_x, screen_y))
 
         # Draw opened chests for this layer
         for pos in self.opened_chests:
@@ -375,13 +387,20 @@ class LootchestManager:
 
             grid_x, grid_y = pos
 
-            # Calculate screen position
-            screen_x = grid_x * grid_cell_size - camera_x
-            screen_y = grid_y * grid_cell_size - camera_y
+            # Calculate screen position - use the same method as tiles
+            # First calculate logical position
+            logical_x = grid_x * base_grid_size - camera_x
+            logical_y = grid_y * base_grid_size - camera_y
+
+            # Scale for zoom
+            screen_x = logical_x * zoom_factor
+            screen_y = logical_y * zoom_factor
 
             # Draw the static open frame if available
             if self.static_open_frame:
-                surface.blit(self.static_open_frame, (screen_x, screen_y))
+                # Scale the frame to match the grid cell size (for zoom)
+                scaled_frame = pygame.transform.scale(self.static_open_frame, (grid_cell_size, grid_cell_size))
+                surface.blit(scaled_frame, (screen_x, screen_y))
 
     def get_chest_frame(self, grid_x, grid_y):
         """Get the current frame for a lootchest at the given position
