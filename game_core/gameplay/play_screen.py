@@ -25,6 +25,7 @@ from gameplay.game_state_saver import GameStateSaver
 from gameplay.character_inventory_saver import CharacterInventorySaver
 from gameplay.relation_handler import RelationHandler
 from gameplay.player_location_tracker import PlayerLocationTracker
+from game_core.sprite_cache import sprite_cache
 
 
 class PlayScreen(BaseScreen):
@@ -449,7 +450,9 @@ class PlayScreen(BaseScreen):
                         "Enemies_Sprites/Pinkbat_Sprites" not in path and
                         "Enemies_Sprites/Spinner_Sprites" not in path and
                         "character/char_idle_" not in path):
-                        self.tiles[int(tile_id)] = pygame.image.load(path).convert_alpha()
+                        sprite = sprite_cache.get_sprite(path)
+                        if sprite:
+                            self.tiles[int(tile_id)] = sprite
                     elif "Enemies_Sprites/Phantom_Sprites" in path:
                         print(f"Skipping phantom enemy tile: {path}")
                     elif "Enemies_Sprites/Bomberplant_Sprites" in path:
@@ -618,7 +621,9 @@ class PlayScreen(BaseScreen):
                         "Enemies_Sprites/Pinkbat_Sprites" not in path and
                         "Enemies_Sprites/Spinner_Sprites" not in path and
                         "character/char_idle_" not in path):
-                        self.tiles[int(tile_id)] = pygame.image.load(path).convert_alpha()
+                        sprite = sprite_cache.get_sprite(path)
+                        if sprite:
+                            self.tiles[int(tile_id)] = sprite
                     elif "Enemies_Sprites/Phantom_Sprites" in path:
                         print(f"Skipping phantom enemy tile: {path}")
                     elif "Enemies_Sprites/Bomberplant_Sprites" in path:
@@ -679,7 +684,9 @@ class PlayScreen(BaseScreen):
                         "character/char_idle_" not in path):
                         # Create a unique ID for this tile
                         tile_id = len(self.tiles)
-                        self.tiles[tile_id] = pygame.image.load(path).convert_alpha()
+                        sprite = sprite_cache.get_sprite(path)
+                        if sprite:
+                            self.tiles[tile_id] = sprite
 
                         # Add to map data
                         if 0 <= x < width and 0 <= y < height:
@@ -1812,14 +1819,37 @@ class PlayScreen(BaseScreen):
                     # Get the current frame of the animated tile
                     frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                     if frame:
-                        # Scale the frame to match the grid cell size
-                        scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                        # Use cached scaling for better performance
+                        if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
+                            # Create a temporary path for caching (use tile_id as identifier)
+                            cache_key = f"animated_tile_{tile_id}_{self.animated_tile_manager.get_current_frame_index(tile_id)}"
+                            # For now, scale directly but this could be optimized further
+                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                        else:
+                            scaled_frame = frame
                         # Draw the animated tile frame
                         surface.blit(scaled_frame, (screen_x, screen_y))
                 # Draw the tile if we have it loaded
                 elif tile_id in self.tiles:
-                    # Scale the tile to match the grid cell size
-                    scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
+                    # Use sprite cache for scaled tiles to improve performance
+                    tile_size = (self.grid_cell_size, self.grid_cell_size)
+                    if self.tiles[tile_id].get_size() != tile_size:
+                        # Get the original path for this tile from expanded mapping
+                        tile_path = None
+                        for tid, tile_info in self.expanded_mapping.items():
+                            if int(tid) == tile_id:
+                                tile_path = tile_info["path"]
+                                break
+
+                        if tile_path and not tile_path.startswith("animated:"):
+                            # Use cached scaling
+                            scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
+                        else:
+                            # Fallback to direct scaling
+                            scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
+                    else:
+                        scaled_tile = self.tiles[tile_id]
+
                     # Draw the static tile
                     surface.blit(scaled_tile, (screen_x, screen_y))
 
@@ -1912,14 +1942,34 @@ class PlayScreen(BaseScreen):
                         # Get the current frame of the animated tile
                         frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                         if frame:
-                            # Scale the frame to match the grid cell size
-                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                            # Use cached scaling for better performance
+                            if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
+                                scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                            else:
+                                scaled_frame = frame
                             # Draw the animated tile frame
                             surface.blit(scaled_frame, (screen_x, screen_y))
                     # Draw the tile if we have it loaded
                     elif tile_id in self.tiles:
-                        # Scale the tile to match the grid cell size
-                        scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
+                        # Use sprite cache for scaled tiles to improve performance
+                        tile_size = (self.grid_cell_size, self.grid_cell_size)
+                        if self.tiles[tile_id].get_size() != tile_size:
+                            # Get the original path for this tile from expanded mapping
+                            tile_path = None
+                            for tid, tile_info in self.expanded_mapping.items():
+                                if int(tid) == tile_id:
+                                    tile_path = tile_info["path"]
+                                    break
+
+                            if tile_path and not tile_path.startswith("animated:"):
+                                # Use cached scaling
+                                scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
+                            else:
+                                # Fallback to direct scaling
+                                scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
+                        else:
+                            scaled_tile = self.tiles[tile_id]
+
                         # Draw the static tile
                         surface.blit(scaled_tile, (screen_x, screen_y))
 
@@ -1994,14 +2044,34 @@ class PlayScreen(BaseScreen):
                         # Get the current frame of the animated tile
                         frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                         if frame:
-                            # Scale the frame to match the grid cell size
-                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                            # Use cached scaling for better performance
+                            if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
+                                scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                            else:
+                                scaled_frame = frame
                             # Draw the animated tile frame
                             surface.blit(scaled_frame, (screen_x, screen_y))
                     # Draw the tile if we have it loaded
                     elif tile_id in self.tiles:
-                        # Scale the tile to match the grid cell size
-                        scaled_tile = pygame.transform.scale(self.tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
+                        # Use sprite cache for scaled tiles to improve performance
+                        tile_size = (self.grid_cell_size, self.grid_cell_size)
+                        if self.tiles[tile_id].get_size() != tile_size:
+                            # Get the original path for this tile from expanded mapping
+                            tile_path = None
+                            for tid, tile_info in self.expanded_mapping.items():
+                                if int(tid) == tile_id:
+                                    tile_path = tile_info["path"]
+                                    break
+
+                            if tile_path and not tile_path.startswith("animated:"):
+                                # Use cached scaling
+                                scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
+                            else:
+                                # Fallback to direct scaling
+                                scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
+                        else:
+                            scaled_tile = self.tiles[tile_id]
+
                         # Draw the static tile
                         surface.blit(scaled_tile, (screen_x, screen_y))
             return

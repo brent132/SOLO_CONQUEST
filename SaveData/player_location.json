@@ -1,4 +1,13 @@
 {
-  "current_world": "main",
-  "worlds": {}
+  "current_world": "firstlevel",
+  "worlds": {
+    "firstlevel": {
+      "map_name": "firstlevel",
+      "x": 120,
+      "y": 154,
+      "direction": "right",
+      "health": 55,
+      "shield_durability": 3
+    }
+  }
 }

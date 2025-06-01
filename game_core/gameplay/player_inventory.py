@@ -3,6 +3,7 @@ Player Inventory - handles the display and interaction with the player's full in
 """
 import pygame
 import os
+from game_core.sprite_cache import sprite_cache
 
 class PlayerInventory:
     """Class to handle the player's full inventory display"""
@@ -69,17 +70,12 @@ class PlayerInventory:
         self.visible = False
 
     def load_image(self, path):
-        """Load an image from the specified path"""
-        full_path = os.path.join(os.getcwd(), path)
-        try:
-            image = pygame.image.load(full_path).convert_alpha()
-            return image
-        except pygame.error as e:
-            print(f"Error loading image {path}: {e}")
+        """Load an image from the specified path using sprite cache"""
+        image = sprite_cache.get_sprite(path)
+        if image is None:
             # Return a placeholder image (red square)
-            placeholder = pygame.Surface((16, 16), pygame.SRCALPHA)
-            placeholder.fill((255, 0, 0, 128))
-            return placeholder
+            image = sprite_cache.create_placeholder((16, 16))
+        return image
 
     def resize(self, new_width, new_height):
         """Update inventory for new screen dimensions"""

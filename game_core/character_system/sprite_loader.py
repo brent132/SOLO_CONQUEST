@@ -3,6 +3,7 @@ Sprite loader module - handles loading character sprites and animations
 """
 import os
 import pygame
+from game_core.sprite_cache import sprite_cache
 
 def load_character_sprites():
     """Load all character sprites from the character folder"""
@@ -112,8 +113,9 @@ def load_character_sprites():
 
                 # Check if the specific file exists
                 if os.path.exists(img_path):
-                    img = pygame.image.load(img_path).convert_alpha()
-                    sprites[anim_key].append(img)
+                    img = sprite_cache.get_sprite(img_path)
+                    if img:
+                        sprites[anim_key].append(img)
                 else:
                     print(f"Warning: Shield sprite not found: {img_path}")
 
@@ -122,10 +124,11 @@ def load_character_sprites():
                     for file in os.listdir(anim_path):
                         if file.startswith("char_shielded") and file.endswith(".png"):
                             fallback_img_path = os.path.join(anim_path, file)
-                            img = pygame.image.load(fallback_img_path).convert_alpha()
-                            sprites[anim_key].append(img)
-                            fallback_found = True
-                            break
+                            img = sprite_cache.get_sprite(fallback_img_path)
+                            if img:
+                                sprites[anim_key].append(img)
+                                fallback_found = True
+                                break
 
                     if not fallback_found:
                         print(f"No fallback shield sprites found in {anim_path}")
@@ -151,8 +154,9 @@ def load_character_sprites():
         for file in frame_files:
             try:
                 img_path = os.path.join(anim_path, file)
-                img = pygame.image.load(img_path).convert_alpha()
-                sprites[anim_key].append(img)
+                img = sprite_cache.get_sprite(img_path)
+                if img:
+                    sprites[anim_key].append(img)
             except Exception as e:
                 print(f"Error loading sprite {img_path}: {e}")
 
@@ -184,3 +188,35 @@ def load_character_sprites():
                 sprites[anim_key] = sprites["idle_down"].copy()
 
     return sprites
+
+def get_scaled_character_sprites(sprites, scale_factor):
+    """
+    Get scaled versions of character sprites using the sprite cache for better performance.
+
+    Args:
+        sprites (dict): Dictionary of loaded sprites
+        scale_factor (float): Scale factor to apply
+
+    Returns:
+        dict: Dictionary of scaled sprites
+    """
+    if scale_factor == 1.0:
+        return sprites
+
+    scaled_sprites = {}
+
+    for anim_key, frame_list in sprites.items():
+        scaled_sprites[anim_key] = []
+
+        for frame in frame_list:
+            if frame:
+                # Calculate target size
+                original_size = frame.get_size()
+                target_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
+
+                # Use sprite cache for scaling (this would need the original path, so we'll scale directly for now)
+                # In a future optimization, we could store the original paths with the sprites
+                scaled_frame = pygame.transform.scale(frame, target_size)
+                scaled_sprites[anim_key].append(scaled_frame)
+
+    return scaled_sprites

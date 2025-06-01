@@ -3,6 +3,7 @@ Animated Tile - handles animated tiles for the game
 """
 import os
 import pygame
+from game_core.sprite_cache import sprite_cache
 
 class AnimatedTile:
     """Class for handling animated tiles"""
@@ -25,24 +26,12 @@ class AnimatedTile:
         self.load_frames()
 
     def load_frames(self):
-        """Load all animation frames from the folder"""
-        # Get all PNG files in the folder
-        try:
-            frame_files = [f for f in os.listdir(self.folder_path) if f.endswith('.png')]
-            frame_files.sort()  # Sort files to ensure consistent order
+        """Load all animation frames from the folder using sprite cache"""
+        # Use the sprite cache to load animation frames efficiently
+        self.frames = sprite_cache.get_animation_frames(self.folder_path)
 
-            # Load each frame
-            for frame_file in frame_files:
-                frame_path = os.path.join(self.folder_path, frame_file)
-                try:
-                    frame_img = pygame.image.load(frame_path).convert_alpha()
-                    self.frames.append(frame_img)
-                except Exception as e:
-                    print(f"Error loading animation frame {frame_path}: {e}")
-
-            # Animation frames loaded successfully
-        except Exception as e:
-            print(f"Error loading animation folder {self.folder_path}: {e}")
+        if not self.frames:
+            print(f"No animation frames loaded from {self.folder_path}")
 
     def update(self):
         """Update the animation state"""
