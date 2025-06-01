@@ -212,9 +212,11 @@ class MapSaver:
             # is_main tag will be set later based on the is_main parameter
         }
 
-        # Add collision data if available
+        # Collision data is now stored globally, not in individual map files
+        # Save collision data to global file instead
         if collision_manager:
-            map_file_data["collision_data"] = collision_manager.get_collision_data_for_save()
+            collision_manager.save_global_collision_data()
+            print(f"Collision data saved to global collision database")
 
         # We'll set the player position from the placed player tile instead of the player_position_manager
 

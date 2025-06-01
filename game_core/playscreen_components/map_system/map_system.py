@@ -26,6 +26,8 @@ from .map_loader import MapLoader
 from .map_processor import MapProcessor
 from .tile_manager import TileManager
 from .map_renderer import MapRenderer
+from .collision_handler import CollisionHandler
+from .relation_handler import RelationHandler
 
 
 class MapSystem:
@@ -37,6 +39,8 @@ class MapSystem:
         self.processor = MapProcessor()
         self.tile_manager = TileManager()
         self.renderer = MapRenderer(grid_cell_size)
+        self.collision_handler = CollisionHandler(16)  # Always use base grid size
+        self.relation_handler = RelationHandler(16)  # Always use base grid size
         
         # Current map state
         self.current_map_name = ""
@@ -47,6 +51,10 @@ class MapSystem:
         # Map dimensions
         self.map_width = 0
         self.map_height = 0
+
+        # Collision data caching for performance
+        self._cached_collision_map_data = None
+        self._collision_cache_valid = False
         
     def load_map(self, map_name: str, animated_tile_manager) -> Tuple[bool, str]:
         """
@@ -90,6 +98,9 @@ class MapSystem:
             self.current_map_name = map_name
             self.current_map_data = map_data
             self.is_loaded = True
+
+            # Invalidate collision cache when map changes
+            self._collision_cache_valid = False
             
             print(f"Map system successfully loaded map: {map_name}")
             print(f"Map format: {processed_info.get('format', 'unknown')}")
@@ -204,6 +215,63 @@ class MapSystem:
         """Get the current loaded map data"""
         return self.current_map_data.copy() if self.current_map_data else {}
     
+    def get_collision_map_data(self):
+        """Get the appropriate map data for collision detection with caching for performance"""
+        # Check if we have a valid cached version
+        if self._collision_cache_valid and self._cached_collision_map_data is not None:
+            return self._cached_collision_map_data
+
+        # For layered maps, we need to merge all layers into a single 2D array for collision detection
+        if hasattr(self.processor, 'layers') and self.processor.layers:
+            # Create a merged map from all layers
+            if not self.processor.layers:
+                self._cached_collision_map_data = []
+                self._collision_cache_valid = True
+                return self._cached_collision_map_data
+
+            # Get dimensions from the first layer
+            first_layer = self.processor.layers[0]["data"]
+            if not first_layer:
+                self._cached_collision_map_data = []
+                self._collision_cache_valid = True
+                return self._cached_collision_map_data
+
+            height = len(first_layer)
+            width = len(first_layer[0]) if height > 0 else 0
+
+            # Create merged map data
+            merged_map = []
+            for y in range(height):
+                row = []
+                for x in range(width):
+                    # Start with empty tile
+                    tile_id = -1
+
+                    # Check each layer from bottom to top
+                    for layer in self.processor.layers:
+                        if not layer.get("visible", True):
+                            continue
+
+                        layer_data = layer["data"]
+                        if y < len(layer_data) and x < len(layer_data[y]):
+                            layer_tile_id = layer_data[y][x]
+                            if layer_tile_id != -1:  # Not empty
+                                tile_id = layer_tile_id  # Use the topmost non-empty tile
+
+                    row.append(tile_id)
+                merged_map.append(row)
+
+            # Cache the result
+            self._cached_collision_map_data = merged_map
+            self._collision_cache_valid = True
+            return merged_map
+        else:
+            # For legacy maps, use the existing map_data
+            map_data = getattr(self.processor, 'map_data', {})
+            self._cached_collision_map_data = map_data
+            self._collision_cache_valid = True
+            return map_data
+
     def clear_map(self):
         """Clear the current map and free resources"""
         self.tile_manager.clear_tiles()
@@ -216,6 +284,22 @@ class MapSystem:
         self.is_loaded = False
         self.map_width = 0
         self.map_height = 0
+
+        # Clear collision cache
+        self._collision_cache_valid = False
+        self._cached_collision_map_data = None
+
+        # Clear handlers
+        self.collision_handler = CollisionHandler(16)
+        self.relation_handler = RelationHandler(16)
+
+    def get_collision_handler(self):
+        """Get the collision handler"""
+        return self.collision_handler
+
+    def get_relation_handler(self):
+        """Get the relation handler"""
+        return self.relation_handler
     
     def get_memory_usage_info(self) -> Dict[str, Any]:
         """Get memory usage information for the map system"""

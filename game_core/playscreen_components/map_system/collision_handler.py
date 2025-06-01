@@ -74,7 +74,8 @@ class CollisionHandler:
 
     def check_collision(self, player_rect, tile_mapping, map_data):
         """Check if player collides with any solid tile corners"""
-        # Convert player position to grid coordinates
+        # Convert player position to grid coordinates using the collision handler's grid size
+        # This should always use the base grid size (16) for logical coordinates
         player_grid_x = player_rect.centerx // self.grid_cell_size
         player_grid_y = player_rect.centery // self.grid_cell_size
 

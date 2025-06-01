@@ -9,23 +9,23 @@ import json
 import pygame
 from debug_utils import debug_manager
 from character_system import PlayerCharacter
-from gameplay.collision_handler import CollisionHandler
+# CollisionHandler now imported from map_system
 from gameplay.animated_tile_manager import AnimatedTileManager
 from gameplay.key_item_manager import KeyItemManager
 from gameplay.crystal_item_manager import CrystalItemManager
 from gameplay.lootchest_manager import LootchestManager
 from gameplay.chest_inventory import ChestInventory
-from gameplay.player_inventory import PlayerInventory
 from playscreen_components.map_system import MapSystem
+from playscreen_components.player_system import PlayerSystem, PlayerInventory
+from playscreen_components.game_systems_coordinator import GameSystemsCoordinator
 from enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
 from gameplay.hud import HUD
 from gameplay.game_over_screen import GameOverScreen
 from gameplay.game_state_saver import GameStateSaver
-from gameplay.character_inventory_saver import CharacterInventorySaver
-from gameplay.relation_handler import RelationHandler
-from gameplay.player_location_tracker import PlayerLocationTracker
+# RelationHandler now imported from map_system
+from playscreen_components.player_system import CharacterInventorySaver, PlayerLocationTracker
 from game_core.sprite_cache import sprite_cache
 
 
@@ -43,6 +43,11 @@ class PlayScreen(BaseScreen):
         self.zoom_levels = [1.0, 1.5, 2.0, 3.0, 4.0]
         self.current_zoom_index = 0  # Start at 1.0x zoom (index 0)
         self.zoom_factor = self.zoom_levels[self.current_zoom_index]
+
+        # Pre-calculate zoom-related values for performance
+        self.zoom_factor_inv = 1.0 / self.zoom_factor
+        self.effective_screen_width = self.width * self.zoom_factor_inv
+        self.effective_screen_height = self.height * self.zoom_factor_inv
 
         # Camera/viewport for large maps
         self.camera_x = 0
@@ -67,14 +72,21 @@ class PlayScreen(BaseScreen):
         # Player character
         self.player = None
 
-        # Collision handler
-        self.collision_handler = CollisionHandler(self.grid_cell_size)
+        # Initialize default handlers (will be replaced when map loads successfully)
+        self.collision_handler = None
+        self.relation_handler = None
 
         # Animated tiles manager
         self.animated_tile_manager = AnimatedTileManager()
 
         # Initialize the modularized map system
         self.map_system = MapSystem(self.grid_cell_size)
+
+        # Initialize the modularized player system
+        self.player_system = PlayerSystem(self.grid_cell_size)
+
+        # Initialize the game systems coordinator
+        self.game_systems_coordinator = GameSystemsCoordinator(self.base_grid_cell_size)
 
         # Key item manager
         self.key_item_manager = KeyItemManager()
@@ -119,8 +131,7 @@ class PlayScreen(BaseScreen):
         # Character inventory saver for saving inventory data
         self.character_inventory_saver = CharacterInventorySaver()
 
-        # Relation handler for teleportation between maps
-        self.relation_handler = RelationHandler(self.grid_cell_size)
+        # Relation handler will be obtained from map_system after initialization
 
         # Player location tracker for saving positions across maps
         self.player_location_tracker = PlayerLocationTracker()
@@ -176,6 +187,17 @@ class PlayScreen(BaseScreen):
         self.layers = self.map_system.get_layers()
         self.map_data = self.map_system.get_map_data()
 
+        # Get handlers from map system
+        self.collision_handler = self.map_system.get_collision_handler()
+        self.relation_handler = self.map_system.get_relation_handler()
+
+        # Initialize game systems coordinator with relation handler now available
+        self.game_systems_coordinator.initialize_systems(
+            self.enemy_manager, self.key_item_manager, self.crystal_item_manager,
+            self.lootchest_manager, self.hud, self.animated_tile_manager,
+            self.player_system, self.relation_handler
+        )
+
         # Set up tiles dictionary for backward compatibility
         self.tiles = {}
         for tile_id in range(1000):  # Reasonable range for tile IDs
@@ -183,14 +205,17 @@ class PlayScreen(BaseScreen):
             if tile_surface:
                 self.tiles[tile_id] = tile_surface
 
-        # Scan for special items (key items, crystals, lootchests) in the map layers
+        # Set current map BEFORE scanning for items to avoid clearing lootchests
+        self.lootchest_manager.set_current_map(map_name)
+
+        # Scan for special items (key items, crystals, lootchests) in the map layers using coordinator
         self._scan_for_special_items()
 
         try:
 
             # Load collision data if available in the map file
             # Note: This is now supplementary to the global collision data
-            if "collision_data" in map_data:
+            if "collision_data" in map_data and self.collision_handler:
                 self.collision_handler.load_collision_data(map_data["collision_data"])
 
             # First, load all relation points from all maps to ensure we have a complete set
@@ -206,109 +231,28 @@ class PlayScreen(BaseScreen):
                 print(f"No relation points in map data, loading from file")
                 self.relation_handler.load_relation_points(map_name)
 
-            # Make sure the current map is set correctly in both handlers
+            # Make sure the current map is set correctly in relation handler
             self.relation_handler.current_map = map_name
-            self.lootchest_manager.set_current_map(map_name)
             print(f"Current map set to: {self.relation_handler.current_map}")
             print(f"All loaded relation points: {self.relation_handler.relation_points}")
 
             # Map processing is now handled by the MapSystem during load_map call above
             # No need to process the map format here anymore
 
-            # First check if we're teleporting - if so, we'll set the position later
-            if not self.is_teleporting:
-                # Determine which folder (world) this map belongs to using the same logic as player_location_tracker
-                folder_name = self.player_location_tracker._determine_folder_name(map_name)
+            # Create player using the modularized player system
+            teleport_position = None
+            if self.is_teleporting and self.teleport_info:
+                teleport_position = self.teleport_info.get('target_position')
 
-                # Get the location for this specific world
-                world_location = self.player_location_tracker.get_world_location(folder_name)
-
-                # Check if we have a saved location for this world
-                if world_location:
-                    # Use the world-specific location
-                    player_x = world_location["x"]
-                    player_y = world_location["y"]
-                    player_direction = world_location["direction"]
-
-                    # Create the player character with saved position and direction
-                    self.player = PlayerCharacter(player_x, player_y)
-                    self.player.direction = player_direction
-                    print(f"DEBUG: Loading map '{map_name}' in world '{folder_name}'")
-                    print(f"DEBUG: Saved location was for map '{world_location.get('map_name')}' at ({player_x}, {player_y})")
-                    print(f"DEBUG: Using saved position for world '{folder_name}': ({player_x}, {player_y})")
-
-                    # Set health and shield from the world location
-                    self.player.current_health = world_location.get("health", 100)
-                    self.player.shield_durability = world_location.get("shield_durability", 3)
-
-                    # Set camera position from game state if available
-                    if "game_state" in map_data and "camera" in map_data["game_state"]:
-                        self.camera_x = map_data["game_state"]["camera"]["x"]
-                        self.camera_y = map_data["game_state"]["camera"]["y"]
-
-                # Check if there's a saved location for this specific map (cross-world compatibility - last resort)
-                elif self.player_location_tracker.has_location(map_name):
-                    saved_location = self.player_location_tracker.get_location(map_name)
-                    if saved_location:
-                        # Use the saved location for this map
-                        player_x = saved_location["x"]
-                        player_y = saved_location["y"]
-                        player_direction = saved_location["direction"]
-
-                        # Create the player character with saved position and direction
-                        self.player = PlayerCharacter(player_x, player_y)
-                        self.player.direction = player_direction
-                        print(f"Loaded saved position for map '{map_name}' from any world (fallback): ({player_x}, {player_y})")
-
-                        # Set default health and shield (since cross-world might not have these)
-                        self.player.current_health = 100
-                        self.player.shield_durability = 3
-
-                # Check if map has a defined player start position
-                elif "player_start" in map_data:
-                    # Use the player starting position from the map data
-                    player_grid_x = map_data["player_start"].get("x", 0)
-                    player_grid_y = map_data["player_start"].get("y", 0)
-                    player_x = player_grid_x * self.grid_cell_size
-                    player_y = player_grid_y * self.grid_cell_size
-                    player_direction = map_data["player_start"].get("direction", "down")
-
-                    # Create the player character with starting position
-                    self.player = PlayerCharacter(player_x, player_y)
-                    self.player.direction = player_direction
-                    print(f"Using map's player_start position: ({player_x}, {player_y})")
-
-                else:
-                    # Default to the middle of the map
-                    player_x = (self.map_width * self.grid_cell_size) // 2
-                    player_y = (self.map_height * self.grid_cell_size) // 2
-
-                    # Create the player character (default direction is already "down")
-                    self.player = PlayerCharacter(player_x, player_y)
-                    print(f"Using default center position: ({player_x}, {player_y})")
-
-
-            else:
-                # We're teleporting, so we'll create a default player that will be positioned later
-                # at the teleport point
-                player_x = 0
-                player_y = 0
-                self.player = PlayerCharacter(player_x, player_y)
-
-                # Set health and shield from game state if available
-                if "game_state" in map_data and "player" in map_data["game_state"]:
-                    player_data = map_data["game_state"]["player"]
-                    if "health" in player_data:
-                        self.player.current_health = player_data["health"]
-                    if "shield_durability" in player_data:
-                        self.player.shield_durability = player_data["shield_durability"]
-
-            # Set map boundaries for the player
-            self.player.set_map_boundaries(
-                0, 0,  # Min X, Min Y
-                self.map_width * self.grid_cell_size,  # Max X
-                self.map_height * self.grid_cell_size  # Max Y
+            self.player = self.player_system.create_player(
+                map_data, map_name, self.map_width, self.map_height,
+                self.player_location_tracker, self.is_teleporting, teleport_position
             )
+
+            # Set camera position from game state if available (for non-teleporting loads)
+            if not self.is_teleporting and "game_state" in map_data and "camera" in map_data["game_state"]:
+                self.camera_x = map_data["game_state"]["camera"]["x"]
+                self.camera_y = map_data["game_state"]["camera"]["y"]
 
             # Load enemies from saved game state if available
             enemies_loaded = False
@@ -386,15 +330,27 @@ class PlayScreen(BaseScreen):
     def _scan_for_special_items(self):
         """Scan the map layers for special items (keys, crystals, lootchests)"""
         # Set up item IDs from animated tile manager
+        key_item_id = None
+        crystal_item_id = None
+        lootchest_item_id = None
+
         for tile_id, tile_name in self.animated_tile_manager.animated_tile_ids.items():
             if tile_name == "key_item":
-                self.key_item_id = tile_id
+                key_item_id = tile_id
+                self.key_item_id = tile_id  # Keep for backward compatibility
             elif tile_name == "crystal_item":
-                self.crystal_item_id = tile_id
+                crystal_item_id = tile_id
+                self.crystal_item_id = tile_id  # Keep for backward compatibility
             elif tile_name == "lootchest_item":
-                self.lootchest_item_id = tile_id
+                lootchest_item_id = tile_id
+                self.lootchest_item_id = tile_id  # Keep for backward compatibility
 
-        # Scan through all layers for special items
+        # Use game systems coordinator to scan and setup items
+        self.game_systems_coordinator.scan_and_setup_items(
+            self.layers, key_item_id, crystal_item_id, lootchest_item_id
+        )
+
+        # Handle lootchest setup separately since it's more complex
         for layer_idx, layer in enumerate(self.layers):
             if not layer.get("visible", True):
                 continue
@@ -403,16 +359,8 @@ class PlayScreen(BaseScreen):
 
             for y, row in enumerate(layer_data):
                 for x, tile_id in enumerate(row):
-                    # Check for key items
-                    if hasattr(self, 'key_item_id') and tile_id == self.key_item_id:
-                        self.key_item_manager.add_key_item(x, y, tile_id, layer_idx)
-
-                    # Check for crystal items
-                    elif hasattr(self, 'crystal_item_id') and tile_id == self.crystal_item_id:
-                        self.crystal_item_manager.add_crystal_item(x, y, tile_id, layer_idx)
-
                     # Check for lootchest items
-                    elif hasattr(self, 'lootchest_item_id') and tile_id == self.lootchest_item_id:
+                    if lootchest_item_id and tile_id == lootchest_item_id:
                         self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
 
     def zoom_in(self):
@@ -520,14 +468,20 @@ class PlayScreen(BaseScreen):
         """Update grid cell size and collision handler based on current zoom factor"""
         self.grid_cell_size = int(self.base_grid_cell_size * self.zoom_factor)
 
+        # Pre-calculate frequently used values to avoid repeated calculations
+        self.zoom_factor_inv = 1.0 / self.zoom_factor  # Cache inverse for performance
+        self.effective_screen_width = self.width * self.zoom_factor_inv
+        self.effective_screen_height = self.height * self.zoom_factor_inv
+
         # Update the map system's grid size for rendering
         if hasattr(self, 'map_system'):
             self.map_system.set_grid_size(self.grid_cell_size)
 
-        # Keep collision handler with base grid size (logical coordinates)
-        # Collision detection should remain in the original coordinate space
-        if not hasattr(self, 'collision_handler') or self.collision_handler.grid_cell_size != self.base_grid_cell_size:
-            self.collision_handler = CollisionHandler(self.base_grid_cell_size)
+        # Update the player system's grid size
+        if hasattr(self, 'player_system'):
+            self.player_system.set_grid_cell_size(self.grid_cell_size)
+
+        # Collision handler is now managed by map_system - no need to recreate it
 
         # Update relation handler with base grid size for logical coordinates
         self.relation_handler.grid_cell_size = self.base_grid_cell_size
@@ -608,55 +562,12 @@ class PlayScreen(BaseScreen):
                     self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held)
                 # Check if clicking on a lootchest (only when inventories are not visible)
                 elif not self.chest_inventory.is_visible() and not self.player_inventory.is_visible() and self.player and not self.player.is_dead:
-                    # Debug output before trying to interact with a lootchest
-                    print(f"Right-click at mouse position: {mouse_pos}")
-                    print(f"Camera position: ({self.camera_x}, {self.camera_y})")
-                    print(f"Grid cell size: {self.grid_cell_size}")
-                    print(f"Zoom factor: {self.zoom_factor}")
-                    print(f"Player rect: {self.player.rect}")
-
-                    # Convert screen coordinates to world coordinates accounting for zoom
-                    # When zoomed, screen coordinates need to be divided by zoom factor
-                    world_mouse_x = mouse_pos[0] / self.zoom_factor
-                    world_mouse_y = mouse_pos[1] / self.zoom_factor
-
-                    # Calculate grid position from world mouse position
-                    # Use base grid size for logical coordinates
-                    grid_x = int((world_mouse_x + self.camera_x) // self.base_grid_cell_size)
-                    grid_y = int((world_mouse_y + self.camera_y) // self.base_grid_cell_size)
-                    print(f"World mouse position: ({world_mouse_x}, {world_mouse_y})")
-                    print(f"Calculated grid position: ({grid_x}, {grid_y})")
-
-                    # Check if there's a lootchest at this position
-                    position = (grid_x, grid_y)
-                    if position in self.lootchest_manager.lootchests:
-                        print(f"Found lootchest at position {position}")
-                    else:
-                        print(f"No lootchest found at position {position}")
-                        print(f"Available lootchests: {list(self.lootchest_manager.lootchests.keys())}")
-
-                    # Try to interact with a lootchest
-                    # Adjust world mouse position for center offset
-                    adjusted_mouse_pos = (
-                        world_mouse_x - self.center_offset_x,
-                        world_mouse_y - self.center_offset_y
+                    # Use game systems coordinator to handle lootchest interaction
+                    result = self.game_systems_coordinator.handle_lootchest_interaction(
+                        mouse_pos, self.camera_x, self.camera_y,
+                        self.center_offset_x, self.center_offset_y,
+                        self.zoom_factor_inv, self.player.rect
                     )
-
-                    # Adjust camera position for center offset
-                    adjusted_camera_x = self.camera_x - self.center_offset_x
-                    adjusted_camera_y = self.camera_y - self.center_offset_y
-
-                    print(f"Adjusted mouse position: {adjusted_mouse_pos}")
-                    print(f"Adjusted camera position: ({adjusted_camera_x}, {adjusted_camera_y})")
-
-                    result = self.lootchest_manager.handle_right_click(
-                        adjusted_mouse_pos,
-                        adjusted_camera_x,
-                        adjusted_camera_y,
-                        self.base_grid_cell_size,
-                        self.player.rect
-                    )
-                    print(f"Lootchest interaction result: {result}")
             else:
                 # Handle other mouse buttons
                 pass
@@ -736,6 +647,10 @@ class PlayScreen(BaseScreen):
         if hasattr(self, 'map_system'):
             self.map_system.clear_map()
 
+        # Clear the player system
+        if hasattr(self, 'player_system'):
+            self.player_system.clear_player()
+
         # Reset camera
         self.camera_x = 0
         self.camera_y = 0
@@ -743,8 +658,7 @@ class PlayScreen(BaseScreen):
         # Reset player
         self.player = None
 
-        # Reset collision handler
-        self.collision_handler = CollisionHandler(self.grid_cell_size)
+        # Reset collision handler - will be obtained from map_system
 
         # Reset enemy manager
         self.enemy_manager = EnemyManager()
@@ -895,9 +809,9 @@ class PlayScreen(BaseScreen):
         area_offset_x = min_x * self.base_grid_cell_size
         area_offset_y = min_y * self.base_grid_cell_size
 
-        # Calculate effective screen size in logical coordinates (accounting for zoom)
-        effective_screen_width = self.width / self.zoom_factor
-        effective_screen_height = self.height / self.zoom_factor
+        # Use pre-calculated effective screen size for performance
+        effective_screen_width = self.effective_screen_width
+        effective_screen_height = self.effective_screen_height
 
         # Check if the used area is smaller than the effective screen
         if used_width < effective_screen_width:
@@ -957,8 +871,9 @@ class PlayScreen(BaseScreen):
         # Update lootchest manager
         self.lootchest_manager.update()
 
-        # Update relation handler
-        self.relation_handler.update()
+        # Update relation handler (if available)
+        if self.relation_handler:
+            self.relation_handler.update()
 
         # Update chest inventory
         if self.chest_inventory.is_visible():
@@ -975,155 +890,44 @@ class PlayScreen(BaseScreen):
 
         # Animated tiles are ready for use
 
-        # Update enemies if player exists
-        if self.player:
-            # Debug output is now controlled by a flag
-            debug_mode = False  # Set to True to enable debug messages
+        # Get collision map data once per frame for performance from Map System
+        collision_map_data = self.map_system.get_collision_map_data()
 
-            if debug_mode:
-                from debug_utils import debug_manager
-                debug_manager.log(f"Player position: ({self.player.rect.centerx}, {self.player.rect.centery})", "player")
-
-            # Pass player position and collision data to enemy manager
-            self.enemy_manager.update(
-                self.player.rect.centerx,
-                self.player.rect.centery,
-                collision_handler=self.collision_handler,
-                tile_mapping=self.expanded_mapping,
-                map_data=self.map_data
+        # Update player character using the modularized player system
+        if self.player_system.get_player() and self.collision_handler:
+            # Check if player died this frame (reuse collision_map_data)
+            player_died = self.player_system.update_player(
+                self.collision_handler, self.expanded_mapping, collision_map_data
             )
 
-            # Check for enemy-player collisions and apply knockback
-            # Pass collision handler and map data to prevent going through walls
-            if hasattr(self, 'layers') and self.layers:
-                self.enemy_manager.check_player_collisions(
-                    self.player,
-                    collision_handler=self.collision_handler,
-                    tile_mapping=self.expanded_mapping,
-                    map_data=self.map_data
-                )
-
-            # Check if player's attack hits any enemies
-            self.enemy_manager.check_player_attacks(
-                self.player,
-                collision_handler=self.collision_handler,
-                tile_mapping=self.expanded_mapping,
-                map_data=self.map_data
-            )
-
-        # Update player character if it exists
-        if self.player:
-            # Check if player is dead and death animation is complete
-            if self.player.is_dead and self.player.death_animation_complete and not self.show_game_over:
+            if player_died and not self.show_game_over:
                 # Show game over screen
                 self.show_game_over = True
                 return
 
-            # Store original position for collision detection
-            original_x = self.player.rect.x
-            original_y = self.player.rect.y
+            # Get the updated player reference
+            self.player = self.player_system.get_player()
 
-            # Update player (handles input and animation)
-            self.player.update()
+            # Update all game systems using the coordinator
+            game_over_triggered = self.game_systems_coordinator.update_game_systems(
+                self.player, self.collision_handler, self.expanded_mapping,
+                collision_map_data, self.layers
+            )
 
-            # Check for collisions with key items
-            collected_key = self.key_item_manager.check_player_collision(self.player.rect, self.base_grid_cell_size)
-            if collected_key:
-                # Key item collected, add to inventory
-                grid_x, grid_y = collected_key
+            if game_over_triggered and not self.show_game_over:
+                # Show game over screen
+                self.show_game_over = True
+                return
 
-                # Check if we already have a key in the inventory
-                key_slot = -1
-                for i in range(self.hud.inventory.num_slots):
-                    if self.hud.inventory.inventory_items[i] and self.hud.inventory.inventory_items[i]["name"] == "Key":
-                        # Found an existing key, increment its count
-                        key_slot = i
-                        if "count" in self.hud.inventory.inventory_items[i]:
-                            self.hud.inventory.inventory_items[i]["count"] += 1
-                        else:
-                            # First time adding a count to this key
-                            self.hud.inventory.inventory_items[i]["count"] = 2
-                        break
-
-                # If no key was found, add to first empty slot
-                if key_slot == -1:
-                    for i in range(self.hud.inventory.num_slots):
-                        if not self.hud.inventory.inventory_items[i]:
-                            # Add key to this slot with count of 1
-                            self.hud.inventory.inventory_items[i] = {
-                                "name": "Key",
-                                "image": self.animated_tile_manager.get_animated_tile_frame(self.key_item_id),
-                                "count": 1
-                            }
-                            break
-
-                # Remove the key from all map layers
-                self._remove_key_from_map_layers(grid_x, grid_y)
-
-                # Key collection message removed
-
-            # Check for collisions with crystal items
-            collected_crystal = self.crystal_item_manager.check_player_collision(self.player.rect, self.base_grid_cell_size)
-            if collected_crystal:
-                # Crystal item collected, add to inventory
-                grid_x, grid_y = collected_crystal
-
-                # Check if we already have a crystal in the inventory
-                crystal_slot = -1
-                for i in range(self.hud.inventory.num_slots):
-                    if self.hud.inventory.inventory_items[i] and self.hud.inventory.inventory_items[i]["name"] == "Crystal":
-                        # Found an existing crystal, increment its count
-                        crystal_slot = i
-                        if "count" in self.hud.inventory.inventory_items[i]:
-                            self.hud.inventory.inventory_items[i]["count"] += 1
-                        else:
-                            # First time adding a count to this crystal
-                            self.hud.inventory.inventory_items[i]["count"] = 2
-                        break
-
-                # If no crystal was found, add to first empty slot
-                if crystal_slot == -1:
-                    for i in range(self.hud.inventory.num_slots):
-                        if not self.hud.inventory.inventory_items[i]:
-                            # Add crystal to this slot with count of 1
-                            self.hud.inventory.inventory_items[i] = {
-                                "name": "Crystal",
-                                "image": self.animated_tile_manager.get_animated_tile_frame(self.crystal_item_id),
-                                "count": 1
-                            }
-                            break
-
-                # Remove the crystal from all map layers
-                self._remove_crystal_from_map_layers(grid_x, grid_y)
-
-            # Check for collisions with entrance points (commented out as entrance_handler is not implemented)
-            # entrance = self.entrance_handler.check_player_collision(self.player.rect)
-            # if entrance:
-            #     # Print the name of the entrance point
-            #     print(f"Player touched entrance: {entrance['name']}")
-
-            # Check for collisions with relation points
-            relation = self.relation_handler.check_player_collision(self.player.rect)
+            # Check for teleportation using the coordinator
+            relation = self.game_systems_coordinator.handle_teleportation_check(self.player)
             if relation:
                 # Player touched a relation point, teleport to the corresponding point in the other map
                 print(f"Player touched relation point: {relation['from_point']} -> {relation['to_point']} in map {relation['to_map']}")
                 print(f"Teleporting to position: {relation['to_position']}")
 
-                # Determine which folder (world) the current map belongs to using the same logic as player_location_tracker
-                current_folder_name = self.player_location_tracker._determine_folder_name(self.map_name)
-
-                print(f"DEBUG: Saving player location for world {current_folder_name}, map {self.map_name}")
-
-                # Save the current player position for the current map and world
-                self.player_location_tracker.save_location(
-                    self.map_name,
-                    self.player.rect.x,
-                    self.player.rect.y,
-                    self.player.direction,
-                    self.player.current_health,
-                    self.player.shield_durability,
-                    current_folder_name
-                )
+                # Save the current player position using the player system
+                self.player_system.save_player_location(self.map_name, self.player_location_tracker)
                 print(f"Saved player location for map {self.map_name}: ({self.player.rect.x}, {self.player.rect.y}, {self.player.direction})")
 
                 # Save the current game state before teleporting
@@ -1200,21 +1004,8 @@ class PlayScreen(BaseScreen):
                     self.player.rect.centerx = point_center_x
                     self.player.rect.centery = point_center_y
 
-                    # Determine which folder (world) the target map belongs to using the same logic as player_location_tracker
-                    target_folder_name = self.player_location_tracker._determine_folder_name(target_map)
-
-                    print(f"DEBUG: Saving player location for world {target_folder_name}, map {target_map}")
-
-                    # Save this position to the player_location_tracker
-                    self.player_location_tracker.save_location(
-                        target_map,
-                        self.player.rect.x,
-                        self.player.rect.y,
-                        self.player.direction,
-                        self.player.current_health,
-                        self.player.shield_durability,
-                        target_folder_name
-                    )
+                    # Save this position using the player system
+                    self.player_system.save_player_location(target_map, self.player_location_tracker)
                     print(f"DEBUG: Saved teleport position for map {target_map}: ({self.player.rect.x}, {self.player.rect.y}, {self.player.direction})")
 
                     # Reset movement states
@@ -1239,34 +1030,20 @@ class PlayScreen(BaseScreen):
                     self.player.update_position()
 
                     # Update camera to center on player using zoom-aware positioning
-                    # When zoomed, the effective screen size in logical coordinates is smaller
-                    effective_screen_width = self.width / self.zoom_factor
-                    effective_screen_height = self.height / self.zoom_factor
-
-                    self.camera_x = self.player.rect.centerx - (effective_screen_width // 2)
-                    self.camera_y = self.player.rect.centery - (effective_screen_height // 2)
+                    # Use pre-calculated effective screen size for performance
+                    self.camera_x = self.player.rect.centerx - (self.effective_screen_width // 2)
+                    self.camera_y = self.player.rect.centery - (self.effective_screen_height // 2)
 
                     # Clamp camera to map boundaries using base grid size (logical coordinates)
-                    max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-                    max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
+                    max_camera_x = max(0, self.map_width * self.base_grid_cell_size - self.effective_screen_width)
+                    max_camera_y = max(0, self.map_height * self.base_grid_cell_size - self.effective_screen_height)
                     self.camera_x = max(0, min(self.camera_x, max_camera_x))
                     self.camera_y = max(0, min(self.camera_y, max_camera_y))
                     print(f"Camera position: ({self.camera_x}, {self.camera_y})")
 
                     # No teleport message
 
-            # Check for collisions with solid tile corners
-            if hasattr(self, 'layers') and self.layers:
-                # Use the merged map_data for collision detection
-                if self.collision_handler.check_collision(self.player.rect, self.expanded_mapping, self.map_data):
-                    # Collision detected, revert to original position
-                    self.player.rect.x = original_x
-                    self.player.rect.y = original_y
-
-                    # If player is being knocked back, reduce knockback velocity to prevent getting stuck
-                    if self.player.is_knocked_back:
-                        self.player.knockback_velocity[0] *= 0.5
-                        self.player.knockback_velocity[1] *= 0.5
+            # Collision detection is now handled by the PlayerSystem
 
             # Update camera to follow player smoothly
             # Center camera on player
@@ -1274,16 +1051,13 @@ class PlayScreen(BaseScreen):
             player_center_y = self.player.rect.centery
 
             # Calculate desired camera position (centered on player)
-            # When zoomed, the effective screen size in logical coordinates is smaller
-            effective_screen_width = self.width / self.zoom_factor
-            effective_screen_height = self.height / self.zoom_factor
-
-            target_camera_x = player_center_x - (effective_screen_width // 2)
-            target_camera_y = player_center_y - (effective_screen_height // 2)
+            # Use pre-calculated effective screen size for performance
+            target_camera_x = player_center_x - (self.effective_screen_width // 2)
+            target_camera_y = player_center_y - (self.effective_screen_height // 2)
 
             # Clamp camera to map boundaries (use base grid size for logical coordinates)
-            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
+            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - self.effective_screen_width)
+            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - self.effective_screen_height)
 
             # Ensure target is within map boundaries
             target_camera_x = max(0, min(target_camera_x, max_camera_x))
@@ -1308,31 +1082,15 @@ class PlayScreen(BaseScreen):
 
         # Draw map tiles with depth - first two layers, then player, then remaining layers
         if hasattr(self, 'layers') and self.layers:
-            # Draw first layer (layer 0)
-            if len(self.layers) > 0 and self.layers[0]["visible"]:
-                self.draw_single_map_layer(surface, 0)
+            # Use optimized rendering for first two layers
+            self._draw_layered_map_optimized_range(surface, 0, 1)
 
-                # Draw key item collection animations for first layer
-                self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 0)
-
-                # Draw crystal item collection animations for first layer
-                self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 0)
-
-                # Draw lootchest animations for first layer
-                self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 0)
-
-            # Draw second layer (layer 1)
-            if len(self.layers) > 1 and self.layers[1]["visible"]:
-                self.draw_single_map_layer(surface, 1)
-
-                # Draw key item collection animations for second layer
-                self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 1)
-
-                # Draw crystal item collection animations for second layer
-                self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 1)
-
-                # Draw lootchest animations for second layer
-                self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, 1)
+            # Draw key item collection animations for first two layers
+            for layer_idx in range(min(2, len(self.layers))):
+                if self.layers[layer_idx]["visible"]:
+                    self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+                    self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+                    self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
 
             # Draw enemies
             self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
@@ -1344,21 +1102,16 @@ class PlayScreen(BaseScreen):
             # Draw relation points
             self.relation_handler.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
 
-            # Draw remaining layers (2 to max) on top of player
-            for layer_idx in range(2, len(self.layers)):
-                layer = self.layers[layer_idx]
-                if layer["visible"]:
-                    # Draw the layer
-                    self.draw_single_map_layer(surface, layer_idx)
+            # Draw remaining layers (2 to max) on top of player using optimized rendering
+            if len(self.layers) > 2:
+                self._draw_layered_map_optimized_range(surface, 2, len(self.layers) - 1)
 
-                    # Draw key item collection animations for this layer
-                    self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-
-                    # Draw crystal item collection animations for this layer
-                    self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-
-                    # Draw lootchest animations for this layer
-                    self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+                # Draw key item collection animations for remaining layers
+                for layer_idx in range(2, len(self.layers)):
+                    if self.layers[layer_idx]["visible"]:
+                        self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+                        self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+                        self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
         else:
             # Fallback for maps without layers
             self.draw_map(surface, skip_player_enemy_tiles=True)
@@ -1450,11 +1203,11 @@ class PlayScreen(BaseScreen):
 
         layer_data = layer["data"]
 
-        # Calculate visible area - use base grid size for logical coordinates
+        # Calculate visible area - optimized using pre-calculated values
         start_x = int(self.camera_x // self.base_grid_cell_size)
-        end_x = min(self.map_width, start_x + (self.width // self.base_grid_cell_size) + 2)
+        end_x = min(self.map_width, start_x + int(self.effective_screen_width // self.base_grid_cell_size) + 2)
         start_y = int(self.camera_y // self.base_grid_cell_size)
-        end_y = min(self.map_height, start_y + (self.height // self.base_grid_cell_size) + 2)
+        end_y = min(self.map_height, start_y + int(self.effective_screen_height // self.base_grid_cell_size) + 2)
 
         # Draw visible tiles in this layer
         for y in range(start_y, end_y):
@@ -1500,12 +1253,12 @@ class PlayScreen(BaseScreen):
                         "character/char_shield_" in path):
                         continue
 
-                # Calculate screen position - use logical coordinates then scale for zoom
-                # First calculate logical position
+                # Calculate screen position - proper logical to screen coordinate conversion
+                # First calculate logical position using base grid size
                 logical_x = x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
                 logical_y = y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
 
-                # Scale for zoom
+                # Scale for zoom using pre-calculated zoom factor
                 screen_x = logical_x * self.zoom_factor
                 screen_y = logical_y * self.zoom_factor
 
@@ -1523,9 +1276,13 @@ class PlayScreen(BaseScreen):
                     if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
                         continue
 
-                # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
+                # Check if this is a lootchest item - only skip if it's currently opening or opened
                 if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                    continue  # Skip drawing - lootchest_manager handles this
+                    # Only skip drawing if this lootchest is currently opening or already opened
+                    chest_pos = (x, y)
+                    if (chest_pos in self.lootchest_manager.opening_chests or
+                        chest_pos in self.lootchest_manager.opened_chests):
+                        continue  # Skip drawing - lootchest_manager handles opening/opened states
 
 
 
@@ -1534,12 +1291,11 @@ class PlayScreen(BaseScreen):
                     # Get the current frame of the animated tile
                     frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
                     if frame:
-                        # Use cached scaling for better performance
-                        if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
-                            # Create a temporary path for caching (use tile_id as identifier)
-                            cache_key = f"animated_tile_{tile_id}_{self.animated_tile_manager.get_current_frame_index(tile_id)}"
-                            # For now, scale directly but this could be optimized further
-                            scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                        # For animated tiles, don't cache the scaled frames since they change every update
+                        # Instead, scale them directly each time to ensure animation works
+                        tile_size = (self.grid_cell_size, self.grid_cell_size)
+                        if frame.get_size() != tile_size:
+                            scaled_frame = pygame.transform.scale(frame, tile_size)
                         else:
                             scaled_frame = frame
                         # Draw the animated tile frame
@@ -1588,17 +1344,217 @@ class PlayScreen(BaseScreen):
         pass
 
     def draw_map(self, surface, skip_player_enemy_tiles=False):
-        """Draw the map tiles using the modularized map system"""
-        # Use the map system to render the entire map
-        self.map_system.render_map(
-            surface, self.animated_tile_manager,
-            self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y,
-            skip_player_enemy_tiles
-        )
+        """Draw the map tiles using optimized direct rendering"""
+        # Performance optimization: Use direct rendering to avoid method call overhead
+        if hasattr(self.map_system.processor, 'layers') and self.map_system.processor.layers:
+            # Direct layered rendering - bypass intermediate method calls
+            self._draw_layered_map_optimized(surface, skip_player_enemy_tiles)
+        elif hasattr(self.map_system.processor, 'map_data') and self.map_system.processor.map_data:
+            # Direct legacy rendering - bypass intermediate method calls
+            self._draw_legacy_map_optimized(surface, skip_player_enemy_tiles)
 
         # Handle special item visibility (key items, crystals, lootchests)
         # This needs to be done after rendering to override the map system's rendering
         self._handle_special_item_visibility(surface)
+
+    def _draw_layered_map_optimized_range(self, surface, start_layer, end_layer):
+        """Optimized layered map rendering for a specific range of layers with proper special item handling"""
+        layers = self.map_system.processor.layers
+        tiles = self.map_system.tile_manager.tiles
+
+        # Calculate visible range once
+        visible_left = self.camera_x - self.center_offset_x
+        visible_top = self.camera_y - self.center_offset_y
+        visible_right = visible_left + surface.get_width()
+        visible_bottom = visible_top + surface.get_height()
+
+        # Convert to grid coordinates using base grid size for logical coordinates
+        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
+        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
+        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
+        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
+        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
+
+        # Render specified layer range directly with special item handling
+        for layer_idx in range(start_layer, min(end_layer + 1, len(layers))):
+            layer = layers[layer_idx]
+            if not layer.get("visible", True):
+                continue
+
+            layer_data = layer["data"]
+
+            # Direct tile rendering loop with special item checks
+            for grid_y in range(int(start_y), min(int(end_y), len(layer_data))):
+                row = layer_data[grid_y]
+                for grid_x in range(int(start_x), min(int(end_x), len(row))):
+                    tile_id = row[grid_x]
+
+                    if tile_id != -1:  # -1 means empty tile
+                        # Skip player and enemy tiles
+                        if str(tile_id) in self.expanded_mapping:
+                            path = self.expanded_mapping[str(tile_id)].get("path", "")
+                            if ("Enemies_Sprites/Phantom_Sprites" in path or
+                                "Enemies_Sprites/Bomberplant_Sprites" in path or
+                                "Enemies_Sprites/Spinner_Sprites" in path or
+                                "character/char_idle_" in path or
+                                "character/char_run_" in path or
+                                "character/char_attack_" in path or
+                                "character/char_hit_" in path or
+                                "character/char_shield_" in path):
+                                continue
+
+                        # Check special items
+                        if hasattr(self, 'key_item_id') and tile_id == self.key_item_id:
+                            if (grid_x, grid_y) in self.key_item_manager.collected_items or not self.key_item_manager.should_draw_key_item(grid_x, grid_y):
+                                continue
+
+                        if hasattr(self, 'crystal_item_id') and tile_id == self.crystal_item_id:
+                            if (grid_x, grid_y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(grid_x, grid_y):
+                                continue
+
+                        if hasattr(self, 'lootchest_item_id') and tile_id == self.lootchest_item_id:
+                            # Only skip drawing if this lootchest is currently opening or already opened
+                            chest_pos = (grid_x, grid_y)
+                            if (chest_pos in self.lootchest_manager.opening_chests or
+                                chest_pos in self.lootchest_manager.opened_chests):
+                                continue  # Skip drawing - lootchest_manager handles opening/opened states
+
+                        # Calculate screen position - proper logical to screen coordinate conversion
+                        logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
+                        logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
+                        screen_x = logical_x * self.zoom_factor
+                        screen_y = logical_y * self.zoom_factor
+
+                        # Render tile directly
+                        self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
+
+    def _draw_layered_map_optimized(self, surface, skip_player_enemy_tiles=False):
+        """Optimized layered map rendering with minimal method call overhead"""
+        layers = self.map_system.processor.layers
+        tiles = self.map_system.tile_manager.tiles
+        expanded_mapping = self.map_system.processor.expanded_mapping
+
+        # Calculate visible range once
+        visible_left = self.camera_x - self.center_offset_x
+        visible_top = self.camera_y - self.center_offset_y
+        visible_right = visible_left + surface.get_width()
+        visible_bottom = visible_top + surface.get_height()
+
+        # Convert to grid coordinates using base grid size for logical coordinates
+        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
+        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
+        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
+        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
+        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
+
+        # Render all layers directly
+        for layer in layers:
+            if not layer.get("visible", True):
+                continue
+
+            layer_data = layer["data"]
+
+            # Direct tile rendering loop - no method calls
+            for grid_y in range(int(start_y), min(int(end_y), len(layer_data))):
+                row = layer_data[grid_y]
+                for grid_x in range(int(start_x), min(int(end_x), len(row))):
+                    tile_id = row[grid_x]
+
+                    if tile_id != -1:  # -1 means empty tile
+                        # Skip player/enemy tiles if requested
+                        if skip_player_enemy_tiles and self._is_player_or_enemy_tile(tile_id):
+                            continue
+
+                        # Calculate screen position - proper logical to screen coordinate conversion
+                        logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
+                        logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
+                        screen_x = logical_x * self.zoom_factor
+                        screen_y = logical_y * self.zoom_factor
+
+                        # Render tile directly
+                        self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
+
+    def _draw_legacy_map_optimized(self, surface, skip_player_enemy_tiles=False):
+        """Optimized legacy map rendering with minimal method call overhead"""
+        map_data = self.map_system.processor.map_data
+        tiles = self.map_system.tile_manager.tiles
+
+        # Calculate visible range once
+        visible_left = self.camera_x - self.center_offset_x
+        visible_top = self.camera_y - self.center_offset_y
+        visible_right = visible_left + surface.get_width()
+        visible_bottom = visible_top + surface.get_height()
+
+        # Convert to grid coordinates using base grid size for logical coordinates
+        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
+        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
+        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
+        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
+        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
+
+        # Direct tile rendering loop - no method calls
+        for grid_y in range(int(start_y), min(int(end_y), len(map_data))):
+            row = map_data[grid_y]
+            for grid_x in range(int(start_x), min(int(end_x), len(row))):
+                tile_id = row[grid_x]
+
+                if tile_id != -1:  # -1 means empty tile
+                    # Skip player/enemy tiles if requested
+                    if skip_player_enemy_tiles and self._is_player_or_enemy_tile(tile_id):
+                        continue
+
+                    # Calculate screen position - proper logical to screen coordinate conversion
+                    logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
+                    logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
+                    screen_x = logical_x * self.zoom_factor
+                    screen_y = logical_y * self.zoom_factor
+
+                    # Render tile directly
+                    self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
+
+    def _render_tile_direct(self, surface, tile_id, screen_x, screen_y, tiles):
+        """Direct tile rendering with optimized caching"""
+        # Check if this is an animated tile
+        if self.animated_tile_manager.is_animated_tile_id(tile_id):
+            # Get the current frame of the animated tile
+            frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
+            if frame:
+                # For animated tiles, don't cache the scaled frames since they change every update
+                # Instead, scale them directly each time to ensure animation works
+                tile_size = (self.grid_cell_size, self.grid_cell_size)
+                if frame.get_size() != tile_size:
+                    scaled_frame = pygame.transform.scale(frame, tile_size)
+                else:
+                    scaled_frame = frame
+                # Draw the animated tile frame
+                surface.blit(scaled_frame, (screen_x, screen_y))
+        # Draw the tile if we have it loaded
+        elif tile_id in tiles:
+            # Use sprite cache for scaled tiles to improve performance
+            tile_size = (self.grid_cell_size, self.grid_cell_size)
+            if tiles[tile_id].get_size() != tile_size:
+                # Create a cache key for static tiles
+                cache_key = (f"static_tile_{tile_id}", self.grid_cell_size)
+
+                # Check if we have this scaled version cached
+                if cache_key in sprite_cache._scaled_cache:
+                    scaled_tile = sprite_cache._scaled_cache[cache_key]
+                else:
+                    # If not in cache, scale and cache it
+                    scaled_tile = pygame.transform.scale(tiles[tile_id], tile_size)
+                    # Store in cache with proper key format
+                    sprite_cache._scaled_cache[cache_key] = scaled_tile
+            else:
+                scaled_tile = tiles[tile_id]
+            surface.blit(scaled_tile, (screen_x, screen_y))
+
+
+
+    def _is_player_or_enemy_tile(self, tile_id: int) -> bool:
+        """Check if a tile ID represents a player or enemy tile"""
+        # This would need to be implemented based on your tile ID ranges
+        # For now, return False as a placeholder
+        return False
 
     def handle_common_events(self, event, mouse_pos):
         """Override handle_common_events to add auto-save when clicking back button"""
@@ -1790,23 +1746,9 @@ class PlayScreen(BaseScreen):
         # Save character inventory separately
         inventory_success, inventory_error_message = self.save_character_inventory()
 
-        # Save current player location for the current map
-        if self.player and self.map_name:
-            # Determine which folder (world) the current map belongs to using the same logic as player_location_tracker
-            current_folder_name = self.player_location_tracker._determine_folder_name(self.map_name)
-
-            print(f"DEBUG: Saving player location for world {current_folder_name}, map {self.map_name}")
-
-            # Save the current player position for the current map and world
-            self.player_location_tracker.save_location(
-                self.map_name,
-                self.player.rect.x,
-                self.player.rect.y,
-                self.player.direction,
-                self.player.current_health,
-                self.player.shield_durability,
-                current_folder_name
-            )
+        # Save current player location using the player system
+        if self.player_system.get_player() and self.map_name:
+            self.player_system.save_player_location(self.map_name, self.player_location_tracker)
             # Save to file
             self.player_location_tracker.save_to_file()
 
@@ -2008,15 +1950,10 @@ class PlayScreen(BaseScreen):
         """
         print(f"PlayScreen.on_chest_opened called with chest_pos={chest_pos}")
 
-        # Make sure chest_contents is a list
-        if not isinstance(chest_contents, list):
-            print(f"Warning: chest_contents is not a list, it's a {type(chest_contents)}")
-            chest_contents = []
-
-        # If chest_contents is empty, initialize with empty slots
-        if not chest_contents:
-            print("Chest contents is empty, initializing with empty slots")
-            chest_contents = [None] * 60  # 10x6 grid
+        # Use game systems coordinator to handle chest opening
+        chest_contents = self.game_systems_coordinator.handle_chest_opened_callback(
+            chest_pos, chest_contents
+        )
 
         print(f"Chest contents has {len(chest_contents)} items")
 
@@ -2096,9 +2033,7 @@ class PlayScreen(BaseScreen):
 
             self.player_inventory.slot_rects[i] = pygame.Rect(x, y, self.player_inventory.slot_size, self.player_inventory.slot_size)
 
-        # Show the chest inventory with whatever contents it has (even if empty)
-        # Position it side-by-side with the player inventory
-        self.chest_inventory.show(chest_pos, chest_contents, self.player_inventory)
+        # Chest inventory is already shown above - no need to show it again
 
 
 
@@ -2151,49 +2086,12 @@ class PlayScreen(BaseScreen):
         if not lootchest_id:
             return False
 
-        # Calculate grid position from mouse position
-        # Convert screen coordinates to world coordinates accounting for zoom
-        # When zoomed, screen coordinates need to be divided by zoom factor
-        world_mouse_x = mouse_pos[0] / self.zoom_factor
-        world_mouse_y = mouse_pos[1] / self.zoom_factor
-
-        # Adjust for camera position and center offset
-        # Use base grid size for logical coordinates
-        adjusted_mouse_x = world_mouse_x + self.camera_x - self.center_offset_x
-        adjusted_mouse_y = world_mouse_y + self.camera_y - self.center_offset_y
-        grid_x = int(adjusted_mouse_x // self.base_grid_cell_size)
-        grid_y = int(adjusted_mouse_y // self.base_grid_cell_size)
-        position = (grid_x, grid_y)
-
-        # Use exact position matching for cursor changes - no search range
-        # We want the cursor to change only when directly over a chest
-
-
-
-        # First check if this position is in the lootchests dictionary
-        if position in self.lootchest_manager.lootchests:
-            # Found a lootchest at this position in the lootchests dictionary
-            return True
-
-        # Check if this position is in the opened chests list
-        # This ensures we detect opened chests even if they've been replaced in the layer data
-        if position in self.lootchest_manager.opened_chests:
-            return True
-
-        # Check each layer for a lootchest at this position
-        for layer_idx, layer in enumerate(self.layers):
-            layer_data = layer["data"]
-            if 0 <= grid_y < len(layer_data) and 0 <= grid_x < len(layer_data[grid_y]):
-                # Check if this is a lootchest and at the mouse position
-                if layer_data[grid_y][grid_x] == lootchest_id:
-                    # Found a lootchest at the mouse position
-                    return True
-
-        # For cursor changes, we only want exact position matches
-        # No nearby chest detection for cursor changes
-        # This ensures the cursor only changes when directly over a chest
-
-        return False
+        # Use game systems coordinator to check lootchest position
+        return self.game_systems_coordinator.check_lootchest_at_position(
+            mouse_pos, self.camera_x, self.camera_y,
+            self.center_offset_x, self.center_offset_y,
+            self.zoom_factor_inv, self.layers, lootchest_id
+        )
 
     def resize(self, new_width, new_height):
         """Handle screen resize"""

@@ -14,7 +14,7 @@ from menu import SplashScreen
 from gameplay.settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from gameplay.play_screen import PlayScreen
-from gameplay.map_select import WorldSelectScreen
+from playscreen_components.map_system import WorldSelectScreen
 from debug_utils import debug_manager
 from performance_monitor import performance_monitor
 

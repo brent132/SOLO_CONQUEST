@@ -18,7 +18,7 @@ from game_core.settings import *
 from game_core.menu import SplashScreen
 from game_core.gameplay.settings_screen import SettingsScreen
 from game_core.gameplay.play_screen import PlayScreen
-from game_core.gameplay.map_select import WorldSelectScreen
+from game_core.playscreen_components.map_system import WorldSelectScreen
 from game_core.debug_utils import debug_manager
 from game_core.performance_monitor import performance_monitor
 
@@ -219,7 +219,7 @@ class GameplayApp:
                     # Reset teleportation flags before loading the map
                     self.play_screen.is_teleporting = False
                     self.play_screen.teleport_info = None
-                    if hasattr(self.play_screen, 'relation_handler'):
+                    if hasattr(self.play_screen, 'relation_handler') and self.play_screen.relation_handler:
                         self.play_screen.relation_handler.current_teleport_point = None
 
                     # Load the selected map

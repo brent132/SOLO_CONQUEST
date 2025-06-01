@@ -351,6 +351,8 @@ class LootchestManager:
         base_grid_size = 16
         zoom_factor = grid_cell_size / base_grid_size
 
+
+
         # Draw opening animations for this layer
         for pos, chest_data in self.opening_chests.items():
             # Skip if not on this layer

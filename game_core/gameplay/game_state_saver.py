@@ -263,14 +263,10 @@ class GameStateSaver:
                 f.write('    },\n')
             else:
                 f.write('    }\n')
-        f.write('  ],\n')
+        f.write('  ]')
 
-        # Write collision_data with proper indentation
-        f.write('  "collision_data": ')
-        collision_data_json = json.dumps(map_data["collision_data"], indent=4)
-        # Adjust indentation to match the structure
-        collision_data_json = collision_data_json.replace('\n', '\n  ')
-        f.write(collision_data_json)
+        # Collision data is now stored globally, not in individual map files
+        # Skip writing collision_data to map files
 
         # Write other sections if they exist
         sections_to_write = []

@@ -5,7 +5,7 @@ import os
 import json
 import pygame
 from base_screen import BaseScreen
-from gameplay.world_manager import WorldManager
+from .world_manager import WorldManager
 
 class WorldItem:
     """Button-like item for a world in the selection screen"""

@@ -138,35 +138,12 @@
       0,
       1
     ],
-    "Tilesets/Overworld\\tile137.png": [
-      0,
-      1
-    ],
-    "Tilesets/Overworld\\tile138.png": [
-      0,
-      1
-    ],
-    "Tilesets/Overworld\\tile139.png": [
-      0,
-      2
-    ],
     "Tilesets/Overworld\\tile153.png": [
       1
     ],
     "Tilesets/Overworld\\tile154.png": [
       0,
       1
-    ],
-    "Tilesets/Overworld\\tile155.png": [
-      0,
-      1
-    ],
-    "Tilesets/Overworld\\tile156.png": [
-      0,
-      1
-    ],
-    "Tilesets/Overworld\\tile157.png": [
-      0
     ],
     "Tilesets/Dungeon\\tile001.png": [
       1,
@@ -183,6 +160,20 @@
       1,
       2,
       3
+    ],
+    "Tilesets/Overworld\\tile137.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile138.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile139.png": [
+      0
+    ],
+    "Tilesets/Overworld\\tile157.png": [
+      0
     ]
   }
 }

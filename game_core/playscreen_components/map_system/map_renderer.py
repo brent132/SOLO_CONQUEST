@@ -126,8 +126,19 @@ class MapRenderer:
             frame = animated_tile_manager.get_animated_tile_frame(tile_id)
             if frame:
                 # Use cached scaling for better performance
-                if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
-                    scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                tile_size = (self.grid_cell_size, self.grid_cell_size)
+                if frame.get_size() != tile_size:
+                    # Create a zoom-aware cache key for animated tiles
+                    cache_key = (f"animated_tile_{tile_id}", self.grid_cell_size)
+
+                    # Check if we have this scaled version cached
+                    if cache_key in sprite_cache._scaled_cache:
+                        scaled_frame = sprite_cache._scaled_cache[cache_key]
+                    else:
+                        # If not in cache, scale and cache it
+                        scaled_frame = pygame.transform.scale(frame, tile_size)
+                        # Store in cache with proper key format
+                        sprite_cache._scaled_cache[cache_key] = scaled_frame
                 else:
                     scaled_frame = frame
                 # Draw the animated tile frame
@@ -164,14 +175,15 @@ class MapRenderer:
         visible_top = camera_y - center_offset_y
         visible_right = visible_left + surface.get_width()
         visible_bottom = visible_top + surface.get_height()
-        
-        # Convert to grid coordinates with some padding for smooth scrolling
-        padding = 2
+
+        # Convert to grid coordinates with minimal padding for better performance
+        # Reduce padding when zoomed to avoid rendering too many tiles
+        padding = max(1, 3 - int(self.grid_cell_size / 16))  # Less padding at higher zoom
         start_x = max(0, (visible_left // self.grid_cell_size) - padding)
         end_x = (visible_right // self.grid_cell_size) + padding + 1
         start_y = max(0, (visible_top // self.grid_cell_size) - padding)
         end_y = (visible_bottom // self.grid_cell_size) + padding + 1
-        
+
         return int(start_x), int(end_x), int(start_y), int(end_y)
     
     def render_legacy_map(self, surface: pygame.Surface, map_data: List,
@@ -226,14 +238,36 @@ class MapRenderer:
         if animated_tile_manager.is_animated_tile_id(tile_id):
             frame = animated_tile_manager.get_animated_tile_frame(tile_id)
             if frame:
-                if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
-                    scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
+                tile_size = (self.grid_cell_size, self.grid_cell_size)
+                if frame.get_size() != tile_size:
+                    # Create a zoom-aware cache key for animated tiles
+                    cache_key = (f"animated_tile_{tile_id}", self.grid_cell_size)
+
+                    # Check if we have this scaled version cached
+                    if cache_key in sprite_cache._scaled_cache:
+                        scaled_frame = sprite_cache._scaled_cache[cache_key]
+                    else:
+                        # If not in cache, scale and cache it
+                        scaled_frame = pygame.transform.scale(frame, tile_size)
+                        # Store in cache with proper key format
+                        sprite_cache._scaled_cache[cache_key] = scaled_frame
                 else:
                     scaled_frame = frame
                 surface.blit(scaled_frame, (screen_x, screen_y))
         elif tile_id in tiles:
-            if tiles[tile_id].get_size() != (self.grid_cell_size, self.grid_cell_size):
-                scaled_tile = pygame.transform.scale(tiles[tile_id], (self.grid_cell_size, self.grid_cell_size))
+            tile_size = (self.grid_cell_size, self.grid_cell_size)
+            if tiles[tile_id].get_size() != tile_size:
+                # Create a cache key for static tiles
+                cache_key = (f"static_tile_{tile_id}", self.grid_cell_size)
+
+                # Check if we have this scaled version cached
+                if cache_key in sprite_cache._scaled_cache:
+                    scaled_tile = sprite_cache._scaled_cache[cache_key]
+                else:
+                    # If not in cache, scale and cache it
+                    scaled_tile = pygame.transform.scale(tiles[tile_id], tile_size)
+                    # Store in cache with proper key format
+                    sprite_cache._scaled_cache[cache_key] = scaled_tile
             else:
                 scaled_tile = tiles[tile_id]
             surface.blit(scaled_tile, (screen_x, screen_y))
