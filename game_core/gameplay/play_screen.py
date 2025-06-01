@@ -16,6 +16,7 @@ from gameplay.crystal_item_manager import CrystalItemManager
 from gameplay.lootchest_manager import LootchestManager
 from gameplay.chest_inventory import ChestInventory
 from gameplay.player_inventory import PlayerInventory
+from playscreen_components.map_system import MapSystem
 from enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
@@ -71,6 +72,9 @@ class PlayScreen(BaseScreen):
 
         # Animated tiles manager
         self.animated_tile_manager = AnimatedTileManager()
+
+        # Initialize the modularized map system
+        self.map_system = MapSystem(self.grid_cell_size)
 
         # Key item manager
         self.key_item_manager = KeyItemManager()
@@ -139,7 +143,7 @@ class PlayScreen(BaseScreen):
         self.load_custom_cursor()
 
     def load_map(self, map_name):
-        """Load a map from file"""
+        """Load a map from file using the modularized map system"""
         # Reset the enemy manager to clear all enemies from the previous map
         self.enemy_manager.enemies = []
 
@@ -149,88 +153,40 @@ class PlayScreen(BaseScreen):
 
         self.map_name = map_name
 
-        # Get the current working directory
-        current_dir = os.getcwd()
-        print(f"Current working directory when loading map: {current_dir}")
+        # Use the modularized map system to load the map
+        success, error_msg = self.map_system.load_map(map_name, self.animated_tile_manager)
 
-        # Try to find the Maps directory
-        # First check if Maps is in the current directory
-        if os.path.exists(os.path.join(current_dir, "Maps")):
-            maps_dir = os.path.join(current_dir, "Maps")
-        # Then check if Maps is in the parent directory (for when running from a subdirectory)
-        elif os.path.exists(os.path.join(current_dir, "..", "Maps")):
-            maps_dir = os.path.join(current_dir, "..", "Maps")
-        # Then check if Maps is in the grandparent directory (for when running from a sub-subdirectory)
-        elif os.path.exists(os.path.join(current_dir, "..", "..", "Maps")):
-            maps_dir = os.path.join(current_dir, "..", "..", "Maps")
-        else:
-            # Default to the relative path
-            maps_dir = "Maps"
+        if not success:
+            self.status_message = f"Error loading map: {error_msg}"
+            self.status_timer = 180
+            return False
 
-        print(f"Using Maps directory when loading map: {maps_dir}")
+        # Get map information from the map system
+        map_info = self.map_system.get_map_info()
+        self.map_width, self.map_height = self.map_system.get_map_dimensions()
 
-        # Try to find the map file - it could be a main map or a related map
-        # First check if it's a main map
-        main_map_path = os.path.join(maps_dir, map_name, f"{map_name}.json")
-        print(f"DEBUG: Requested map name: '{map_name}'")
-        print(f"DEBUG: Checking for main map file at: {main_map_path}")
+        # Get the raw map data for compatibility with existing systems
+        map_data = self.map_system.get_current_map_data()
 
-        if os.path.exists(main_map_path):
-            # It's a main map
-            map_path = main_map_path
-            print(f"DEBUG: Found main map file: {map_path}")
-        else:
-            # It might be a related map, search in all map folders
-            map_path = None
-            print(f"DEBUG: '{map_name}' is not a main map, searching in folders...")
+        # Update grid size in map system if it has changed
+        self.map_system.set_grid_size(self.grid_cell_size)
 
-            # Check if Maps directory exists
-            if os.path.exists(maps_dir):
-                print(f"Maps directory exists: {maps_dir}")
-                # List all folders in the Maps directory
-                folders = [f for f in os.listdir(maps_dir) if os.path.isdir(os.path.join(maps_dir, f))]
-                print(f"Found folders in Maps directory: {folders}")
+        # For backward compatibility, set up the old attributes that other systems expect
+        self.expanded_mapping = self.map_system.get_expanded_mapping()
+        self.layers = self.map_system.get_layers()
+        self.map_data = self.map_system.get_map_data()
 
-                for folder_name in folders:
-                    folder_path = os.path.join(maps_dir, folder_name)
-                    print(f"Checking folder: {folder_path}")
+        # Set up tiles dictionary for backward compatibility
+        self.tiles = {}
+        for tile_id in range(1000):  # Reasonable range for tile IDs
+            tile_surface = self.map_system.get_tile(tile_id)
+            if tile_surface:
+                self.tiles[tile_id] = tile_surface
 
-                    # List all files in this folder
-                    files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-                    print(f"Files in folder {folder_name}: {files}")
-
-                    # Check if this folder contains our map
-                    related_map_path = os.path.join(folder_path, f"{map_name}.json")
-                    print(f"Checking for related map file at: {related_map_path}")
-
-                    if os.path.exists(related_map_path):
-                        map_path = related_map_path
-                        print(f"Found related map file: {map_path}")
-                        break
-            else:
-                print(f"Maps directory does not exist: {maps_dir}")
-                self.status_message = f"Error: Maps directory not found"
-                self.status_timer = 180
-                return False
+        # Scan for special items (key items, crystals, lootchests) in the map layers
+        self._scan_for_special_items()
 
         try:
-            # Check if file exists
-            if not os.path.exists(map_path):
-                self.status_message = f"Error: Map file not found: {map_name}"
-                self.status_timer = 180
-                return False
-
-            print(f"DEBUG: Final map path being loaded: {map_path}")
-            print(f"Loading map data from: {map_path}")
-            # Load map data
-            with open(map_path, 'r') as f:
-                map_data = json.load(f)
-            print(f"DEBUG: Loaded map data - map name in file: '{map_data.get('name', 'UNKNOWN')}'")
-            print(f"DEBUG: Map dimensions: {map_data.get('width', 0)}x{map_data.get('height', 0)}")
-
-            # Store map dimensions
-            self.map_width = map_data.get("width", 0)
-            self.map_height = map_data.get("height", 0)
 
             # Load collision data if available in the map file
             # Note: This is now supplementary to the global collision data
@@ -256,16 +212,8 @@ class PlayScreen(BaseScreen):
             print(f"Current map set to: {self.relation_handler.current_map}")
             print(f"All loaded relation points: {self.relation_handler.relation_points}")
 
-            # Check which format the map is in
-            if "layers" in map_data and "tile_mapping" in map_data:
-                # Layered format - process tile mapping and layers
-                self.process_layered_format_map(map_data)
-            elif "map_data" in map_data and "tile_mapping" in map_data:
-                # Single-layer array format - process tile mapping and map data
-                self.process_new_format_map(map_data)
-            else:
-                # Old format - process tiles directly
-                self.process_old_format_map(map_data)
+            # Map processing is now handled by the MapSystem during load_map call above
+            # No need to process the map format here anymore
 
             # First check if we're teleporting - if so, we'll set the position later
             if not self.is_teleporting:
@@ -426,287 +374,46 @@ class PlayScreen(BaseScreen):
             self.status_timer = 180
             return False
 
-    def process_layered_format_map(self, map_data):
-        """Process a map in the layered format"""
-        # Clear existing tiles
-        self.tiles = {}
+    # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
+    # process_layered_format_map() has been replaced by the modularized map system
 
-        # Process tile mapping
-        tile_mapping = map_data["tile_mapping"]
-        self.expanded_mapping = self._expand_tile_mapping(tile_mapping)
+    # OLD TILE MAPPING METHOD REMOVED - NOW HANDLED BY MapProcessor
 
-        # Load all tile images
-        for tile_id, tile_info in self.expanded_mapping.items():
-            path = tile_info["path"]
-            try:
-                # Skip animated tiles - they're handled separately
-                if not path.startswith("animated:"):
-                    # Skip enemy tiles - they're handled by the enemy manager
-                    # Skip player character tiles - they're handled separately
-                    if ("Enemies_Sprites/Phantom_Sprites" not in path and
-                        "Enemies_Sprites/Bomberplant_Sprites" not in path and
-                        "Enemies_Sprites/Spider_Sprites" not in path and
-                        "Enemies_Sprites/Pinkslime_Sprites" not in path and
-                        "Enemies_Sprites/Pinkbat_Sprites" not in path and
-                        "Enemies_Sprites/Spinner_Sprites" not in path and
-                        "character/char_idle_" not in path):
-                        sprite = sprite_cache.get_sprite(path)
-                        if sprite:
-                            self.tiles[int(tile_id)] = sprite
-                    elif "Enemies_Sprites/Phantom_Sprites" in path:
-                        print(f"Skipping phantom enemy tile: {path}")
-                    elif "Enemies_Sprites/Bomberplant_Sprites" in path:
-                        print(f"Skipping bomberplant enemy tile: {path}")
-                    elif "Enemies_Sprites/Spider_Sprites" in path:
-                        print(f"Skipping spider enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkslime_Sprites" in path:
-                        print(f"Skipping pinkslime enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkbat_Sprites" in path:
-                        print(f"Skipping pinkbat enemy tile: {path}")
-                    elif "Enemies_Sprites/Spinner_Sprites" in path:
-                        print(f"Skipping spinner enemy tile: {path}")
-                    elif "character/char_idle_" in path:
-                        print(f"Skipping player character tile: {path}")
-            except Exception as e:
-                print(f"Error loading tile {path}: {e}")
+    # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
 
-        # Add animated tiles to the expanded_mapping
+    # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
+
+    def _scan_for_special_items(self):
+        """Scan the map layers for special items (keys, crystals, lootchests)"""
+        # Set up item IDs from animated tile manager
         for tile_id, tile_name in self.animated_tile_manager.animated_tile_ids.items():
-            # Add the animated tile to the expanded mapping
-            self.expanded_mapping[str(tile_id)] = {
-                "path": f"animated:{tile_name}",
-                "tileset": -1,  # Special value for animated tiles
-                "animated": True
-            }
-
-            # Check if this is a key item and add it to the key item manager
             if tile_name == "key_item":
                 self.key_item_id = tile_id
-            # Check if this is a crystal item and add it to the crystal item manager
             elif tile_name == "crystal_item":
                 self.crystal_item_id = tile_id
-            # Check if this is a lootchest item and add it to the lootchest manager
             elif tile_name == "lootchest_item":
                 self.lootchest_item_id = tile_id
 
-
-        # Store all layers separately instead of merging them
-        self.layers = []
-        width = map_data.get("width", 0)
-        height = map_data.get("height", 0)
-
-        # Process each layer
-        for layer_idx, layer in enumerate(map_data.get("layers", [])):
-            layer_visible = layer.get("visible", True)
-            layer_data = layer.get("map_data", [])
-
-            # Validate layer_data
-            if not isinstance(layer_data, list) or not layer_data:
-                print(f"Warning: Invalid layer data for layer {layer_idx}")
+        # Scan through all layers for special items
+        for layer_idx, layer in enumerate(self.layers):
+            if not layer.get("visible", True):
                 continue
 
-            # Ensure all rows have the same length
-            row_length = len(layer_data[0]) if layer_data else 0
-            for row_idx, row in enumerate(layer_data):
-                if len(row) != row_length:
-                    print(f"Warning: Row {row_idx} in layer {layer_idx} has inconsistent length")
-                    # Pad or truncate the row to match the expected length
-                    if len(row) < row_length:
-                        layer_data[row_idx] = row + [-1] * (row_length - len(row))
-                    else:
-                        layer_data[row_idx] = row[:row_length]
+            layer_data = layer.get("data", [])
 
-            # Store this layer
-            self.layers.append({
-                "data": layer_data,
-                "visible": layer_visible
-            })
-
-            # Scan for key items in this layer
-            if hasattr(self, 'key_item_id'):
-                for y, row in enumerate(layer_data):
-                    for x, tile_id in enumerate(row):
-                        if tile_id == self.key_item_id:
-                            # Found a key item, add it to the key item manager with layer information
-                            self.key_item_manager.add_key_item(x, y, tile_id, layer_idx)
-
-            # Scan for crystal items in this layer
-            if hasattr(self, 'crystal_item_id'):
-                for y, row in enumerate(layer_data):
-                    for x, tile_id in enumerate(row):
-                        if tile_id == self.crystal_item_id:
-                            # Found a crystal item, add it to the crystal item manager with layer information
-                            self.crystal_item_manager.add_crystal_item(x, y, tile_id, layer_idx)
-
-            # Scan for lootchest items in this layer
-            if hasattr(self, 'lootchest_item_id'):
-                for y, row in enumerate(layer_data):
-                    for x, tile_id in enumerate(row):
-                        if tile_id == self.lootchest_item_id:
-                            # Found a lootchest item, add it to the lootchest manager with layer information
-                            self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
-
-
-
-        # Keep the merged map_data for backward compatibility
-        self.map_data = [[-1 for _ in range(width)] for _ in range(height)]
-        for layer in self.layers:
-            if not layer["visible"]:
-                continue
-            layer_data = layer["data"]
             for y, row in enumerate(layer_data):
-                if y >= height:
-                    continue
                 for x, tile_id in enumerate(row):
-                    if x >= width or tile_id == -1:
-                        continue
-                    # Validate tile_id
-                    try:
-                        tile_id_int = int(tile_id)
-                        # Place the tile in the merged map
-                        self.map_data[y][x] = tile_id_int
-                    except (ValueError, TypeError):
-                        print(f"Warning: Invalid tile ID {tile_id} at position ({x}, {y}) in layer {layer}")
-                        continue
+                    # Check for key items
+                    if hasattr(self, 'key_item_id') and tile_id == self.key_item_id:
+                        self.key_item_manager.add_key_item(x, y, tile_id, layer_idx)
 
-    def _expand_tile_mapping(self, tile_mapping):
-        """Helper method to expand tile mapping patterns"""
-        expanded_mapping = {}
+                    # Check for crystal items
+                    elif hasattr(self, 'crystal_item_id') and tile_id == self.crystal_item_id:
+                        self.crystal_item_manager.add_crystal_item(x, y, tile_id, layer_idx)
 
-        # Expand any loop patterns in the tile mapping
-        for key, value in tile_mapping.items():
-            if isinstance(value, dict) and value.get("type") == "loop":
-                # This is a loop pattern
-                start_id = value["start_id"]
-                count = value["count"]
-                pattern = value["pattern"]
-
-                # Generate all the paths from the pattern
-                for i in range(count):
-                    tile_id = start_id + i
-                    number = pattern["start"] + i
-                    path = f"{pattern['prefix']}{number:0{pattern['digits']}d}{pattern['suffix']}"
-
-                    expanded_mapping[str(tile_id)] = {
-                        "path": path,
-                        "tileset": int(key.split('_')[1]) if key.startswith('tileset_') else 0
-                    }
-            else:
-                # This is a regular mapping
-                expanded_mapping[key] = value
-
-        return expanded_mapping
-
-    def process_new_format_map(self, map_data):
-        """Process a map in the new array-based format"""
-        # Clear existing tiles
-        self.tiles = {}
-
-        # Process tile mapping
-        tile_mapping = map_data["tile_mapping"]
-        self.expanded_mapping = self._expand_tile_mapping(tile_mapping)
-
-        # Load all tile images
-        for tile_id, tile_info in self.expanded_mapping.items():
-            path = tile_info["path"]
-            try:
-                # Skip animated tiles - they're handled separately
-                if not path.startswith("animated:"):
-                    # Skip enemy tiles - they're handled by the enemy manager
-                    # Skip player character tiles - they're handled separately
-                    if ("Enemies_Sprites/Phantom_Sprites" not in path and
-                        "Enemies_Sprites/Bomberplant_Sprites" not in path and
-                        "Enemies_Sprites/Spider_Sprites" not in path and
-                        "Enemies_Sprites/Pinkslime_Sprites" not in path and
-                        "Enemies_Sprites/Pinkbat_Sprites" not in path and
-                        "Enemies_Sprites/Spinner_Sprites" not in path and
-                        "character/char_idle_" not in path):
-                        sprite = sprite_cache.get_sprite(path)
-                        if sprite:
-                            self.tiles[int(tile_id)] = sprite
-                    elif "Enemies_Sprites/Phantom_Sprites" in path:
-                        print(f"Skipping phantom enemy tile: {path}")
-                    elif "Enemies_Sprites/Bomberplant_Sprites" in path:
-                        print(f"Skipping bomberplant enemy tile: {path}")
-                    elif "Enemies_Sprites/Spider_Sprites" in path:
-                        print(f"Skipping spider enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkslime_Sprites" in path:
-                        print(f"Skipping pinkslime enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkbat_Sprites" in path:
-                        print(f"Skipping pinkbat enemy tile: {path}")
-                    elif "Enemies_Sprites/Spinner_Sprites" in path:
-                        print(f"Skipping spinner enemy tile: {path}")
-                    elif "character/char_idle_" in path:
-                        print(f"Skipping player character tile: {path}")
-            except Exception as e:
-                print(f"Error loading tile {path}: {e}")
-
-        # Add animated tiles to the expanded_mapping
-        for tile_id, tile_name in self.animated_tile_manager.animated_tile_ids.items():
-            # Add the animated tile to the expanded mapping
-            self.expanded_mapping[str(tile_id)] = {
-                "path": f"animated:{tile_name}",
-                "tileset": -1,  # Special value for animated tiles
-                "animated": True
-            }
-            print(f"Added animated tile to expanded mapping: {tile_name} with ID {tile_id}")
-
-        # Store the map data
-        self.map_data = map_data["map_data"]
-
-    def process_old_format_map(self, map_data):
-        """Process a map in the old format with individual tile entries"""
-        # Clear existing tiles
-        self.tiles = {}
-
-        # Create a 2D array filled with -1 (empty tile)
-        width = map_data.get("width", 0)
-        height = map_data.get("height", 0)
-        self.map_data = [[-1 for _ in range(width)] for _ in range(height)]
-
-        # Process tiles
-        for key, tile_info in map_data.get("tiles", {}).items():
-            try:
-                # Get position
-                x, y = tile_info.get("position", [0, 0])
-
-                # Load tile image
-                path = tile_info.get("source_path", "")
-                if path and os.path.exists(path):
-                    # Skip player character tiles - they're handled separately
-                    # Skip enemy tiles - they're handled by the enemy manager
-                    if ("Enemies_Sprites/Phantom_Sprites" not in path and
-                        "Enemies_Sprites/Bomberplant_Sprites" not in path and
-                        "Enemies_Sprites/Spider_Sprites" not in path and
-                        "Enemies_Sprites/Pinkslime_Sprites" not in path and
-                        "Enemies_Sprites/Pinkbat_Sprites" not in path and
-                        "Enemies_Sprites/Spinner_Sprites" not in path and
-                        "character/char_idle_" not in path):
-                        # Create a unique ID for this tile
-                        tile_id = len(self.tiles)
-                        sprite = sprite_cache.get_sprite(path)
-                        if sprite:
-                            self.tiles[tile_id] = sprite
-
-                        # Add to map data
-                        if 0 <= x < width and 0 <= y < height:
-                            self.map_data[y][x] = tile_id
-                    elif "Enemies_Sprites/Phantom_Sprites" in path:
-                        print(f"Skipping phantom enemy tile: {path}")
-                    elif "Enemies_Sprites/Bomberplant_Sprites" in path:
-                        print(f"Skipping bomberplant enemy tile: {path}")
-                    elif "Enemies_Sprites/Spider_Sprites" in path:
-                        print(f"Skipping spider enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkslime_Sprites" in path:
-                        print(f"Skipping pinkslime enemy tile: {path}")
-                    elif "Enemies_Sprites/Pinkbat_Sprites" in path:
-                        print(f"Skipping pinkbat enemy tile: {path}")
-                    elif "Enemies_Sprites/Spinner_Sprites" in path:
-                        print(f"Skipping spinner enemy tile: {path}")
-                    elif "character/char_idle_" in path:
-                        print(f"Skipping player character tile: {path}")
-            except Exception as e:
-                print(f"Error processing tile {key}: {e}")
+                    # Check for lootchest items
+                    elif hasattr(self, 'lootchest_item_id') and tile_id == self.lootchest_item_id:
+                        self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
 
     def zoom_in(self):
         """Zoom in to the next zoom level"""
@@ -812,6 +519,10 @@ class PlayScreen(BaseScreen):
     def update_zoom(self):
         """Update grid cell size and collision handler based on current zoom factor"""
         self.grid_cell_size = int(self.base_grid_cell_size * self.zoom_factor)
+
+        # Update the map system's grid size for rendering
+        if hasattr(self, 'map_system'):
+            self.map_system.set_grid_size(self.grid_cell_size)
 
         # Keep collision handler with base grid size (logical coordinates)
         # Collision detection should remain in the original coordinate space
@@ -1020,6 +731,10 @@ class PlayScreen(BaseScreen):
         self.map_width = 0
         self.map_height = 0
         self.tiles = {}
+
+        # Clear the map system
+        if hasattr(self, 'map_system'):
+            self.map_system.clear_map()
 
         # Reset camera
         self.camera_x = 0
@@ -1854,236 +1569,36 @@ class PlayScreen(BaseScreen):
                     surface.blit(scaled_tile, (screen_x, screen_y))
 
     def draw_map_layers(self, surface, start_layer, end_layer):
-        """Draw specific map layers from start_layer to end_layer (inclusive)"""
-        # Only draw if we have map data and layers
-        if not hasattr(self, 'layers') or not self.layers:
-            return
+        """Draw specific map layers using the modularized map system"""
+        # Use the map system to render the specified layer range
+        self.map_system.render_layer_range(
+            surface, start_layer, end_layer, self.animated_tile_manager,
+            self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y
+        )
 
-        # Layer data loaded successfully
+        # Handle special item visibility for these layers
+        self._handle_special_item_visibility(surface)
 
-        # Calculate visible area - convert camera positions to integers
-        start_x = int(self.camera_x // self.grid_cell_size)
-        end_x = min(self.map_width, start_x + (self.width // self.grid_cell_size) + 1)
-        start_y = int(self.camera_y // self.grid_cell_size)
-        end_y = min(self.map_height, start_y + (self.height // self.grid_cell_size) + 1)
-
-        # Ensure layer indices are valid
-        start_layer = max(0, min(start_layer, len(self.layers) - 1))
-        end_layer = max(0, min(end_layer, len(self.layers) - 1))
-
-        # Draw each layer in the specified range
-        for layer_idx in range(start_layer, end_layer + 1):
-            if layer_idx >= len(self.layers):
-                continue
-
-            layer = self.layers[layer_idx]
-            if not layer["visible"]:
-                continue
-
-            layer_data = layer["data"]
-
-            # Draw visible tiles in this layer
-            for y in range(start_y, end_y):
-                if y >= len(layer_data):
-                    continue
-
-                for x in range(start_x, end_x):
-                    if x >= len(layer_data[y]):
-                        continue
-
-                    # Get tile ID at this position
-                    try:
-                        tile_id = layer_data[y][x]
-
-                        # Validate tile_id
-                        if not isinstance(tile_id, int):
-                            # Try to convert to int
-                            try:
-                                tile_id = int(tile_id)
-                            except (ValueError, TypeError):
-                                print(f"Warning: Invalid tile ID {tile_id} at position ({x}, {y}) in layer {layer_idx}")
-                                continue
-
-                        # Skip empty tiles
-                        if tile_id == -1:
-                            continue
-                    except (IndexError, TypeError) as e:
-                        # Skip if the tile is out of bounds or layer_data is not properly formatted
-                        print(f"Warning: Error accessing tile at ({x}, {y}) in layer {layer_idx}: {e}")
-                        continue
-
-                    # Calculate screen position - camera position is already an integer
-                    # Add center offset for small maps
-                    screen_x = x * self.grid_cell_size - self.camera_x + self.center_offset_x
-                    screen_y = y * self.grid_cell_size - self.camera_y + self.center_offset_y
-
-                    # Check if this is a key item and if it should be drawn
-                    if tile_id == self.key_item_id and hasattr(self, 'key_item_id'):
-                        # ALWAYS skip drawing the original key if there's a collection animation in progress
-                        # This is a direct check to ensure the key is never drawn during collection
-                        if (x, y) in self.key_item_manager.collected_items or not self.key_item_manager.should_draw_key_item(x, y):
-                            continue
-
-                    # Check if this is a crystal item and if it should be drawn
-                    if tile_id == self.crystal_item_id and hasattr(self, 'crystal_item_id'):
-                        # ALWAYS skip drawing the original crystal if there's a collection animation in progress
-                        # This is a direct check to ensure the crystal is never drawn during collection
-                        if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
-                            continue
-
-                    # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
-                    if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                        continue  # Skip drawing - lootchest_manager handles this
-
-
-
-                    # Check if this is an animated tile
-                    if self.animated_tile_manager.is_animated_tile_id(tile_id):
-                        # Get the current frame of the animated tile
-                        frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
-                        if frame:
-                            # Use cached scaling for better performance
-                            if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
-                                scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
-                            else:
-                                scaled_frame = frame
-                            # Draw the animated tile frame
-                            surface.blit(scaled_frame, (screen_x, screen_y))
-                    # Draw the tile if we have it loaded
-                    elif tile_id in self.tiles:
-                        # Use sprite cache for scaled tiles to improve performance
-                        tile_size = (self.grid_cell_size, self.grid_cell_size)
-                        if self.tiles[tile_id].get_size() != tile_size:
-                            # Get the original path for this tile from expanded mapping
-                            tile_path = None
-                            for tid, tile_info in self.expanded_mapping.items():
-                                if int(tid) == tile_id:
-                                    tile_path = tile_info["path"]
-                                    break
-
-                            if tile_path and not tile_path.startswith("animated:"):
-                                # Use cached scaling
-                                scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
-                            else:
-                                # Fallback to direct scaling
-                                scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
-                        else:
-                            scaled_tile = self.tiles[tile_id]
-
-                        # Draw the static tile
-                        surface.blit(scaled_tile, (screen_x, screen_y))
+    def _handle_special_item_visibility(self, surface):
+        """Handle visibility of special items (keys, crystals, lootchests) that need custom logic"""
+        # This method handles the special visibility logic that was previously in the old rendering methods
+        # For now, this is a placeholder - the special item managers handle their own visibility
+        # If needed, we can add custom rendering logic here for items that need to be hidden/shown
+        # based on collection state or other conditions
+        pass
 
     def draw_map(self, surface, skip_player_enemy_tiles=False):
-        """Draw the map tiles"""
-        # Only draw if we have map data
-        if not hasattr(self, 'layers') or not self.layers:
-            # Fall back to old method if no layers
-            if not self.map_data:
-                return
+        """Draw the map tiles using the modularized map system"""
+        # Use the map system to render the entire map
+        self.map_system.render_map(
+            surface, self.animated_tile_manager,
+            self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y,
+            skip_player_enemy_tiles
+        )
 
-            # Calculate visible area - convert camera positions to integers
-            start_x = int(self.camera_x // self.grid_cell_size)
-            end_x = min(self.map_width, start_x + (self.width // self.grid_cell_size) + 1)
-            start_y = int(self.camera_y // self.grid_cell_size)
-            end_y = min(self.map_height, start_y + (self.height // self.grid_cell_size) + 1)
-
-            # Draw visible tiles
-            for y in range(start_y, end_y):
-                for x in range(start_x, end_x):
-                    # Get tile ID at this position
-                    try:
-                        tile_id = self.map_data[y][x]
-                    except IndexError:
-                        continue
-
-                    # Skip empty tiles
-                    if tile_id == -1:
-                        continue
-
-                    # Skip player and enemy tiles if requested
-                    if skip_player_enemy_tiles and hasattr(self, 'expanded_mapping') and str(tile_id) in self.expanded_mapping:
-                        path = self.expanded_mapping[str(tile_id)].get("path", "")
-                        # Only skip tiles that are specifically player or enemy sprites
-                        if ("Enemies_Sprites/Phantom_Sprites" in path or
-                            "Enemies_Sprites/Bomberplant_Sprites" in path or
-                            "Enemies_Sprites/Spinner_Sprites" in path or
-                            "character/char_idle_" in path or
-                            "character/char_run_" in path or
-                            "character/char_attack_" in path or
-                            "character/char_hit_" in path or
-                            "character/char_shield_" in path):
-                            continue
-
-                    # Calculate screen position - camera position is already an integer
-                    # Add center offset for small maps
-                    screen_x = x * self.grid_cell_size - self.camera_x + self.center_offset_x
-                    screen_y = y * self.grid_cell_size - self.camera_y + self.center_offset_y
-
-                    # Check if this is a key item and if it should be drawn
-                    if tile_id == self.key_item_id and hasattr(self, 'key_item_id'):
-                        # ALWAYS skip drawing the original key if there's a collection animation in progress
-                        # This is a direct check to ensure the key is never drawn during collection
-                        if (x, y) in self.key_item_manager.collected_items or not self.key_item_manager.should_draw_key_item(x, y):
-                            continue
-
-                    # Check if this is a crystal item and if it should be drawn
-                    if tile_id == self.crystal_item_id and hasattr(self, 'crystal_item_id'):
-                        # ALWAYS skip drawing the original crystal if there's a collection animation in progress
-                        # This is a direct check to ensure the crystal is never drawn during collection
-                        if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
-                            continue
-
-                    # Check if this is a lootchest item - skip drawing here as it's handled by lootchest_manager
-                    if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                        continue  # Skip drawing - lootchest_manager handles this
-
-
-
-                    # Check if this is an animated tile
-                    if self.animated_tile_manager.is_animated_tile_id(tile_id):
-                        # Get the current frame of the animated tile
-                        frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
-                        if frame:
-                            # Use cached scaling for better performance
-                            if frame.get_size() != (self.grid_cell_size, self.grid_cell_size):
-                                scaled_frame = pygame.transform.scale(frame, (self.grid_cell_size, self.grid_cell_size))
-                            else:
-                                scaled_frame = frame
-                            # Draw the animated tile frame
-                            surface.blit(scaled_frame, (screen_x, screen_y))
-                    # Draw the tile if we have it loaded
-                    elif tile_id in self.tiles:
-                        # Use sprite cache for scaled tiles to improve performance
-                        tile_size = (self.grid_cell_size, self.grid_cell_size)
-                        if self.tiles[tile_id].get_size() != tile_size:
-                            # Get the original path for this tile from expanded mapping
-                            tile_path = None
-                            for tid, tile_info in self.expanded_mapping.items():
-                                if int(tid) == tile_id:
-                                    tile_path = tile_info["path"]
-                                    break
-
-                            if tile_path and not tile_path.startswith("animated:"):
-                                # Use cached scaling
-                                scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
-                            else:
-                                # Fallback to direct scaling
-                                scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
-                        else:
-                            scaled_tile = self.tiles[tile_id]
-
-                        # Draw the static tile
-                        surface.blit(scaled_tile, (screen_x, screen_y))
-            return
-
-        # If we have layers, draw all of them
-        if skip_player_enemy_tiles:
-            # Draw each layer individually to skip player/enemy tiles
-            for layer_idx in range(len(self.layers)):
-                self.draw_single_map_layer(surface, layer_idx)
-        else:
-            # Draw all layers at once - make sure to include all layers (0 to len-1)
-            self.draw_map_layers(surface, 0, len(self.layers) - 1)
+        # Handle special item visibility (key items, crystals, lootchests)
+        # This needs to be done after rendering to override the map system's rendering
+        self._handle_special_item_visibility(surface)
 
     def handle_common_events(self, event, mouse_pos):
         """Override handle_common_events to add auto-save when clicking back button"""
