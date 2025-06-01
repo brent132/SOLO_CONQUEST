@@ -9,12 +9,6 @@
       0,
       1
     ],
-    "animated:water_tile": [
-      0,
-      1,
-      2,
-      3
-    ],
     "Tilesets/Overworld\\tile000.png": [
       0,
       1,
@@ -176,6 +170,18 @@
     ],
     "Tilesets/Dungeon\\tile001.png": [
       1,
+      3
+    ],
+    "Tilesets/Overworld\\tile082.png": [
+      1
+    ],
+    "Tilesets/Overworld\\tile083.png": [
+      0
+    ],
+    "animated:water_tile": [
+      0,
+      1,
+      2,
       3
     ]
   }

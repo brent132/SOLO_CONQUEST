@@ -1,13 +1,4 @@
 {
   "current_world": "main",
-  "worlds": {
-    "main": {
-      "map_name": "house",
-      "x": 336,
-      "y": 144,
-      "direction": "down",
-      "health": 100,
-      "shield_durability": 3
-    }
-  }
+  "worlds": {}
 }
