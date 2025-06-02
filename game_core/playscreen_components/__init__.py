@@ -14,4 +14,5 @@ Components:
 - state_system: Game state saving, loading, and persistence
 - inventory_system: Chest inventory display and Terraria-style interactions
 - ui_system: HUD, health bars, game over screen, and UI management
+- rendering_system: Rendering pipeline, layers, tiles, entities, and effects
 """

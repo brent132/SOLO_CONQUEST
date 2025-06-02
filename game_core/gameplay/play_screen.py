@@ -17,6 +17,7 @@ from playscreen_components.map_system import MapSystem
 from playscreen_components.player_system import PlayerSystem, PlayerInventory
 from playscreen_components.game_systems_coordinator import GameSystemsCoordinator
 from playscreen_components.input_system import InputSystem
+from playscreen_components.rendering_system import RenderingPipeline
 from enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
@@ -72,6 +73,9 @@ class PlayScreen(BaseScreen):
 
         # Initialize the modularized input system
         self.input_system = InputSystem(self.width, self.height, self.base_grid_cell_size)
+
+        # Initialize the modularized rendering system
+        self.rendering_pipeline = RenderingPipeline(self.width, self.height, self.base_grid_cell_size)
 
         # Key item manager
         self.key_item_manager = KeyItemManager()
@@ -264,6 +268,17 @@ class PlayScreen(BaseScreen):
 
         # Set map data in input system
         self.input_system.set_map_data(self.layers, self.map_width, self.map_height)
+
+        # Initialize rendering pipeline with all game systems
+        self.rendering_pipeline.initialize_systems(
+            self.map_system, self.player, self.enemy_manager, self.key_item_manager,
+            self.crystal_item_manager, self.lootchest_manager, self.relation_handler,
+            self.animated_tile_manager, self.hud, self.player_inventory, self.chest_inventory,
+            self.game_over_screen
+        )
+
+        # Set the back button reference in the UI renderer
+        self.rendering_pipeline.ui_renderer.set_back_button(self.back_button)
 
         # Set up zoom controller callbacks
         zoom_controller = self.input_system.get_zoom_controller()
@@ -506,6 +521,10 @@ class PlayScreen(BaseScreen):
         # Update relation handler with base grid size for logical coordinates
         if hasattr(self, 'relation_handler'):
             self.relation_handler.grid_cell_size = self.base_grid_cell_size
+
+        # Update rendering pipeline zoom settings
+        if hasattr(self, 'rendering_pipeline'):
+            self.rendering_pipeline.update_zoom(grid_cell_size, zoom_factor)
 
         # Recalculate center offset for small maps
         self.calculate_center_offset()
@@ -770,6 +789,10 @@ class PlayScreen(BaseScreen):
             # Update the player reference in the input system
             self.input_system.update_player(self.player)
 
+            # Update the player reference in the rendering pipeline
+            if hasattr(self, 'rendering_pipeline'):
+                self.rendering_pipeline.update_player(self.player)
+
             # Update all game systems using the coordinator
             game_over_triggered = self.game_systems_coordinator.update_game_systems(
                 self.player, self.collision_handler, self.expanded_mapping,
@@ -938,119 +961,18 @@ class PlayScreen(BaseScreen):
             self.camera_y = int(max(0, min(self.camera_y, max_camera_y)))
 
     def draw(self, surface):
-        """Draw the play screen"""
-        # Fill the background with black
-        surface.fill((0, 0, 0))
-
-        # Draw map tiles with depth - first two layers, then player, then remaining layers
-        if hasattr(self, 'layers') and self.layers:
-            # Use optimized rendering for first two layers
-            self._draw_layered_map_optimized_range(surface, 0, 1)
-
-            # Draw key item collection animations for first two layers
-            for layer_idx in range(min(2, len(self.layers))):
-                if self.layers[layer_idx]["visible"]:
-                    self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-                    self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-                    self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-
-            # Draw enemies
-            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
-
-            # Draw player character after second layer but before higher layers
-            if self.player:
-                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
-
-            # Draw relation points
-            self.relation_handler.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
-
-            # Draw remaining layers (2 to max) on top of player using optimized rendering
-            if len(self.layers) > 2:
-                self._draw_layered_map_optimized_range(surface, 2, len(self.layers) - 1)
-
-                # Draw key item collection animations for remaining layers
-                for layer_idx in range(2, len(self.layers)):
-                    if self.layers[layer_idx]["visible"]:
-                        self.key_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-                        self.crystal_item_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
-                        self.lootchest_manager.draw_layer(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size, layer_idx)
+        """Draw the play screen using the modularized rendering pipeline"""
+        # Use the rendering pipeline to render the complete frame
+        if hasattr(self, 'rendering_pipeline') and self.rendering_pipeline.is_initialized:
+            self.rendering_pipeline.render_frame(
+                surface, self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y,
+                self.zoom_factor, self.show_game_over
+            )
         else:
-            # Fallback for maps without layers
-            self.draw_map(surface, skip_player_enemy_tiles=True)
-
-            # Draw key item collection animations (using legacy method for non-layered maps)
-            self.key_item_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
-
-            # Draw crystal item collection animations (using legacy method for non-layered maps)
-            self.crystal_item_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
-
-            # Draw enemies first
-            self.enemy_manager.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
-
-            # Draw player character on top of enemies if it exists
-            if self.player:
-                self.player.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.zoom_factor)
-
-            # Draw relation points
-            self.relation_handler.draw(surface, self.camera_x - self.center_offset_x, self.camera_y - self.center_offset_y, self.grid_cell_size)
-
-        # Draw common elements (back button also saves)
-        # First draw the back button
-        self.back_button.draw(surface)
-
-        # No tooltip for back button
-
-
-
-        # Draw zoom indicator in the bottom-left corner
-        if self.zoom_factor != 1.0:  # Only show when not at 100%
-            zoom_text = f"Zoom: {int(self.zoom_factor * 100)}%"
-            font = pygame.font.SysFont(None, 24)
-            zoom_surface = font.render(zoom_text, True, (255, 255, 255))
-            zoom_rect = zoom_surface.get_rect(bottomleft=(10, self.height - 10))
-            surface.blit(zoom_surface, zoom_rect)
-
-        # Draw game over screen if showing
-        if self.show_game_over:
-            self.game_over_screen.draw(surface)
-
-        # Draw inventories FIRST to ensure proper layering
-        # If both inventories are visible, draw a shared background
-        if self.chest_inventory.is_visible() and self.player_inventory.is_visible():
-            # Draw shared semi-transparent black background
-            bg_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-            bg_surface.fill((0, 0, 0, 180))  # Semi-transparent black
-            surface.blit(bg_surface, (0, 0))
-
-            # Draw inventories in the correct order (chest inventory first, player inventory on top)
-            # First draw chest inventory without its own background
-            self.chest_inventory.draw(surface, skip_background=True)
-
-            # Then draw player inventory without its own background (on top)
-            self.player_inventory.draw(surface, skip_background=True)
-
-            # Cursor items are now drawn automatically by the inventory draw methods
-        else:
-            # Draw chest inventory if visible
-            if self.chest_inventory.is_visible():
-                self.chest_inventory.draw(surface)
-
-            # Draw player inventory if visible
-            if self.player_inventory.is_visible():
-                self.player_inventory.draw(surface)
-
-        # Draw HUD elements if player exists (on top of inventories)
-        if self.player:
-            # Draw HUD normally
-            self.hud.draw(surface, self.player)
-
-        # No status messages
-
-        # Draw game over screen if active
-        if self.show_game_over:
-            self.game_over_screen.draw(surface)
-
-        # No popup messages
+            # Fallback to basic rendering if pipeline not initialized
+            surface.fill((0, 0, 0))
+            if self.show_game_over and self.game_over_screen:
+                self.game_over_screen.draw(surface)
 
     def draw_single_map_layer(self, surface, layer_idx):
         """Draw a single map layer"""
