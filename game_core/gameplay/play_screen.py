@@ -10,20 +10,18 @@ import pygame
 from debug_utils import debug_manager
 from character_system import PlayerCharacter
 # CollisionHandler now imported from map_system
-from gameplay.animated_tile_manager import AnimatedTileManager
-from gameplay.key_item_manager import KeyItemManager
-from gameplay.crystal_item_manager import CrystalItemManager
-from gameplay.lootchest_manager import LootchestManager
-from gameplay.chest_inventory import ChestInventory
+from playscreen_components.animation_system import AnimatedTileManager
+from playscreen_components.item_system import KeyItemManager, CrystalItemManager, LootchestManager
+from playscreen_components.inventory_system import ChestInventory
 from playscreen_components.map_system import MapSystem
 from playscreen_components.player_system import PlayerSystem, PlayerInventory
 from playscreen_components.game_systems_coordinator import GameSystemsCoordinator
+from playscreen_components.input_system import InputSystem
 from enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
-from gameplay.hud import HUD
-from gameplay.game_over_screen import GameOverScreen
-from gameplay.game_state_saver import GameStateSaver
+from playscreen_components.ui_system import HUD, GameOverScreen
+from playscreen_components.state_system import GameStateSaver
 # RelationHandler now imported from map_system
 from playscreen_components.player_system import CharacterInventorySaver, PlayerLocationTracker
 from game_core.sprite_cache import sprite_cache
@@ -39,24 +37,8 @@ class PlayScreen(BaseScreen):
         self.base_grid_cell_size = 16  # Base 16x16 grid cells
         self.grid_cell_size = 16  # Current grid cell size (affected by zoom)
 
-        # Zoom settings - limited to 100% minimum
-        self.zoom_levels = [1.0, 1.5, 2.0, 3.0, 4.0]
-        self.current_zoom_index = 0  # Start at 1.0x zoom (index 0)
-        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
-
-        # Pre-calculate zoom-related values for performance
-        self.zoom_factor_inv = 1.0 / self.zoom_factor
-        self.effective_screen_width = self.width * self.zoom_factor_inv
-        self.effective_screen_height = self.height * self.zoom_factor_inv
-
-        # Camera/viewport for large maps
-        self.camera_x = 0
-        self.camera_y = 0
+        # Camera speed for manual movement (if needed)
         self.camera_speed = 5
-
-        # Offset for centering small maps
-        self.center_offset_x = 0
-        self.center_offset_y = 0
 
         # Map data
         self.map_name = ""
@@ -88,6 +70,9 @@ class PlayScreen(BaseScreen):
         # Initialize the game systems coordinator
         self.game_systems_coordinator = GameSystemsCoordinator(self.base_grid_cell_size)
 
+        # Initialize the modularized input system
+        self.input_system = InputSystem(self.width, self.height, self.base_grid_cell_size)
+
         # Key item manager
         self.key_item_manager = KeyItemManager()
 
@@ -97,18 +82,11 @@ class PlayScreen(BaseScreen):
         # Lootchest manager
         self.lootchest_manager = LootchestManager()
 
-        # Initialize shared cursor state for Terraria-style inventory system
-        self.shared_cursor_item = None
-
         # Chest inventory (for displaying chest contents)
         self.chest_inventory = ChestInventory(self.width, self.height)
 
         # Player inventory (for displaying full inventory when ESC is pressed)
         self.player_inventory = PlayerInventory(self.width, self.height)
-
-        # Set up shared cursor system - both inventories will use shared cursor methods
-        # We'll override their cursor access to use our shared state
-        self._setup_shared_cursor_system()
 
         # Set the callback for when a chest is opened
         print("Setting lootchest_manager callback to self.on_chest_opened")
@@ -148,10 +126,90 @@ class PlayScreen(BaseScreen):
         # Initialize key item collection variables
         self.key_collected = False
 
-        # Custom cursor
+        # Custom cursor - now handled by input system
         self.default_cursor = pygame.mouse.get_cursor()
         self.select_cursor = None
-        self.load_custom_cursor()
+
+    # Properties to access zoom-related values from input system
+    @property
+    def zoom_factor(self):
+        """Get current zoom factor from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().zoom_factor
+        return 1.0
+
+    @property
+    def zoom_factor_inv(self):
+        """Get inverse zoom factor from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().zoom_factor_inv
+        return 1.0
+
+    @property
+    def effective_screen_width(self):
+        """Get effective screen width from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().effective_screen_width
+        return self.width
+
+    @property
+    def effective_screen_height(self):
+        """Get effective screen height from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().effective_screen_height
+        return self.height
+
+    @property
+    def camera_x(self):
+        """Get camera X position from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().camera_x
+        return 0
+
+    @camera_x.setter
+    def camera_x(self, value):
+        """Set camera X position in input system"""
+        if hasattr(self, 'input_system'):
+            self.input_system.get_zoom_controller().camera_x = value
+
+    @property
+    def camera_y(self):
+        """Get camera Y position from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().camera_y
+        return 0
+
+    @camera_y.setter
+    def camera_y(self, value):
+        """Set camera Y position in input system"""
+        if hasattr(self, 'input_system'):
+            self.input_system.get_zoom_controller().camera_y = value
+
+    @property
+    def center_offset_x(self):
+        """Get center offset X from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().center_offset_x
+        return 0
+
+    @center_offset_x.setter
+    def center_offset_x(self, value):
+        """Set center offset X in input system"""
+        if hasattr(self, 'input_system'):
+            self.input_system.get_zoom_controller().center_offset_x = value
+
+    @property
+    def center_offset_y(self):
+        """Get center offset Y from input system"""
+        if hasattr(self, 'input_system'):
+            return self.input_system.get_zoom_controller().center_offset_y
+        return 0
+
+    @center_offset_y.setter
+    def center_offset_y(self, value):
+        """Set center offset Y in input system"""
+        if hasattr(self, 'input_system'):
+            self.input_system.get_zoom_controller().center_offset_y = value
 
     def load_map(self, map_name):
         """Load a map from file using the modularized map system"""
@@ -197,6 +255,19 @@ class PlayScreen(BaseScreen):
             self.lootchest_manager, self.hud, self.animated_tile_manager,
             self.player_system, self.relation_handler
         )
+
+        # Initialize input system with game references
+        self.input_system.initialize_systems(
+            self.hud, self.player_inventory, self.chest_inventory, self.player,
+            self.game_systems_coordinator, self.animated_tile_manager
+        )
+
+        # Set map data in input system
+        self.input_system.set_map_data(self.layers, self.map_width, self.map_height)
+
+        # Set up zoom controller callbacks
+        zoom_controller = self.input_system.get_zoom_controller()
+        zoom_controller.add_zoom_changed_callback(self._on_zoom_changed)
 
         # Set up tiles dictionary for backward compatibility
         self.tiles = {}
@@ -363,131 +434,11 @@ class PlayScreen(BaseScreen):
                     if lootchest_item_id and tile_id == lootchest_item_id:
                         self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
 
-    def zoom_in(self):
-        """Zoom in to the next zoom level"""
-        if self.current_zoom_index < len(self.zoom_levels) - 1:
-            # Store the center point of the current view (player position)
-            if self.player:
-                center_x = self.player.rect.centerx
-                center_y = self.player.rect.centery
-            else:
-                center_x = self.camera_x + (self.width // 2)
-                center_y = self.camera_y + (self.height // 2)
-
-            # Update zoom
-            self.current_zoom_index += 1
-            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
-            self.update_zoom()
-
-            # Recalculate center offset for small maps
-            self.calculate_center_offset()
-
-            # Recalculate camera position to maintain the same center point
-            if self.player:
-                # When zoomed, the effective screen size in logical coordinates is smaller
-                effective_screen_width = self.width / self.zoom_factor
-                effective_screen_height = self.height / self.zoom_factor
-
-                self.camera_x = center_x - (effective_screen_width // 2)
-                self.camera_y = center_y - (effective_screen_height // 2)
-
-                # Clamp camera to map boundaries (use base grid size for logical coordinates)
-                max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-                max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
-                self.camera_x = max(0, min(self.camera_x, max_camera_x))
-                self.camera_y = max(0, min(self.camera_y, max_camera_y))
-
-    def zoom_out(self):
-        """Zoom out to the previous zoom level"""
-        if self.current_zoom_index > 0:
-            # Store the center point of the current view (player position)
-            if self.player:
-                center_x = self.player.rect.centerx
-                center_y = self.player.rect.centery
-            else:
-                center_x = self.camera_x + (self.width // 2)
-                center_y = self.camera_y + (self.height // 2)
-
-            # Update zoom
-            self.current_zoom_index -= 1
-            self.zoom_factor = self.zoom_levels[self.current_zoom_index]
-            self.update_zoom()
-
-            # Recalculate center offset for small maps
-            self.calculate_center_offset()
-
-            # Recalculate camera position to maintain the same center point
-            if self.player:
-                # When zoomed, the effective screen size in logical coordinates is smaller
-                effective_screen_width = self.width / self.zoom_factor
-                effective_screen_height = self.height / self.zoom_factor
-
-                self.camera_x = center_x - (effective_screen_width // 2)
-                self.camera_y = center_y - (effective_screen_height // 2)
-
-                # Clamp camera to map boundaries (use base grid size for logical coordinates)
-                max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-                max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
-                self.camera_x = max(0, min(self.camera_x, max_camera_x))
-                self.camera_y = max(0, min(self.camera_y, max_camera_y))
-
-    def reset_zoom(self):
-        """Reset zoom to 1.0x (100%)"""
-        # Store the center point of the current view (player position)
-        if self.player:
-            center_x = self.player.rect.centerx
-            center_y = self.player.rect.centery
-        else:
-            center_x = self.camera_x + (self.width // 2)
-            center_y = self.camera_y + (self.height // 2)
-
-        # Reset zoom to 1.0x
-        self.current_zoom_index = 0  # 1.0x is at index 0
-        self.zoom_factor = self.zoom_levels[self.current_zoom_index]
-        self.update_zoom()
-
-        # Recalculate center offset for small maps
-        self.calculate_center_offset()
-
-        # Recalculate camera position to maintain the same center point
-        if self.player:
-            # When at 1.0x zoom, effective screen size equals actual screen size
-            effective_screen_width = self.width / self.zoom_factor
-            effective_screen_height = self.height / self.zoom_factor
-
-            self.camera_x = center_x - (effective_screen_width // 2)
-            self.camera_y = center_y - (effective_screen_height // 2)
-
-            # Clamp camera to map boundaries (use base grid size for logical coordinates)
-            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
-            self.camera_x = max(0, min(self.camera_x, max_camera_x))
-            self.camera_y = max(0, min(self.camera_y, max_camera_y))
-
-    def update_zoom(self):
-        """Update grid cell size and collision handler based on current zoom factor"""
-        self.grid_cell_size = int(self.base_grid_cell_size * self.zoom_factor)
-
-        # Pre-calculate frequently used values to avoid repeated calculations
-        self.zoom_factor_inv = 1.0 / self.zoom_factor  # Cache inverse for performance
-        self.effective_screen_width = self.width * self.zoom_factor_inv
-        self.effective_screen_height = self.height * self.zoom_factor_inv
-
-        # Update the map system's grid size for rendering
-        if hasattr(self, 'map_system'):
-            self.map_system.set_grid_size(self.grid_cell_size)
-
-        # Update the player system's grid size
-        if hasattr(self, 'player_system'):
-            self.player_system.set_grid_cell_size(self.grid_cell_size)
-
-        # Collision handler is now managed by map_system - no need to recreate it
-
-        # Update relation handler with base grid size for logical coordinates
-        self.relation_handler.grid_cell_size = self.base_grid_cell_size
+    # OLD ZOOM METHODS REMOVED - NOW HANDLED BY InputSystem
+    # zoom_in(), zoom_out(), reset_zoom(), update_zoom() have been replaced by the modularized input system
 
     def handle_event(self, event):
-        """Handle events for the play screen"""
+        """Handle events for the play screen using the modularized input system"""
         mouse_pos = pygame.mouse.get_pos()
 
         # If game over screen is showing, handle its events
@@ -502,135 +453,62 @@ class PlayScreen(BaseScreen):
                 return "back"
             return None
 
-
-
         # Handle common events (back button also saves)
         result = self.handle_common_events(event, mouse_pos)
         if result:
             return result
 
-        # Mouse button up events are no longer needed in Terraria-style system
-        # All interactions are handled in mouse button down events
+        # Use the modularized input system to handle input events
+        result = self.input_system.handle_event(event, mouse_pos)
 
-        # Pass mouse events to player character for attack handling
-        if self.player and event.type == pygame.MOUSEBUTTONDOWN:
-            # Handle mouse wheel for inventory selection
-            if event.button == 4:  # Mouse wheel up
-                self.hud.inventory.selected_slot = (self.hud.inventory.selected_slot - 1) % self.hud.inventory.num_slots
-            elif event.button == 5:  # Mouse wheel down
-                self.hud.inventory.selected_slot = (self.hud.inventory.selected_slot + 1) % self.hud.inventory.num_slots
-            # Handle left-click for inventory slots, player inventory, and attacks
-            elif event.button == 1:  # Left mouse button
-                # Check for shift key
-                keys = pygame.key.get_pressed()
-                shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+        # Handle special return values from input system
+        if result == "escape_pressed":
+            return self._handle_escape_key()
 
-                # Check if chest inventory is visible and handle clicks
-                if self.chest_inventory.is_visible():
-                    # Handle click in chest inventory
-                    self.chest_inventory.handle_click(mouse_pos, shift_held=shift_held, player_inventory=self.player_inventory)
-                    # Also check player inventory if it's visible
-                    if self.player_inventory.is_visible():
-                        self.player_inventory.handle_click(mouse_pos, shift_held=shift_held, chest_inventory=self.chest_inventory)
-                # Check if only player inventory is visible and handle clicks
-                elif self.player_inventory.is_visible():
-                    # Handle click in player inventory (but don't close it on click outside)
-                    self.player_inventory.handle_click(mouse_pos, shift_held=shift_held)
-                # Check if clicking on an inventory slot
-                elif self.hud.inventory.hovered_slot != -1:
-                    # Select the clicked slot
-                    self.hud.inventory.selected_slot = self.hud.inventory.hovered_slot
-                else:
-                    # No inventory slot clicked, use left-click for attack
-                    self.player.handle_mouse_event(event)
-            # Handle right-click for inventory item picking or lootchest interaction
-            elif event.button == 3:  # Right mouse button
-                # Check for shift key
-                keys = pygame.key.get_pressed()
-                shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+        return result
 
-                # Check if chest inventory is visible and handle right-clicks
-                if self.chest_inventory.is_visible():
-                    # Handle right-click in chest inventory
-                    self.chest_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held, player_inventory=self.player_inventory)
-                    # Also check player inventory if it's visible
-                    if self.player_inventory.is_visible():
-                        self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held, chest_inventory=self.chest_inventory)
-                # Check if only player inventory is visible and handle right-clicks
-                elif self.player_inventory.is_visible():
-                    # Handle right-click in player inventory
-                    self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held)
-                # Check if clicking on a lootchest (only when inventories are not visible)
-                elif not self.chest_inventory.is_visible() and not self.player_inventory.is_visible() and self.player and not self.player.is_dead:
-                    # Use game systems coordinator to handle lootchest interaction
-                    result = self.game_systems_coordinator.handle_lootchest_interaction(
-                        mouse_pos, self.camera_x, self.camera_y,
-                        self.center_offset_x, self.center_offset_y,
-                        self.zoom_factor_inv, self.player.rect
-                    )
-            else:
-                # Handle other mouse buttons
-                pass
-
-        # Handle keyboard events for inventory selection and zoom
-        if event.type == pygame.KEYDOWN:
-            # Check for Ctrl key combinations first
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL]:
-                if event.key == pygame.K_EQUALS or event.key == pygame.K_PLUS:
-                    # Ctrl++ to zoom in
-                    self.zoom_in()
-                    return None
-                elif event.key == pygame.K_MINUS:
-                    # Ctrl+- to zoom out
-                    self.zoom_out()
-                    return None
-                elif event.key == pygame.K_0:
-                    # Ctrl+0 to reset zoom
-                    self.reset_zoom()
-                    return None
-
-            # ESC key to toggle player inventory
-            if event.key == pygame.K_ESCAPE:
-                # If chest inventory is visible, close both inventories
-                if self.chest_inventory.is_visible():
-                    # Save chest contents before closing
-                    if self.chest_inventory.current_chest_pos:
-                        self.lootchest_manager.set_chest_contents(
-                            self.chest_inventory.current_chest_pos,
-                            self.chest_inventory.inventory_items
-                        )
-                    self.chest_inventory.hide()
-                    self.player_inventory.hide(self.hud.inventory)
-                    # Save character inventory when closing the inventory screen
-                    self.save_character_inventory()
-                # If only player inventory is visible, hide it and save inventory data
-                elif self.player_inventory.is_visible():
-                    self.player_inventory.hide(self.hud.inventory)
-                    # Save character inventory when closing the inventory screen
-                    self.save_character_inventory()
-                # Otherwise, show player inventory
-                else:
-                    self.player_inventory.show(self.hud.inventory)
-
-            # Number keys 1-0 for inventory selection (0 is the 10th slot)
-            elif pygame.K_1 <= event.key <= pygame.K_9:
-                # Convert key to slot index (0-8)
-                slot = event.key - pygame.K_1
-                self.hud.inventory.selected_slot = slot
-            elif event.key == pygame.K_0:
-                # 0 key selects the 10th slot (index 9)
-                self.hud.inventory.selected_slot = 9
-
-            # Q and E keys for inventory selection
-            elif event.key == pygame.K_q:
-                # Previous slot
-                self.hud.inventory.selected_slot = (self.hud.inventory.selected_slot - 1) % self.hud.inventory.num_slots
-            elif event.key == pygame.K_e:
-                # Next slot
-                self.hud.inventory.selected_slot = (self.hud.inventory.selected_slot + 1) % self.hud.inventory.num_slots
-
+    def _handle_escape_key(self):
+        """Handle ESC key press for inventory toggling"""
+        # If chest inventory is visible, close both inventories
+        if self.chest_inventory.is_visible():
+            # Save chest contents before closing
+            if self.chest_inventory.current_chest_pos:
+                self.lootchest_manager.set_chest_contents(
+                    self.chest_inventory.current_chest_pos,
+                    self.chest_inventory.inventory_items
+                )
+            self.chest_inventory.hide()
+            self.player_inventory.hide(self.hud.inventory)
+            # Save character inventory when closing the inventory screen
+            self.save_character_inventory()
+        # If only player inventory is visible, hide it and save inventory data
+        elif self.player_inventory.is_visible():
+            self.player_inventory.hide(self.hud.inventory)
+            # Save character inventory when closing the inventory screen
+            self.save_character_inventory()
+        # Otherwise, show player inventory
+        else:
+            self.player_inventory.show(self.hud.inventory)
         return None
+
+    def _on_zoom_changed(self, grid_cell_size: int, zoom_factor: float, zoom_factor_inv: float):
+        """Callback when zoom changes - update systems that depend on zoom"""
+        self.grid_cell_size = grid_cell_size
+
+        # Update the map system's grid size for rendering
+        if hasattr(self, 'map_system'):
+            self.map_system.set_grid_size(grid_cell_size)
+
+        # Update the player system's grid size
+        if hasattr(self, 'player_system'):
+            self.player_system.set_grid_cell_size(grid_cell_size)
+
+        # Update relation handler with base grid size for logical coordinates
+        if hasattr(self, 'relation_handler'):
+            self.relation_handler.grid_cell_size = self.base_grid_cell_size
+
+        # Recalculate center offset for small maps
+        self.calculate_center_offset()
 
     def reset(self):
         """Reset the screen state but keep the map name"""
@@ -678,23 +556,8 @@ class PlayScreen(BaseScreen):
             self.show_game_over = False
             self.load_map(self.map_name)
 
-    def load_custom_cursor(self):
-        """Load the custom cursor image and rotate it"""
-        try:
-            # Load the select icon image
-            original_image = pygame.image.load("character/Hud_Ui/select_icon_ui.png").convert_alpha()
-
-            # Rotate the image 135 degrees counter-clockwise (to point top-left)
-            cursor_image = pygame.transform.rotate(original_image, 135)
-
-            # Create a cursor from the rotated image
-            # Set hotspot to the tip of the arrow (approximately)
-            # For a 135-degree rotation (pointing top-left), the tip would be in the top-left quadrant
-            hotspot = (cursor_image.get_width() // 4, cursor_image.get_height() // 4)
-            self.select_cursor = pygame.cursors.Cursor((hotspot), cursor_image)
-        except Exception as e:
-            print(f"Error loading custom cursor: {e}")
-            self.select_cursor = None
+    # OLD CURSOR LOADING METHOD REMOVED - NOW HANDLED BY InputSystem
+    # load_custom_cursor() has been replaced by the modularized input system
 
     def find_used_area_bounds(self):
         """Find the bounds of the used area in the map, excluding enemy and player tiles
@@ -813,24 +676,28 @@ class PlayScreen(BaseScreen):
         effective_screen_width = self.effective_screen_width
         effective_screen_height = self.effective_screen_height
 
-        # Check if the used area is smaller than the effective screen
+        # Calculate center offsets
         if used_width < effective_screen_width:
             # Center horizontally
-            self.center_offset_x = (effective_screen_width - used_width) // 2 - area_offset_x
+            center_offset_x = (effective_screen_width - used_width) // 2 - area_offset_x
         else:
             # Used area is wider than or equal to the screen, no horizontal centering needed
-            self.center_offset_x = 0
+            center_offset_x = 0
 
         if used_height < effective_screen_height:
             # Center vertically
-            self.center_offset_y = (effective_screen_height - used_height) // 2 - area_offset_y
+            center_offset_y = (effective_screen_height - used_height) // 2 - area_offset_y
         else:
             # Used area is taller than or equal to the screen, no vertical centering needed
-            self.center_offset_y = 0
+            center_offset_y = 0
+
+        # Set the center offsets in the input system
+        self.center_offset_x = center_offset_x
+        self.center_offset_y = center_offset_y
 
         print(f"Used area bounds: ({min_x}, {min_y}) to ({max_x}, {max_y})")
         print(f"Used area size: {used_width}x{used_height} pixels")
-        print(f"Center offset: ({self.center_offset_x}, {self.center_offset_y})")
+        print(f"Center offset: ({center_offset_x}, {center_offset_y})")
 
     def update(self):
         """Update play screen logic"""
@@ -848,16 +715,8 @@ class PlayScreen(BaseScreen):
         # Update HUD (for inventory hover effects)
         self.hud.update(mouse_pos)
 
-        # Check if mouse is hovering over a lootchest
-        hovered_lootchest = self.is_hovering_lootchest(mouse_pos)
-
-        # Update cursor based on hover state
-        if (self.hud.inventory.hovered_slot != -1 or hovered_lootchest) and self.select_cursor:
-            # Mouse is hovering over an inventory slot or a lootchest, use custom cursor
-            pygame.mouse.set_cursor(self.select_cursor)
-        else:
-            # Use default cursor
-            pygame.mouse.set_cursor(self.default_cursor)
+        # Update input system (handles cursor management)
+        self.input_system.update(mouse_pos)
 
         # Update animated tiles
         self.animated_tile_manager.update()
@@ -907,6 +766,9 @@ class PlayScreen(BaseScreen):
 
             # Get the updated player reference
             self.player = self.player_system.get_player()
+
+            # Update the player reference in the input system
+            self.input_system.update_player(self.player)
 
             # Update all game systems using the coordinator
             game_over_triggered = self.game_systems_coordinator.update_game_systems(
@@ -2075,23 +1937,8 @@ class PlayScreen(BaseScreen):
             if 0 <= grid_y < len(self.map_data) and 0 <= grid_x < len(self.map_data[grid_y]):
                 self.map_data[grid_y][grid_x] = -1
 
-    def is_hovering_lootchest(self, mouse_pos):
-        """Check if the mouse is hovering over a lootchest"""
-        # Only check if we have map data and layers
-        if not hasattr(self, 'layers') or not self.layers:
-            return False
-
-        # Get the lootchest item ID
-        lootchest_id = self.animated_tile_manager.get_animated_tile_id("lootchest_item")
-        if not lootchest_id:
-            return False
-
-        # Use game systems coordinator to check lootchest position
-        return self.game_systems_coordinator.check_lootchest_at_position(
-            mouse_pos, self.camera_x, self.camera_y,
-            self.center_offset_x, self.center_offset_y,
-            self.zoom_factor_inv, self.layers, lootchest_id
-        )
+    # OLD CURSOR AND HOVER METHODS REMOVED - NOW HANDLED BY InputSystem
+    # is_hovering_lootchest() has been replaced by the modularized input system
 
     def resize(self, new_width, new_height):
         """Handle screen resize"""
@@ -2191,21 +2038,5 @@ class PlayScreen(BaseScreen):
 
         # No need to update popup message position as it's calculated in the draw method
 
-    def _setup_shared_cursor_system(self):
-        """Set up the shared cursor system for Terraria-style inventory interactions"""
-        # Replace the cursor_item property in both inventories with our shared system
-
-        # Store original cursor_item attributes as private
-        self.player_inventory._original_cursor_item = self.player_inventory.cursor_item
-        self.chest_inventory._original_cursor_item = self.chest_inventory.cursor_item
-
-        # Replace cursor_item with property that uses shared state
-        def get_shared_cursor(inventory_self):
-            return self.shared_cursor_item
-
-        def set_shared_cursor(inventory_self, value):
-            self.shared_cursor_item = value
-
-        # Monkey patch both inventories to use shared cursor
-        self.player_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)
-        self.chest_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)
+    # OLD SHARED CURSOR SYSTEM SETUP REMOVED - NOW HANDLED BY InputSystem
+    # _setup_shared_cursor_system() has been replaced by the modularized input system

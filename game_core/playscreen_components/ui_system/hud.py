@@ -333,13 +333,3 @@ class HUD:
                 self.health_bar_pos[1] + self.health_bar_height + 25  # Position below the health text
             )
             surface.blit(invincible_text, invincible_pos)
-
-
-
-
-
-
-
-
-
-

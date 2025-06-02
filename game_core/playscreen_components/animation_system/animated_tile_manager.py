@@ -3,7 +3,7 @@ Animated Tile Manager - handles loading and managing animated tiles
 """
 import os
 import pygame
-from gameplay.animated_tile import AnimatedTile
+from .animated_tile import AnimatedTile
 
 class AnimatedTileManager:
     """Manages loading and updating animated tiles"""

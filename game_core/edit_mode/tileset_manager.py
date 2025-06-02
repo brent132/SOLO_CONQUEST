@@ -4,7 +4,7 @@ Tileset Manager - handles loading and managing tilesets
 import os
 import pygame
 from edit_mode.ui_components import TileButton
-from gameplay.animated_tile_manager import AnimatedTileManager
+from game_core.playscreen_components.animation_system import AnimatedTileManager
 
 class TilesetManager:
     """Manages loading and displaying tilesets"""

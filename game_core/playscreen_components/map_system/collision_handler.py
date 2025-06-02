@@ -139,7 +139,7 @@ class CollisionHandler:
         # Check if this is an animated tile (IDs 1000+)
         if tile_id >= 1000:
             # Get the animated tile manager singleton
-            from gameplay.animated_tile_manager import AnimatedTileManager
+            from game_core.playscreen_components.animation_system import AnimatedTileManager
             # Get the singleton instance
             animated_tile_manager = AnimatedTileManager()
 

@@ -285,7 +285,7 @@ class EditScreenUI:
                 # Check if this is an animated tile
                 if 'animated_tile_id' in tile_data:
                     # Get the singleton instance of AnimatedTileManager
-                    from gameplay.animated_tile_manager import AnimatedTileManager
+                    from game_core.playscreen_components.animation_system import AnimatedTileManager
                     animated_tile_manager = AnimatedTileManager()  # This will return the singleton instance
 
                     # Get the current frame of the animated tile

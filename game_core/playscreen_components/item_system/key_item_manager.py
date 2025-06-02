@@ -1,123 +1,85 @@
 """
-Crystal Item Manager - handles crystal item collection and animation
+Key Item Manager - handles key item collection and animation
 """
 import pygame
 import os
-from gameplay.animated_tile import AnimatedTile
+from playscreen_components.animation_system import AnimatedTile
 
-class CrystalItemManager:
-    """Manages crystal item collection and animation"""
+class KeyItemManager:
+    """Manages key item collection and animation"""
     def __init__(self):
-        # Crystal item properties
-        self.crystal_items = {}  # Dictionary of crystal items by position (x, y)
+        # Key item properties
+        self.key_items = {}  # Dictionary of key items by position (x, y)
         self.collected_items = {}  # Dictionary of collected items with animation in progress
-        self.collected_crystals = []  # List of collected crystal positions
+        self.collected_keys = []  # List of collected key positions
 
         # Collection animation
         self.collection_animation = None
-        self.collection_duration = 30  # Duration of collection animation in frames (0.5 seconds at 60 FPS)
+        self.collection_duration = 30  # Duration of collection animation in frames (reduced to 0.5 seconds at 60 FPS)
         self.collection_frames = []  # Store all animation frames
 
         # Load collection animation
         self.load_collection_animation()
 
     def load_collection_animation(self):
-        """Load the crystal item collection animation"""
-        animation_folder = "character/Props_Items_(animated)/crystal_item_anim_collected"
+        """Load the key item collection animation"""
+        animation_folder = "character/Props_Items_(animated)/key_item_collected_anim"
         if os.path.exists(animation_folder):
-            # Instead of using AnimatedTile, we'll load frames manually to ensure correct order
-            self.collection_frames = []
+            self.collection_animation = AnimatedTile(animation_folder, frame_duration=5)  # Reduced frame duration for faster animation
 
-            # Define the correct frame order (explicitly list the files in the desired sequence)
-            frame_files = ["tile000.png", "tile001.png", "tile002.png", "tile003.png", "tile004.png"]
-
-            # Load each frame in the specified order
-            loaded_frames = []
-            for frame_file in frame_files:
-                frame_path = os.path.join(animation_folder, frame_file)
-                if os.path.exists(frame_path):
-                    try:
-                        frame = pygame.image.load(frame_path).convert_alpha()
-                        loaded_frames.append(frame)
-                    except Exception as e:
-                        print(f"Error loading crystal animation frame {frame_path}: {e}")
-
-            # Process frames to ensure consistent size and positioning
-            if loaded_frames:
-                # Find the maximum dimensions
-                base_width = max(frame.get_width() for frame in loaded_frames)
-                base_height = max(frame.get_height() for frame in loaded_frames)
-
-                # Process each frame
-                for frame in loaded_frames:
-                    # Create a new surface with consistent size
-                    new_frame = pygame.Surface((base_width, base_height), pygame.SRCALPHA)
-
-                    # Calculate position to center the frame
-                    x_offset = (base_width - frame.get_width()) // 2
-                    y_offset = (base_height - frame.get_height()) // 2
-
-                    # Blit the original frame centered on the new surface
-                    new_frame.blit(frame, (x_offset, y_offset))
-
-                    # Add to processed frames
-                    self.collection_frames.append(new_frame)
-
-                # Create a dummy AnimatedTile for timing purposes
-                self.collection_animation = AnimatedTile(animation_folder, frame_duration=6)
-
-                print(f"Loaded crystal item collection animation with {len(self.collection_frames)} frames in custom order")
+            # Store all animation frames for direct access
+            if self.collection_animation.frames:
+                self.collection_frames = self.collection_animation.frames
+                print(f"Loaded key item collection animation with {len(self.collection_frames)} frames")
             else:
-                print("No frames loaded for crystal item collection animation")
-                self.collection_animation = None
+                print("No frames found in key item collection animation")
         else:
-            print(f"Crystal item collection animation folder not found: {animation_folder}")
-            self.collection_animation = None
+            print(f"Key item collection animation folder not found: {animation_folder}")
 
-    def add_crystal_item(self, grid_x, grid_y, tile_id, layer=0):
-        """Add a crystal item to the manager
+    def add_key_item(self, grid_x, grid_y, tile_id, layer=0):
+        """Add a key item to the manager
 
         Args:
             grid_x: X position on the grid
             grid_y: Y position on the grid
-            tile_id: ID of the crystal tile
-            layer: Layer number the crystal is on (for proper layering)
+            tile_id: ID of the key tile
+            layer: Layer number the key is on (for proper layering)
         """
         position = (grid_x, grid_y)
-        self.crystal_items[position] = {
+        self.key_items[position] = {
             "tile_id": tile_id,
             "collected": False,
-            "layer": layer  # Store which layer this crystal belongs to
+            "layer": layer  # Store which layer this key belongs to
         }
 
     def check_player_collision(self, player_rect, grid_cell_size):
-        """Check if player collides with any crystal items"""
-        # Skip if player is dead or no crystal items
-        if not player_rect or not self.crystal_items:
-            return None
+        """Check if player collides with any key items"""
+        # Skip if player is dead or no key items
+        if not player_rect or not self.key_items:
+            return
 
-        # Calculate player's grid position
-        player_grid_x = (player_rect.centerx) // grid_cell_size
-        player_grid_y = (player_rect.centery) // grid_cell_size
+        # Convert player position to grid coordinates
+        player_grid_x = player_rect.centerx // grid_cell_size
+        player_grid_y = player_rect.centery // grid_cell_size
         player_grid_pos = (player_grid_x, player_grid_y)
 
-        # Check if player is on a crystal item position
-        if player_grid_pos in self.crystal_items and not self.crystal_items[player_grid_pos]["collected"]:
-            # Mark the crystal item as collected IMMEDIATELY to prevent it from being drawn
-            self.crystal_items[player_grid_pos]["collected"] = True
+        # Check if player is on a key item position
+        if player_grid_pos in self.key_items and not self.key_items[player_grid_pos]["collected"]:
+            # Mark the key item as collected IMMEDIATELY to prevent it from being drawn
+            self.key_items[player_grid_pos]["collected"] = True
 
             # Start collection animation
             self.collected_items[player_grid_pos] = {
                 "animation_frame": 0,  # Current frame index
                 "timer": self.collection_duration,
                 "frame_counter": 0,  # Counter for frame timing
-                "layer": self.crystal_items[player_grid_pos]["layer"]  # Preserve layer information
+                "layer": self.key_items[player_grid_pos]["layer"]  # Preserve layer information
             }
 
-            # Add to collected crystals list
-            self.collected_crystals.append(player_grid_pos)
+            # Add to collected keys list
+            self.collected_keys.append(player_grid_pos)
 
-            # Return the collected crystal position
+            # Return the collected key position
             return player_grid_pos
 
         return None
@@ -148,13 +110,7 @@ class CrystalItemManager:
                 # Check if it's time to advance to the next frame
                 if item_data["frame_counter"] >= self.collection_animation.frame_duration:
                     item_data["frame_counter"] = 0
-
-                    # Advance to next frame, but don't loop back to the beginning
-                    next_frame = item_data["animation_frame"] + 1
-
-                    # If we've reached the last frame, stay on it until the timer expires
-                    if next_frame < len(self.collection_frames):
-                        item_data["animation_frame"] = next_frame
+                    item_data["animation_frame"] = (item_data["animation_frame"] + 1) % len(self.collection_frames)
 
     def draw_layer(self, surface, camera_x, camera_y, grid_cell_size, layer):
         """Draw collection animations for a specific layer
@@ -240,21 +196,21 @@ class CrystalItemManager:
                 # Draw the collection animation centered on the grid cell
                 surface.blit(frame, (frame_x, frame_y))
 
-    def is_crystal_collected(self, grid_x, grid_y):
-        """Check if a crystal at the given position has been collected"""
-        return (grid_x, grid_y) in self.collected_crystals
+    def is_key_collected(self, grid_x, grid_y):
+        """Check if a key at the given position has been collected"""
+        return (grid_x, grid_y) in self.collected_keys
 
-    def should_draw_crystal_item(self, grid_x, grid_y):
-        """Check if a crystal item at the given position should be drawn"""
-        # Don't draw the crystal item if it has been collected
+    def should_draw_key_item(self, grid_x, grid_y):
+        """Check if a key item at the given position should be drawn"""
+        # Don't draw the key item if it has been collected
         position = (grid_x, grid_y)
 
-        # First check if this position is in the collected crystals list
-        if position in self.collected_crystals:
+        # First check if this position is in the collected keys list
+        if position in self.collected_keys:
             return False
 
-        # Then check if it's marked as collected in the crystal_items dictionary
-        if position in self.crystal_items and self.crystal_items[position]["collected"]:
+        # Then check if it's marked as collected in the key_items dictionary
+        if position in self.key_items and self.key_items[position]["collected"]:
             return False
 
         # Also check if there's a collection animation in progress for this position
@@ -262,3 +218,7 @@ class CrystalItemManager:
             return False
 
         return True
+
+    def get_collected_keys_count(self):
+        """Get the number of collected keys"""
+        return len(self.collected_keys)

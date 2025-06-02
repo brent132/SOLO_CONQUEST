@@ -135,7 +135,9 @@
     "enemies": [],
     "inventory": [],
     "collected_keys": [],
-    "collected_crystals": [],
+    "collected_crystals": [
+      [20, 12]
+    ],
     "opened_lootchests": [],
     "chest_contents": {}
   }

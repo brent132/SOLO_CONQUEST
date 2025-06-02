@@ -3,7 +3,7 @@ Lootchest Manager - handles lootchest interaction and animation
 """
 import pygame
 import os
-from gameplay.animated_tile import AnimatedTile
+from playscreen_components.animation_system import AnimatedTile
 
 class LootchestManager:
     """Manages lootchest interaction and animation"""
@@ -351,8 +351,6 @@ class LootchestManager:
         base_grid_size = 16
         zoom_factor = grid_cell_size / base_grid_size
 
-
-
         # Draw opening animations for this layer
         for pos, chest_data in self.opening_chests.items():
             # Skip if not on this layer
@@ -490,8 +488,9 @@ class LootchestManager:
         # Load each chest's contents
         for pos_str, contents in chest_contents_data.items():
             # Convert string "x,y" back to tuple (x, y)
-            x, y = map(int, pos_str.split(","))
-            position = (x, y)
+            # Handle both integer and float coordinates
+            x, y = map(float, pos_str.split(","))
+            position = (int(x), int(y))
 
             # Initialize empty contents for a 10x6 grid (60 slots)
             loaded_contents = [None] * 60
