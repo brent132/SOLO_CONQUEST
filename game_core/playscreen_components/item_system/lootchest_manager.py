@@ -159,39 +159,34 @@ class LootchestManager:
         print(f"  Grid cell size: {grid_cell_size}")
         print(f"  Player rect: {player_rect}")
 
-        # Calculate grid position from mouse position
-        grid_x = (mouse_pos[0] + camera_x) // grid_cell_size
-        grid_y = (mouse_pos[1] + camera_y) // grid_cell_size
+        # Calculate precise grid position from mouse position
+        world_x = mouse_pos[0] + camera_x
+        world_y = mouse_pos[1] + camera_y
+        grid_x = int(world_x // grid_cell_size)
+        grid_y = int(world_y // grid_cell_size)
+
+        # Calculate the position within the tile (0.0 to 1.0)
+        tile_offset_x = (world_x % grid_cell_size) / grid_cell_size
+        tile_offset_y = (world_y % grid_cell_size) / grid_cell_size
+
         position = (grid_x, grid_y)
         print(f"  Calculated grid position: ({grid_x}, {grid_y})")
+        print(f"  Tile offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
 
-        # Check if there's a lootchest at this position
+        # Check if there's a lootchest at this exact position
         if position not in self.lootchests:
-            print(f"  No lootchest found at position {position}")
+            print(f"  No lootchest found at exact position {position}")
             print(f"  Available lootchests: {list(self.lootchests.keys())}")
-            # Try to find a lootchest near this position (within 7 tiles)
-            nearby_positions = []
-            search_range = 7  # Search range of 7 tiles as requested
+            return False
 
-            # Calculate distances to all lootchests
-            for chest_pos in self.lootchests.keys():
-                # Calculate Manhattan distance
-                distance = abs(chest_pos[0] - grid_x) + abs(chest_pos[1] - grid_y)
-                if distance <= search_range:
-                    nearby_positions.append((distance, chest_pos))
-
-            # Sort by distance
-            nearby_positions.sort()
-
-            if nearby_positions:
-                # Use the closest nearby lootchest
-                closest_chest = nearby_positions[0][1]
-                print(f"  Found nearby lootchests: {[pos for _, pos in nearby_positions]}")
-                print(f"  Using closest lootchest at position {closest_chest} (distance: {nearby_positions[0][0]})")
-                position = closest_chest
-            else:
-                print(f"  No lootchests found within {search_range} tiles")
-                return False
+        # Additional precision check: ensure click is within the center area of the tile
+        # This prevents accidental activation from edge clicks
+        center_tolerance = 0.2  # Allow clicks within 20% margin from edges
+        if (tile_offset_x < center_tolerance or tile_offset_x > (1.0 - center_tolerance) or
+            tile_offset_y < center_tolerance or tile_offset_y > (1.0 - center_tolerance)):
+            print(f"  Click too close to tile edge. Offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
+            print(f"  Required center area: {center_tolerance:.1f} to {1.0 - center_tolerance:.1f}")
+            return False
 
         print(f"  Found lootchest at position {position}")
         print(f"  Lootchest data: {self.lootchests[position]}")

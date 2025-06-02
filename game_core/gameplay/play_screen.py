@@ -22,9 +22,8 @@ from enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen
-from playscreen_components.state_system import GameStateSaver
+from playscreen_components.state_system import SaveLoadManager
 # RelationHandler now imported from map_system
-from playscreen_components.player_system import CharacterInventorySaver, PlayerLocationTracker
 from game_core.sprite_cache import sprite_cache
 
 
@@ -107,16 +106,13 @@ class PlayScreen(BaseScreen):
         self.game_over_screen = GameOverScreen(width, height)
         self.show_game_over = False
 
-        # Game state saver for saving game state
-        self.game_state_saver = GameStateSaver()
+        # Centralized save/load manager for all game data
+        self.save_load_manager = SaveLoadManager()
 
-        # Character inventory saver for saving inventory data
-        self.character_inventory_saver = CharacterInventorySaver()
-
-        # Relation handler will be obtained from map_system after initialization
-
-        # Player location tracker for saving positions across maps
-        self.player_location_tracker = PlayerLocationTracker()
+        # Legacy components (for backward compatibility)
+        self.game_state_saver = self.save_load_manager.game_state_saver
+        self.character_inventory_saver = self.save_load_manager.character_inventory_saver
+        self.player_location_tracker = self.save_load_manager.player_location_tracker
 
         # Teleportation flags and info
         self.is_teleporting = False
@@ -1523,30 +1519,16 @@ class PlayScreen(BaseScreen):
                         enemy.float_y = enemy_data[7]
 
     def save_game(self):
-        """Save the current game state to the map file"""
-        # Save map state
-        map_success, map_error_message = self.game_state_saver.save_game_state(self)
+        """Save the current game state using the centralized save/load manager"""
+        # Use the centralized save manager
+        success, message = self.save_load_manager.save_all(self)
 
-        # Save character inventory separately
-        inventory_success, inventory_error_message = self.save_character_inventory()
+        if not success:
+            print(f"Error saving game: {message}")
 
-        # Save current player location using the player system
-        if self.player_system.get_player() and self.map_name:
-            self.player_system.save_player_location(self.map_name, self.player_location_tracker)
-            # Save to file
-            self.player_location_tracker.save_to_file()
+        return success
 
-        # Return results without showing popup messages
-        if map_success and inventory_success:
-            return True
-        elif not map_success:
-            # Only log error, don't show message
-            print(f"Error saving game: {map_error_message}")
-            return False
-        else:
-            # Only log error, don't show message
-            print(f"Error saving inventory: {inventory_error_message}")
-            return False
+
 
     def save_character_inventory(self):
         """Save the character's inventory to a separate file"""
@@ -1580,24 +1562,17 @@ class PlayScreen(BaseScreen):
             self.player_inventory.inventory_items[bottom_row_start + i] = self.hud.inventory.inventory_items[i]
 
     def load_character_inventory(self):
-        """Load the character's inventory from the save file"""
+        """Load the character's inventory using the centralized save/load manager"""
         # Skip if player inventory is not initialized
         if not self.player_inventory:
             return False, "Player inventory not initialized"
 
-        # Load the inventory data
-        success, message = self.character_inventory_saver.load_inventory(self.player_inventory)
+        # Use the centralized load manager
+        success, message = self.save_load_manager.load_all(self)
 
         if success:
-            # Update item images with proper sprites from animated tile manager
-            self._update_inventory_images()
-
-            # Update the HUD inventory from the bottom row of the player inventory
-            # This ensures the quick access slots are updated
-            self.player_inventory.hide(self.hud.inventory)
-
             # Log success using debug manager
-            debug_manager.log("Character inventory loaded successfully", "player")
+            debug_manager.log("Character data loaded successfully", "player")
         else:
             # Log message using debug manager
             # This is expected when starting a new game
@@ -1871,10 +1846,13 @@ class PlayScreen(BaseScreen):
         # Call the base class resize method
         super().resize(new_width, new_height)
 
+        # Update input system dimensions (this updates zoom controller)
+        self.input_system.resize(new_width, new_height)
+
         # Update HUD dimensions
         self.hud.resize(new_width, new_height)
 
-        # Recalculate center offset for small maps
+        # Recalculate center offset for small maps (after input system is updated)
         self.calculate_center_offset()
 
         # Adjust camera position to maintain the same view center

@@ -238,3 +238,8 @@ class InputSystem:
         """Update the current player reference"""
         self.player = player
         self.mouse_handler.player = player
+
+    def resize(self, new_width: int, new_height: int):
+        """Handle screen resize by updating all input components"""
+        # Update zoom controller dimensions
+        self.zoom_controller.resize(new_width, new_height)

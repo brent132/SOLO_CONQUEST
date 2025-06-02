@@ -9,7 +9,6 @@ This module manages:
 - Camera bounds clamping
 - Effective screen size calculations
 """
-from typing import Optional, Tuple
 
 
 class ZoomController:
@@ -62,7 +61,7 @@ class ZoomController:
         self.center_offset_x = center_offset_x
         self.center_offset_y = center_offset_y
         
-    def zoom_in(self, player_rect: Optional = None) -> bool:
+    def zoom_in(self, player_rect=None) -> bool:
         """
         Zoom in to the next zoom level
         
@@ -94,7 +93,7 @@ class ZoomController:
             return True
         return False
 
-    def zoom_out(self, player_rect: Optional = None) -> bool:
+    def zoom_out(self, player_rect=None) -> bool:
         """
         Zoom out to the previous zoom level
         
@@ -126,7 +125,7 @@ class ZoomController:
             return True
         return False
 
-    def reset_zoom(self, player_rect: Optional = None) -> bool:
+    def reset_zoom(self, player_rect=None) -> bool:
         """
         Reset zoom to 1.0x (100%)
         
@@ -189,6 +188,14 @@ class ZoomController:
                 callback(self.grid_cell_size, self.zoom_factor, self.zoom_factor_inv)
             except Exception as e:
                 print(f"Error in zoom changed callback: {e}")
+
+    def resize(self, new_width: int, new_height: int):
+        """Handle screen resize by updating dimensions and recalculating zoom values"""
+        self.width = new_width
+        self.height = new_height
+
+        # Recalculate zoom-related values with new screen dimensions
+        self._update_zoom_values()
                 
     def get_zoom_info(self) -> dict:
         """Get current zoom information"""

@@ -136,7 +136,7 @@
     "inventory": [],
     "collected_keys": [],
     "collected_crystals": [
-      [20, 12]
+      [20, 12],[21, 12]
     ],
     "opened_lootchests": [],
     "chest_contents": {}
