@@ -196,6 +196,11 @@ class ZoomController:
 
         # Recalculate zoom-related values with new screen dimensions
         self._update_zoom_values()
+
+    def set_center_offset(self, center_offset_x: float, center_offset_y: float):
+        """Set center offset for small map centering"""
+        self.center_offset_x = center_offset_x
+        self.center_offset_y = center_offset_y
                 
     def get_zoom_info(self) -> dict:
         """Get current zoom information"""

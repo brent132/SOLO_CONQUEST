@@ -366,8 +366,8 @@
   },
   "game_state": {
     "camera": {
-      "x": 0,
-      "y": 0
+      "x": 0.0,
+      "y": 0.0
     },
     "enemies": [
       {
@@ -431,18 +431,6 @@
     "chest_contents": {
       "14,9": {
         "40": {
-          "name": "Crystal",
-          "count": 1
-        },
-        "41": {
-          "name": "Crystal",
-          "count": 1
-        },
-        "42": {
-          "name": "Crystal",
-          "count": 1
-        },
-        "43": {
           "name": "Crystal",
           "count": 1
         }

@@ -23,6 +23,7 @@ from enemy_system import EnemyManager
 from base_screen import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen
 from playscreen_components.state_system import SaveLoadManager
+from playscreen_components.camera_system import CameraController
 # RelationHandler now imported from map_system
 from game_core.sprite_cache import sprite_cache
 
@@ -75,6 +76,9 @@ class PlayScreen(BaseScreen):
 
         # Initialize the modularized rendering system
         self.rendering_pipeline = RenderingPipeline(self.width, self.height, self.base_grid_cell_size)
+
+        # Initialize the modularized camera system
+        self.camera_controller = CameraController(self.base_grid_cell_size)
 
         # Key item manager
         self.key_item_manager = KeyItemManager()
@@ -161,29 +165,31 @@ class PlayScreen(BaseScreen):
 
     @property
     def camera_x(self):
-        """Get camera X position from input system"""
-        if hasattr(self, 'input_system'):
-            return self.input_system.get_zoom_controller().camera_x
+        """Get camera X position from camera controller"""
+        if hasattr(self, 'camera_controller'):
+            return self.camera_controller.get_camera_position()[0]
         return 0
 
     @camera_x.setter
     def camera_x(self, value):
-        """Set camera X position in input system"""
-        if hasattr(self, 'input_system'):
-            self.input_system.get_zoom_controller().camera_x = value
+        """Set camera X position in camera controller"""
+        if hasattr(self, 'camera_controller'):
+            current_y = self.camera_controller.get_camera_position()[1]
+            self.camera_controller.set_camera_position(value, current_y)
 
     @property
     def camera_y(self):
-        """Get camera Y position from input system"""
-        if hasattr(self, 'input_system'):
-            return self.input_system.get_zoom_controller().camera_y
+        """Get camera Y position from camera controller"""
+        if hasattr(self, 'camera_controller'):
+            return self.camera_controller.get_camera_position()[1]
         return 0
 
     @camera_y.setter
     def camera_y(self, value):
-        """Set camera Y position in input system"""
-        if hasattr(self, 'input_system'):
-            self.input_system.get_zoom_controller().camera_y = value
+        """Set camera Y position in camera controller"""
+        if hasattr(self, 'camera_controller'):
+            current_x = self.camera_controller.get_camera_position()[0]
+            self.camera_controller.set_camera_position(current_x, value)
 
     @property
     def center_offset_x(self):
@@ -280,6 +286,12 @@ class PlayScreen(BaseScreen):
         zoom_controller = self.input_system.get_zoom_controller()
         zoom_controller.add_zoom_changed_callback(self._on_zoom_changed)
 
+        # Initialize camera controller with zoom controller and map data
+        self.camera_controller.initialize(zoom_controller, self.player)
+        self.camera_controller.set_map_data(
+            self.layers, self.map_data, self.map_width, self.map_height, self.expanded_mapping
+        )
+
         # Set up tiles dictionary for backward compatibility
         self.tiles = {}
         for tile_id in range(1000):  # Reasonable range for tile IDs
@@ -331,10 +343,15 @@ class PlayScreen(BaseScreen):
                 self.player_location_tracker, self.is_teleporting, teleport_position
             )
 
+            # Update camera controller with player reference
+            self.camera_controller.set_player(self.player)
+
             # Set camera position from game state if available (for non-teleporting loads)
             if not self.is_teleporting and "game_state" in map_data and "camera" in map_data["game_state"]:
-                self.camera_x = map_data["game_state"]["camera"]["x"]
-                self.camera_y = map_data["game_state"]["camera"]["y"]
+                self.camera_controller.set_camera_from_save_data(
+                    map_data["game_state"]["camera"]["x"],
+                    map_data["game_state"]["camera"]["y"]
+                )
 
             # Load enemies from saved game state if available
             enemies_loaded = False
@@ -384,11 +401,11 @@ class PlayScreen(BaseScreen):
             # This happens after map loading so we have the player and inventory initialized
             self.load_character_inventory()
 
-            # Calculate center offset for small maps
-            self.calculate_center_offset()
+            # Calculate center offset for small maps using camera controller
+            center_offset_x, center_offset_y = self.camera_controller.calculate_center_offset()
             print(f"Map dimensions: {self.map_width}x{self.map_height} pixels: {self.map_width * self.grid_cell_size}x{self.map_height * self.grid_cell_size}")
             print(f"Screen dimensions: {self.width}x{self.height}")
-            print(f"Center offset: ({self.center_offset_x}, {self.center_offset_y})")
+            print(f"Center offset: ({center_offset_x}, {center_offset_y})")
 
             # Restore teleportation flags
             self.is_teleporting = was_teleporting
@@ -522,8 +539,9 @@ class PlayScreen(BaseScreen):
         if hasattr(self, 'rendering_pipeline'):
             self.rendering_pipeline.update_zoom(grid_cell_size, zoom_factor)
 
-        # Recalculate center offset for small maps
-        self.calculate_center_offset()
+        # Recalculate center offset for small maps using camera controller
+        if hasattr(self, 'camera_controller'):
+            self.camera_controller.calculate_center_offset()
 
     def reset(self):
         """Reset the screen state but keep the map name"""
@@ -574,145 +592,9 @@ class PlayScreen(BaseScreen):
     # OLD CURSOR LOADING METHOD REMOVED - NOW HANDLED BY InputSystem
     # load_custom_cursor() has been replaced by the modularized input system
 
-    def find_used_area_bounds(self):
-        """Find the bounds of the used area in the map, excluding enemy and player tiles
-
-        Returns:
-            tuple: (min_x, max_x, min_y, max_y) - the bounds of the used area
-        """
-        # Initialize bounds to extreme values
-        min_x = self.map_width
-        max_x = 0
-        min_y = self.map_height
-        max_y = 0
-
-        # Flag to track if any tiles were found
-        found_tiles = False
-
-        # Check if we have layers
-        if hasattr(self, 'layers') and self.layers:
-            # Scan each layer for tiles
-            for layer in self.layers:
-                layer_data = layer["data"]
-
-                for y in range(len(layer_data)):
-                    for x in range(len(layer_data[y])):
-                        # Check if this tile is not empty (-1)
-                        tile_id = layer_data[y][x]
-                        if tile_id != -1:
-                            # Skip enemy and player tiles
-                            if self.is_enemy_or_player_tile(tile_id):
-                                continue
-
-                            # Update bounds
-                            min_x = min(min_x, x)
-                            max_x = max(max_x, x)
-                            min_y = min(min_y, y)
-                            max_y = max(max_y, y)
-                            found_tiles = True
-        # Fallback to old format if no layers
-        elif hasattr(self, 'map_data') and self.map_data:
-            for y in range(len(self.map_data)):
-                for x in range(len(self.map_data[y])):
-                    # Check if this tile is not empty (-1)
-                    tile_id = self.map_data[y][x]
-                    if tile_id != -1:
-                        # Skip enemy and player tiles
-                        if self.is_enemy_or_player_tile(tile_id):
-                            continue
-
-                        # Update bounds
-                        min_x = min(min_x, x)
-                        max_x = max(max_x, x)
-                        min_y = min(min_y, y)
-                        max_y = max(max_y, y)
-                        found_tiles = True
-
-        # If no tiles were found, use the full map dimensions
-        if not found_tiles:
-            min_x = 0
-            max_x = self.map_width - 1
-            min_y = 0
-            max_y = self.map_height - 1
-
-        return min_x, max_x, min_y, max_y
-
-    def is_enemy_or_player_tile(self, tile_id):
-        """Check if a tile is an enemy or player tile
-
-        Args:
-            tile_id: The tile ID to check
-
-        Returns:
-            bool: True if the tile is an enemy or player tile, False otherwise
-        """
-        # Convert tile_id to string for dictionary lookup
-        tile_id_str = str(tile_id)
-
-        # Check if we have the expanded mapping
-        if not hasattr(self, 'expanded_mapping') or not self.expanded_mapping:
-            return False
-
-        # Check if this tile is in the expanded mapping
-        if tile_id_str in self.expanded_mapping:
-            path = self.expanded_mapping[tile_id_str].get("path", "")
-
-            # Check if this is an enemy or player tile
-            if ("Enemies_Sprites/Phantom_Sprites" in path or
-                "Enemies_Sprites/Bomberplant_Sprites" in path or
-                "Enemies_Sprites/Spinner_Sprites" in path or
-                "character/char_idle_" in path or
-                "character/char_run_" in path or
-                "character/char_attack_" in path or
-                "character/char_hit_" in path or
-                "character/char_shield_" in path):
-                return True
-
-        return False
-
-    def calculate_center_offset(self):
-        """Calculate the offset needed to center the used area of a map on the screen
-
-        This method scans the map data to find the bounds of the used area
-        (where tiles exist) and centers that area on the screen.
-        """
-        # Find the bounds of the used area in the map
-        min_x, max_x, min_y, max_y = self.find_used_area_bounds()
-
-        # Calculate the size of the used area in pixels (use base grid size for logical coordinates)
-        used_width = (max_x - min_x + 1) * self.base_grid_cell_size if max_x >= min_x else 0
-        used_height = (max_y - min_y + 1) * self.base_grid_cell_size if max_y >= min_y else 0
-
-        # Calculate the offset to the start of the used area (use base grid size for logical coordinates)
-        area_offset_x = min_x * self.base_grid_cell_size
-        area_offset_y = min_y * self.base_grid_cell_size
-
-        # Use pre-calculated effective screen size for performance
-        effective_screen_width = self.effective_screen_width
-        effective_screen_height = self.effective_screen_height
-
-        # Calculate center offsets
-        if used_width < effective_screen_width:
-            # Center horizontally
-            center_offset_x = (effective_screen_width - used_width) // 2 - area_offset_x
-        else:
-            # Used area is wider than or equal to the screen, no horizontal centering needed
-            center_offset_x = 0
-
-        if used_height < effective_screen_height:
-            # Center vertically
-            center_offset_y = (effective_screen_height - used_height) // 2 - area_offset_y
-        else:
-            # Used area is taller than or equal to the screen, no vertical centering needed
-            center_offset_y = 0
-
-        # Set the center offsets in the input system
-        self.center_offset_x = center_offset_x
-        self.center_offset_y = center_offset_y
-
-        print(f"Used area bounds: ({min_x}, {min_y}) to ({max_x}, {max_y})")
-        print(f"Used area size: {used_width}x{used_height} pixels")
-        print(f"Center offset: ({center_offset_x}, {center_offset_y})")
+    # OLD CAMERA METHODS REMOVED - NOW HANDLED BY CameraController
+    # find_used_area_bounds(), is_enemy_or_player_tile(), calculate_center_offset()
+    # have been replaced by the modularized camera system
 
     def update(self):
         """Update play screen logic"""
@@ -910,51 +792,15 @@ class PlayScreen(BaseScreen):
                     # This ensures animations and collision detection work correctly
                     self.player.update_position()
 
-                    # Update camera to center on player using zoom-aware positioning
-                    # Use pre-calculated effective screen size for performance
-                    self.camera_x = self.player.rect.centerx - (self.effective_screen_width // 2)
-                    self.camera_y = self.player.rect.centery - (self.effective_screen_height // 2)
-
-                    # Clamp camera to map boundaries using base grid size (logical coordinates)
-                    max_camera_x = max(0, self.map_width * self.base_grid_cell_size - self.effective_screen_width)
-                    max_camera_y = max(0, self.map_height * self.base_grid_cell_size - self.effective_screen_height)
-                    self.camera_x = max(0, min(self.camera_x, max_camera_x))
-                    self.camera_y = max(0, min(self.camera_y, max_camera_y))
-                    print(f"Camera position: ({self.camera_x}, {self.camera_y})")
+                    # Update camera to center on player using camera controller
+                    self.camera_controller.center_camera_on_player()
 
                     # No teleport message
 
             # Collision detection is now handled by the PlayerSystem
 
-            # Update camera to follow player smoothly
-            # Center camera on player
-            player_center_x = self.player.rect.centerx
-            player_center_y = self.player.rect.centery
-
-            # Calculate desired camera position (centered on player)
-            # Use pre-calculated effective screen size for performance
-            target_camera_x = player_center_x - (self.effective_screen_width // 2)
-            target_camera_y = player_center_y - (self.effective_screen_height // 2)
-
-            # Clamp camera to map boundaries (use base grid size for logical coordinates)
-            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - self.effective_screen_width)
-            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - self.effective_screen_height)
-
-            # Ensure target is within map boundaries
-            target_camera_x = max(0, min(target_camera_x, max_camera_x))
-            target_camera_y = max(0, min(target_camera_y, max_camera_y))
-
-            # Smooth camera movement - interpolate between current and target position
-            # Use a consistent interpolation to prevent jitter
-            camera_smoothing = 1.0  # Set to 1.0 to disable smoothing and eliminate black lines
-
-            # Apply smoothing
-            self.camera_x = target_camera_x * camera_smoothing + self.camera_x * (1 - camera_smoothing)
-            self.camera_y = target_camera_y * camera_smoothing + self.camera_y * (1 - camera_smoothing)
-
-            # Ensure camera position is valid after smoothing and convert to integer
-            self.camera_x = int(max(0, min(self.camera_x, max_camera_x)))
-            self.camera_y = int(max(0, min(self.camera_y, max_camera_y)))
+            # Update camera to follow player smoothly using camera controller
+            self.camera_controller.update_camera_following()
 
     def draw(self, surface):
         """Draw the play screen using the modularized rendering pipeline"""
@@ -1852,40 +1698,9 @@ class PlayScreen(BaseScreen):
         # Update HUD dimensions
         self.hud.resize(new_width, new_height)
 
-        # Recalculate center offset for small maps (after input system is updated)
-        self.calculate_center_offset()
-
-        # Adjust camera position to maintain the same view center
-        # This prevents the view from jumping when resizing
-        if self.player:
-            # Update camera to center on player
-            effective_screen_width = self.width / self.zoom_factor
-            effective_screen_height = self.height / self.zoom_factor
-
-            self.camera_x = self.player.rect.centerx - (effective_screen_width // 2)
-            self.camera_y = self.player.rect.centery - (effective_screen_height // 2)
-
-            # Clamp camera to map boundaries (use base grid size for logical coordinates)
-            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
-            self.camera_x = max(0, min(self.camera_x, max_camera_x))
-            self.camera_y = max(0, min(self.camera_y, max_camera_y))
-        else:
-            # If no player, adjust camera based on the change in center offset
-            delta_offset_x = self.center_offset_x - old_center_offset_x
-            delta_offset_y = self.center_offset_y - old_center_offset_y
-
-            # Adjust camera position to account for the change in center offset
-            self.camera_x -= delta_offset_x
-            self.camera_y -= delta_offset_y
-
-            # Clamp camera to map boundaries (use base grid size for logical coordinates)
-            effective_screen_width = self.width / self.zoom_factor
-            effective_screen_height = self.height / self.zoom_factor
-            max_camera_x = max(0, self.map_width * self.base_grid_cell_size - effective_screen_width)
-            max_camera_y = max(0, self.map_height * self.base_grid_cell_size - effective_screen_height)
-            self.camera_x = max(0, min(self.camera_x, max_camera_x))
-            self.camera_y = max(0, min(self.camera_y, max_camera_y))
+        # Handle camera resize using camera controller
+        if hasattr(self, 'camera_controller'):
+            self.camera_controller.handle_resize(old_center_offset_x, old_center_offset_y)
 
         # If both inventories are visible, maintain their side-by-side positioning
         if self.chest_inventory.is_visible() and self.player_inventory.is_visible():
