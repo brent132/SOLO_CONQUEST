@@ -67,11 +67,13 @@ class CursorManager:
     def setup_shared_cursor_system(self, player_inventory, chest_inventory):
         """
         Set up the shared cursor system for Terraria-style inventory interactions
-        
+
         Args:
             player_inventory: The player inventory instance
             chest_inventory: The chest inventory instance
         """
+
+
         # Store original cursor_item attributes as private
         player_inventory._original_cursor_item = player_inventory.cursor_item
         chest_inventory._original_cursor_item = chest_inventory.cursor_item
@@ -86,6 +88,7 @@ class CursorManager:
         # Monkey patch both inventories to use shared cursor
         player_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)
         chest_inventory.__class__.cursor_item = property(get_shared_cursor, set_shared_cursor)
+
         
     def get_shared_cursor_item(self) -> Optional[Any]:
         """Get the current shared cursor item"""
@@ -102,6 +105,28 @@ class CursorManager:
     def has_cursor_item(self) -> bool:
         """Check if there's currently a cursor item"""
         return self.shared_cursor_item is not None
+
+    def render_cursor_item(self, surface: pygame.Surface):
+        """Render the shared cursor item at the mouse position"""
+        if self.shared_cursor_item and "image" in self.shared_cursor_item:
+            mouse_pos = pygame.mouse.get_pos()
+            cursor_image = self.shared_cursor_item["image"]
+            cursor_x = mouse_pos[0] - cursor_image.get_width() // 2
+            cursor_y = mouse_pos[1] - cursor_image.get_height() // 2
+
+            # Draw with semi-transparency
+            temp_surface = pygame.Surface((cursor_image.get_width(), cursor_image.get_height()), pygame.SRCALPHA)
+            temp_surface.blit(cursor_image, (0, 0))
+            temp_surface.set_alpha(180)
+            surface.blit(temp_surface, (cursor_x, cursor_y))
+
+            # Draw count
+            count = self.shared_cursor_item.get("count", 1)
+            if count > 1:
+                font = pygame.font.SysFont(None, 16)
+                count_text = font.render(str(count), True, (255, 255, 255))
+                count_rect = count_text.get_rect(bottomright=(cursor_x + cursor_image.get_width(), cursor_y + cursor_image.get_height()))
+                surface.blit(count_text, count_rect)
         
     def get_cursor_state(self) -> str:
         """Get the current cursor state"""

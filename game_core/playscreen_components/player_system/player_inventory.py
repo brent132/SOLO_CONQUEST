@@ -182,27 +182,7 @@ class PlayerInventory:
                         # Draw the count text directly without background
                         surface.blit(count_text, (count_x, count_y))
 
-        # Draw cursor item if holding one
-        if self.cursor_item:
-            mouse_pos = pygame.mouse.get_pos()
-            if "image" in self.cursor_item:
-                cursor_image = self.cursor_item["image"]
-                cursor_x = mouse_pos[0] - cursor_image.get_width() // 2
-                cursor_y = mouse_pos[1] - cursor_image.get_height() // 2
-
-                # Draw with semi-transparency
-                temp_surface = pygame.Surface((cursor_image.get_width(), cursor_image.get_height()), pygame.SRCALPHA)
-                temp_surface.blit(cursor_image, (0, 0))
-                temp_surface.set_alpha(180)
-                surface.blit(temp_surface, (cursor_x, cursor_y))
-
-                # Draw count
-                count = self.cursor_item.get("count", 1)
-                if count > 1:
-                    font = pygame.font.SysFont(None, 16)
-                    count_text = font.render(str(count), True, (255, 255, 255))
-                    count_rect = count_text.get_rect(bottomright=(cursor_x + cursor_image.get_width(), cursor_y + cursor_image.get_height()))
-                    surface.blit(count_text, count_rect)
+        # Cursor item rendering is now handled centrally by the UI renderer
 
     def draw_cursor_item(self, surface):
         """Draw the cursor item (for compatibility with play_screen)"""

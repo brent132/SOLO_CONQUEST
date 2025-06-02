@@ -24,8 +24,9 @@ from base_screen import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen
 from playscreen_components.state_system import SaveLoadManager
 from playscreen_components.camera_system import CameraController
+from playscreen_components.ui_management import UIManager
+from playscreen_components.teleportation_system import TeleportationManager
 # RelationHandler now imported from map_system
-from game_core.sprite_cache import sprite_cache
 
 
 class PlayScreen(BaseScreen):
@@ -47,10 +48,6 @@ class PlayScreen(BaseScreen):
         self.map_width = 0
         self.map_height = 0
         self.tiles = {}  # Will store loaded tile images
-
-        # Status message
-        self.status_message = ""
-        self.status_timer = 0
 
         # Player character
         self.player = None
@@ -80,6 +77,12 @@ class PlayScreen(BaseScreen):
         # Initialize the modularized camera system
         self.camera_controller = CameraController(self.base_grid_cell_size)
 
+        # Initialize the modularized UI management system
+        self.ui_manager = UIManager(self.width, self.height)
+
+        # Initialize the modularized teleportation system
+        self.teleportation_manager = TeleportationManager(self.base_grid_cell_size)
+
         # Key item manager
         self.key_item_manager = KeyItemManager()
 
@@ -108,7 +111,6 @@ class PlayScreen(BaseScreen):
 
         # Game over screen
         self.game_over_screen = GameOverScreen(width, height)
-        self.show_game_over = False
 
         # Centralized save/load manager for all game data
         self.save_load_manager = SaveLoadManager()
@@ -117,15 +119,6 @@ class PlayScreen(BaseScreen):
         self.game_state_saver = self.save_load_manager.game_state_saver
         self.character_inventory_saver = self.save_load_manager.character_inventory_saver
         self.player_location_tracker = self.save_load_manager.player_location_tracker
-
-        # Teleportation flags and info
-        self.is_teleporting = False
-        self.teleport_info = None
-
-        # Popup message for save notification
-        self.popup_message = ""
-        self.popup_timer = 0
-        self.popup_duration = 120  # 2 seconds at 60 FPS
 
         # Initialize key item collection variables
         self.key_collected = False
@@ -217,6 +210,32 @@ class PlayScreen(BaseScreen):
         if hasattr(self, 'input_system'):
             self.input_system.get_zoom_controller().center_offset_y = value
 
+    @property
+    def is_teleporting(self):
+        """Get teleportation state from teleportation manager"""
+        if hasattr(self, 'teleportation_manager'):
+            return self.teleportation_manager.is_teleporting
+        return False
+
+    @is_teleporting.setter
+    def is_teleporting(self, value):
+        """Set teleportation state in teleportation manager"""
+        if hasattr(self, 'teleportation_manager'):
+            self.teleportation_manager.is_teleporting = value
+
+    @property
+    def teleport_info(self):
+        """Get teleport info from teleportation manager"""
+        if hasattr(self, 'teleportation_manager'):
+            return self.teleportation_manager.teleport_info
+        return None
+
+    @teleport_info.setter
+    def teleport_info(self, value):
+        """Set teleport info in teleportation manager"""
+        if hasattr(self, 'teleportation_manager'):
+            self.teleportation_manager.teleport_info = value
+
     def load_map(self, map_name):
         """Load a map from file using the modularized map system"""
         # Reset the enemy manager to clear all enemies from the previous map
@@ -232,8 +251,7 @@ class PlayScreen(BaseScreen):
         success, error_msg = self.map_system.load_map(map_name, self.animated_tile_manager)
 
         if not success:
-            self.status_message = f"Error loading map: {error_msg}"
-            self.status_timer = 180
+            self.ui_manager.show_status_message(f"Error loading map: {error_msg}", 180)
             return False
 
         # Get map information from the map system
@@ -282,6 +300,17 @@ class PlayScreen(BaseScreen):
         # Set the back button reference in the UI renderer
         self.rendering_pipeline.ui_renderer.set_back_button(self.back_button)
 
+        # Initialize UI manager with all UI components
+        self.ui_manager.initialize(self.hud, self.player_inventory, self.chest_inventory, self.game_over_screen)
+        self.ui_manager.set_save_callback(self.save_character_inventory)
+
+        # Set UI manager reference in the UI renderer
+        self.rendering_pipeline.ui_renderer.set_ui_manager(self.ui_manager)
+
+        # Set cursor manager reference in the UI renderer
+        cursor_manager = self.input_system.get_cursor_manager()
+        self.rendering_pipeline.ui_renderer.set_cursor_manager(cursor_manager)
+
         # Set up zoom controller callbacks
         zoom_controller = self.input_system.get_zoom_controller()
         zoom_controller.add_zoom_changed_callback(self._on_zoom_changed)
@@ -290,6 +319,12 @@ class PlayScreen(BaseScreen):
         self.camera_controller.initialize(zoom_controller, self.player)
         self.camera_controller.set_map_data(
             self.layers, self.map_data, self.map_width, self.map_height, self.expanded_mapping
+        )
+
+        # Initialize teleportation manager with required systems
+        self.teleportation_manager.initialize(
+            self.player_system, self.camera_controller, self.relation_handler,
+            self.player_location_tracker, self.save_game, self.load_map
         )
 
         # Set up tiles dictionary for backward compatibility
@@ -413,8 +448,7 @@ class PlayScreen(BaseScreen):
 
             return True
         except Exception as e:
-            self.status_message = f"Error loading map: {str(e)}"
-            self.status_timer = 180
+            self.ui_manager.show_status_message(f"Error loading map: {str(e)}", 180)
             return False
 
     # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
@@ -469,17 +503,17 @@ class PlayScreen(BaseScreen):
         """Handle events for the play screen using the modularized input system"""
         mouse_pos = pygame.mouse.get_pos()
 
-        # If game over screen is showing, handle its events
-        if self.show_game_over:
-            result = self.game_over_screen.handle_event(event)
-            if result == "restart":
-                # Reload the current map to restart
-                self.reload_current_map()
-                return None
-            elif result == "exit":
-                # Return to map selection
-                return "back"
+        # Handle UI events first (game over, inventories, messages)
+        ui_result = self.ui_manager.handle_event(event, mouse_pos)
+        if ui_result == "restart_game":
+            # Reload the current map to restart
+            self.reload_current_map()
             return None
+        elif ui_result == "exit_to_menu":
+            # Return to map selection
+            return "back"
+        elif ui_result == "escape_handled":
+            return None  # Event was handled by UI
 
         # Handle common events (back button also saves)
         result = self.handle_common_events(event, mouse_pos)
@@ -491,33 +525,11 @@ class PlayScreen(BaseScreen):
 
         # Handle special return values from input system
         if result == "escape_pressed":
-            return self._handle_escape_key()
+            # Escape key handling is now managed by UI Manager
+            # This should not happen as UI Manager handles escape first
+            return None
 
         return result
-
-    def _handle_escape_key(self):
-        """Handle ESC key press for inventory toggling"""
-        # If chest inventory is visible, close both inventories
-        if self.chest_inventory.is_visible():
-            # Save chest contents before closing
-            if self.chest_inventory.current_chest_pos:
-                self.lootchest_manager.set_chest_contents(
-                    self.chest_inventory.current_chest_pos,
-                    self.chest_inventory.inventory_items
-                )
-            self.chest_inventory.hide()
-            self.player_inventory.hide(self.hud.inventory)
-            # Save character inventory when closing the inventory screen
-            self.save_character_inventory()
-        # If only player inventory is visible, hide it and save inventory data
-        elif self.player_inventory.is_visible():
-            self.player_inventory.hide(self.hud.inventory)
-            # Save character inventory when closing the inventory screen
-            self.save_character_inventory()
-        # Otherwise, show player inventory
-        else:
-            self.player_inventory.show(self.hud.inventory)
-        return None
 
     def _on_zoom_changed(self, grid_cell_size: int, zoom_factor: float, zoom_factor_inv: float):
         """Callback when zoom changes - update systems that depend on zoom"""
@@ -577,8 +589,9 @@ class PlayScreen(BaseScreen):
         # Reset animated tile manager
         self.animated_tile_manager = AnimatedTileManager()
 
-        # Reset game over state
-        self.show_game_over = False
+        # Reset game over state using UI manager
+        if hasattr(self, 'ui_manager'):
+            self.ui_manager.set_game_over(False)
 
         # Restore the map name
         self.map_name = current_map
@@ -586,7 +599,7 @@ class PlayScreen(BaseScreen):
     def reload_current_map(self):
         """Reload the current map to restart the game"""
         if self.map_name:
-            self.show_game_over = False
+            self.ui_manager.set_game_over(False)
             self.load_map(self.map_name)
 
     # OLD CURSOR LOADING METHOD REMOVED - NOW HANDLED BY InputSystem
@@ -598,19 +611,11 @@ class PlayScreen(BaseScreen):
 
     def update(self):
         """Update play screen logic"""
-        # Update status message timer
-        if self.status_timer > 0:
-            self.status_timer -= 1
-
-        # Update popup message timer
-        if self.popup_timer > 0:
-            self.popup_timer -= 1
-
-        # Get current mouse position for HUD updates
+        # Get current mouse position for UI updates
         mouse_pos = pygame.mouse.get_pos()
 
-        # Update HUD (for inventory hover effects)
-        self.hud.update(mouse_pos)
+        # Update UI manager (handles messages, inventories, HUD, etc.)
+        self.ui_manager.update(mouse_pos)
 
         # Update input system (handles cursor management)
         self.input_system.update(mouse_pos)
@@ -631,17 +636,8 @@ class PlayScreen(BaseScreen):
         if self.relation_handler:
             self.relation_handler.update()
 
-        # Update chest inventory
-        if self.chest_inventory.is_visible():
-            self.chest_inventory.update(mouse_pos)
-
-        # Update player inventory
-        if self.player_inventory.is_visible():
-            self.player_inventory.update(mouse_pos)
-
-        # If game over screen is showing, update it
-        if self.show_game_over:
-            self.game_over_screen.update()
+        # Game over screen and inventory updates are now handled by UI Manager
+        if self.ui_manager.is_game_over_showing():
             return
 
         # Animated tiles are ready for use
@@ -656,9 +652,9 @@ class PlayScreen(BaseScreen):
                 self.collision_handler, self.expanded_mapping, collision_map_data
             )
 
-            if player_died and not self.show_game_over:
+            if player_died and not self.ui_manager.is_game_over_showing():
                 # Show game over screen
-                self.show_game_over = True
+                self.ui_manager.set_game_over(True)
                 return
 
             # Get the updated player reference
@@ -677,125 +673,27 @@ class PlayScreen(BaseScreen):
                 collision_map_data, self.layers
             )
 
-            if game_over_triggered and not self.show_game_over:
+            if game_over_triggered and not self.ui_manager.is_game_over_showing():
                 # Show game over screen
-                self.show_game_over = True
+                self.ui_manager.set_game_over(True)
                 return
 
-            # Check for teleportation using the coordinator
+            # Check for teleportation using the coordinator and teleportation manager
             relation = self.game_systems_coordinator.handle_teleportation_check(self.player)
             if relation:
-                # Player touched a relation point, teleport to the corresponding point in the other map
-                print(f"Player touched relation point: {relation['from_point']} -> {relation['to_point']} in map {relation['to_map']}")
-                print(f"Teleporting to position: {relation['to_position']}")
-
-                # Save the current player position using the player system
-                self.player_system.save_player_location(self.map_name, self.player_location_tracker)
-                print(f"Saved player location for map {self.map_name}: ({self.player.rect.x}, {self.player.rect.y}, {self.player.direction})")
-
-                # Save the current game state before teleporting
-                self.save_game()
-
-                # Store the target position before loading the map
-                target_position = relation['to_position']
-                target_map = relation['to_map']
-                print(f"Loading target map: {target_map}")
-                print(f"Target position: {target_position}")
-
-                # Set a flag to indicate we're teleporting
-                self.is_teleporting = True
-
-                # Store teleport information for after map load
-                self.teleport_info = {
-                    'target_position': target_position,
-                    'target_map': target_map,
-                    'to_point': relation['to_point']
-                }
-
-                # Make sure we have all relation points loaded before switching maps
-                self.relation_handler.load_all_relation_points()
-
-                # Print all available relation points for debugging
-                print(f"Available relation points before map load: {self.relation_handler.relation_points}")
-
-                # Clear all enemies before loading the new map
+                # Clear all enemies before teleporting
                 self.enemy_manager.enemies = []
 
-                # Load the target map
-                load_success = self.load_map(target_map)
-                print(f"Map load success: {load_success}")
+                # Handle teleportation using the teleportation manager
+                teleport_success = self.teleportation_manager.handle_teleportation(relation, self.map_name)
 
-                # Make sure the relation handler has the current map set correctly
-                self.relation_handler.current_map = target_map
-                print(f"Set relation handler current map to: {self.relation_handler.current_map}")
-
-                # Set the current teleport point to the destination point
-                # This prevents immediate re-teleportation until player steps off and back on
-                grid_x, grid_y = target_position
-
-                # Find the ID of the destination point
-                point_id = None
-                if target_map in self.relation_handler.relation_points:
-                    for id_key, points in self.relation_handler.relation_points[target_map].items():
-                        if relation['to_point'] in points and points[relation['to_point']] == target_position:
-                            point_id = id_key
-                            break
-
-                self.relation_handler.current_teleport_point = {
-                    'point_type': relation['to_point'],
-                    'position': target_position,
-                    'id': point_id
-                }
-                print(f"Set current teleport point to: {self.relation_handler.current_teleport_point}")
-
-                # Print all available relation points after map load
-                print(f"Available relation points after map load: {self.relation_handler.relation_points}")
-
-                if load_success and self.player and self.is_teleporting:
-                    # Position the player exactly at the center of the target relation point
-                    # Convert grid coordinates to pixel coordinates using base grid size (logical coordinates)
-                    grid_x, grid_y = target_position
-                    pixel_x = grid_x * self.base_grid_cell_size
-                    pixel_y = grid_y * self.base_grid_cell_size
-
-                    # Calculate the exact center of the teleport point
-                    point_center_x = pixel_x + (self.base_grid_cell_size // 2)
-                    point_center_y = pixel_y + (self.base_grid_cell_size // 2)
-
-                    # Set player position directly at the center of the teleport point
-                    # Use the center of the player's rect to align with the center of the point
-                    self.player.rect.centerx = point_center_x
-                    self.player.rect.centery = point_center_y
-
-                    # Save this position using the player system
-                    self.player_system.save_player_location(target_map, self.player_location_tracker)
-                    print(f"DEBUG: Saved teleport position for map {target_map}: ({self.player.rect.x}, {self.player.rect.y}, {self.player.direction})")
-
-                    # Reset movement states
-                    self.player.velocity = [0, 0]
-                    self.player.is_knocked_back = False
-                    self.player.knockback_velocity = [0, 0]
-
-                    print(f"Positioned player exactly at center of teleport point: ({point_center_x}, {point_center_y})")
-
-                    # Reset teleporting flag
-                    self.is_teleporting = False
-
+                if teleport_success and self.player:
                     # Set map boundaries for the player using base grid size (logical coordinates)
                     self.player.set_map_boundaries(
                         0, 0,  # Min X, Min Y
                         self.map_width * self.base_grid_cell_size,  # Max X
                         self.map_height * self.base_grid_cell_size  # Max Y
                     )
-
-                    # Update the player's position in the physics system
-                    # This ensures animations and collision detection work correctly
-                    self.player.update_position()
-
-                    # Update camera to center on player using camera controller
-                    self.camera_controller.center_camera_on_player()
-
-                    # No teleport message
 
             # Collision detection is now handled by the PlayerSystem
 
@@ -808,379 +706,28 @@ class PlayScreen(BaseScreen):
         if hasattr(self, 'rendering_pipeline') and self.rendering_pipeline.is_initialized:
             self.rendering_pipeline.render_frame(
                 surface, self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y,
-                self.zoom_factor, self.show_game_over
+                self.zoom_factor, self.ui_manager.is_game_over_showing()
             )
         else:
             # Fallback to basic rendering if pipeline not initialized
             surface.fill((0, 0, 0))
-            if self.show_game_over and self.game_over_screen:
+            if self.ui_manager.is_game_over_showing() and self.game_over_screen:
                 self.game_over_screen.draw(surface)
 
-    def draw_single_map_layer(self, surface, layer_idx):
-        """Draw a single map layer"""
-        # Only draw if we have map data and layers
-        if not hasattr(self, 'layers') or not self.layers or layer_idx >= len(self.layers):
-            return
+    # Legacy rendering methods removed - now handled by RenderingPipeline
+    # draw_single_map_layer() has been replaced by the modularized rendering system
 
-        # Get the layer
-        layer = self.layers[layer_idx]
-        if not layer["visible"]:
-            return
+    # Legacy rendering methods removed - now handled by RenderingPipeline
+    # draw_map_layers(), draw_map(), _handle_special_item_visibility() have been replaced by the modularized rendering system
 
-        layer_data = layer["data"]
+    # Legacy rendering methods removed - now handled by RenderingPipeline
+    # _draw_layered_map_optimized_range() has been replaced by the modularized rendering system
 
-        # Calculate visible area - optimized using pre-calculated values
-        start_x = int(self.camera_x // self.base_grid_cell_size)
-        end_x = min(self.map_width, start_x + int(self.effective_screen_width // self.base_grid_cell_size) + 2)
-        start_y = int(self.camera_y // self.base_grid_cell_size)
-        end_y = min(self.map_height, start_y + int(self.effective_screen_height // self.base_grid_cell_size) + 2)
+    # Legacy rendering methods removed - now handled by RenderingPipeline
+    # _draw_layered_map_optimized() and _draw_legacy_map_optimized() have been replaced by the modularized rendering system
 
-        # Draw visible tiles in this layer
-        for y in range(start_y, end_y):
-            if y >= len(layer_data):
-                continue
-
-            for x in range(start_x, end_x):
-                if x >= len(layer_data[y]):
-                    continue
-
-                # Get tile ID at this position
-                try:
-                    tile_id = layer_data[y][x]
-
-                    # Validate tile_id
-                    if not isinstance(tile_id, int):
-                        # Try to convert to int
-                        try:
-                            tile_id = int(tile_id)
-                        except (ValueError, TypeError):
-                            print(f"Warning: Invalid tile ID {tile_id} at position ({x}, {y}) in layer {layer_idx}")
-                            continue
-
-                    # Skip empty tiles
-                    if tile_id == -1:
-                        continue
-                except (IndexError, TypeError) as e:
-                    # Skip if the tile is out of bounds or layer_data is not properly formatted
-                    print(f"Warning: Error accessing tile at ({x}, {y}) in layer {layer_idx}: {e}")
-                    continue
-
-                # Skip player and enemy tiles
-                if str(tile_id) in self.expanded_mapping:
-                    path = self.expanded_mapping[str(tile_id)].get("path", "")
-                    # Only skip tiles that are specifically player or enemy sprites
-                    if ("Enemies_Sprites/Phantom_Sprites" in path or
-                        "Enemies_Sprites/Bomberplant_Sprites" in path or
-                        "Enemies_Sprites/Spinner_Sprites" in path or
-                        "character/char_idle_" in path or
-                        "character/char_run_" in path or
-                        "character/char_attack_" in path or
-                        "character/char_hit_" in path or
-                        "character/char_shield_" in path):
-                        continue
-
-                # Calculate screen position - proper logical to screen coordinate conversion
-                # First calculate logical position using base grid size
-                logical_x = x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
-                logical_y = y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
-
-                # Scale for zoom using pre-calculated zoom factor
-                screen_x = logical_x * self.zoom_factor
-                screen_y = logical_y * self.zoom_factor
-
-                # Check if this is a key item and if it should be drawn
-                if tile_id == self.key_item_id and hasattr(self, 'key_item_id'):
-                    # ALWAYS skip drawing the original key if there's a collection animation in progress
-                    # This is a direct check to ensure the key is never drawn during collection
-                    if (x, y) in self.key_item_manager.collected_items or not self.key_item_manager.should_draw_key_item(x, y):
-                        continue
-
-                # Check if this is a crystal item and if it should be drawn
-                if tile_id == self.crystal_item_id and hasattr(self, 'crystal_item_id'):
-                    # ALWAYS skip drawing the original crystal if there's a collection animation in progress
-                    # This is a direct check to ensure the crystal is never drawn during collection
-                    if (x, y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(x, y):
-                        continue
-
-                # Check if this is a lootchest item - only skip if it's currently opening or opened
-                if tile_id == self.lootchest_item_id and hasattr(self, 'lootchest_item_id'):
-                    # Only skip drawing if this lootchest is currently opening or already opened
-                    chest_pos = (x, y)
-                    if (chest_pos in self.lootchest_manager.opening_chests or
-                        chest_pos in self.lootchest_manager.opened_chests):
-                        continue  # Skip drawing - lootchest_manager handles opening/opened states
-
-
-
-                # Check if this is an animated tile
-                if self.animated_tile_manager.is_animated_tile_id(tile_id):
-                    # Get the current frame of the animated tile
-                    frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
-                    if frame:
-                        # For animated tiles, don't cache the scaled frames since they change every update
-                        # Instead, scale them directly each time to ensure animation works
-                        tile_size = (self.grid_cell_size, self.grid_cell_size)
-                        if frame.get_size() != tile_size:
-                            scaled_frame = pygame.transform.scale(frame, tile_size)
-                        else:
-                            scaled_frame = frame
-                        # Draw the animated tile frame
-                        surface.blit(scaled_frame, (screen_x, screen_y))
-                # Draw the tile if we have it loaded
-                elif tile_id in self.tiles:
-                    # Use sprite cache for scaled tiles to improve performance
-                    tile_size = (self.grid_cell_size, self.grid_cell_size)
-                    if self.tiles[tile_id].get_size() != tile_size:
-                        # Get the original path for this tile from expanded mapping
-                        tile_path = None
-                        for tid, tile_info in self.expanded_mapping.items():
-                            if int(tid) == tile_id:
-                                tile_path = tile_info["path"]
-                                break
-
-                        if tile_path and not tile_path.startswith("animated:"):
-                            # Use cached scaling
-                            scaled_tile = sprite_cache.get_scaled_sprite(tile_path, tile_size)
-                        else:
-                            # Fallback to direct scaling
-                            scaled_tile = pygame.transform.scale(self.tiles[tile_id], tile_size)
-                    else:
-                        scaled_tile = self.tiles[tile_id]
-
-                    # Draw the static tile
-                    surface.blit(scaled_tile, (screen_x, screen_y))
-
-    def draw_map_layers(self, surface, start_layer, end_layer):
-        """Draw specific map layers using the modularized map system"""
-        # Use the map system to render the specified layer range
-        self.map_system.render_layer_range(
-            surface, start_layer, end_layer, self.animated_tile_manager,
-            self.camera_x, self.camera_y, self.center_offset_x, self.center_offset_y
-        )
-
-        # Handle special item visibility for these layers
-        self._handle_special_item_visibility(surface)
-
-    def _handle_special_item_visibility(self, surface):
-        """Handle visibility of special items (keys, crystals, lootchests) that need custom logic"""
-        # This method handles the special visibility logic that was previously in the old rendering methods
-        # For now, this is a placeholder - the special item managers handle their own visibility
-        # If needed, we can add custom rendering logic here for items that need to be hidden/shown
-        # based on collection state or other conditions
-        pass
-
-    def draw_map(self, surface, skip_player_enemy_tiles=False):
-        """Draw the map tiles using optimized direct rendering"""
-        # Performance optimization: Use direct rendering to avoid method call overhead
-        if hasattr(self.map_system.processor, 'layers') and self.map_system.processor.layers:
-            # Direct layered rendering - bypass intermediate method calls
-            self._draw_layered_map_optimized(surface, skip_player_enemy_tiles)
-        elif hasattr(self.map_system.processor, 'map_data') and self.map_system.processor.map_data:
-            # Direct legacy rendering - bypass intermediate method calls
-            self._draw_legacy_map_optimized(surface, skip_player_enemy_tiles)
-
-        # Handle special item visibility (key items, crystals, lootchests)
-        # This needs to be done after rendering to override the map system's rendering
-        self._handle_special_item_visibility(surface)
-
-    def _draw_layered_map_optimized_range(self, surface, start_layer, end_layer):
-        """Optimized layered map rendering for a specific range of layers with proper special item handling"""
-        layers = self.map_system.processor.layers
-        tiles = self.map_system.tile_manager.tiles
-
-        # Calculate visible range once
-        visible_left = self.camera_x - self.center_offset_x
-        visible_top = self.camera_y - self.center_offset_y
-        visible_right = visible_left + surface.get_width()
-        visible_bottom = visible_top + surface.get_height()
-
-        # Convert to grid coordinates using base grid size for logical coordinates
-        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
-        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
-        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
-        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
-        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
-
-        # Render specified layer range directly with special item handling
-        for layer_idx in range(start_layer, min(end_layer + 1, len(layers))):
-            layer = layers[layer_idx]
-            if not layer.get("visible", True):
-                continue
-
-            layer_data = layer["data"]
-
-            # Direct tile rendering loop with special item checks
-            for grid_y in range(int(start_y), min(int(end_y), len(layer_data))):
-                row = layer_data[grid_y]
-                for grid_x in range(int(start_x), min(int(end_x), len(row))):
-                    tile_id = row[grid_x]
-
-                    if tile_id != -1:  # -1 means empty tile
-                        # Skip player and enemy tiles
-                        if str(tile_id) in self.expanded_mapping:
-                            path = self.expanded_mapping[str(tile_id)].get("path", "")
-                            if ("Enemies_Sprites/Phantom_Sprites" in path or
-                                "Enemies_Sprites/Bomberplant_Sprites" in path or
-                                "Enemies_Sprites/Spinner_Sprites" in path or
-                                "character/char_idle_" in path or
-                                "character/char_run_" in path or
-                                "character/char_attack_" in path or
-                                "character/char_hit_" in path or
-                                "character/char_shield_" in path):
-                                continue
-
-                        # Check special items
-                        if hasattr(self, 'key_item_id') and tile_id == self.key_item_id:
-                            if (grid_x, grid_y) in self.key_item_manager.collected_items or not self.key_item_manager.should_draw_key_item(grid_x, grid_y):
-                                continue
-
-                        if hasattr(self, 'crystal_item_id') and tile_id == self.crystal_item_id:
-                            if (grid_x, grid_y) in self.crystal_item_manager.collected_items or not self.crystal_item_manager.should_draw_crystal_item(grid_x, grid_y):
-                                continue
-
-                        if hasattr(self, 'lootchest_item_id') and tile_id == self.lootchest_item_id:
-                            # Only skip drawing if this lootchest is currently opening or already opened
-                            chest_pos = (grid_x, grid_y)
-                            if (chest_pos in self.lootchest_manager.opening_chests or
-                                chest_pos in self.lootchest_manager.opened_chests):
-                                continue  # Skip drawing - lootchest_manager handles opening/opened states
-
-                        # Calculate screen position - proper logical to screen coordinate conversion
-                        logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
-                        logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
-                        screen_x = logical_x * self.zoom_factor
-                        screen_y = logical_y * self.zoom_factor
-
-                        # Render tile directly
-                        self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
-
-    def _draw_layered_map_optimized(self, surface, skip_player_enemy_tiles=False):
-        """Optimized layered map rendering with minimal method call overhead"""
-        layers = self.map_system.processor.layers
-        tiles = self.map_system.tile_manager.tiles
-        expanded_mapping = self.map_system.processor.expanded_mapping
-
-        # Calculate visible range once
-        visible_left = self.camera_x - self.center_offset_x
-        visible_top = self.camera_y - self.center_offset_y
-        visible_right = visible_left + surface.get_width()
-        visible_bottom = visible_top + surface.get_height()
-
-        # Convert to grid coordinates using base grid size for logical coordinates
-        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
-        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
-        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
-        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
-        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
-
-        # Render all layers directly
-        for layer in layers:
-            if not layer.get("visible", True):
-                continue
-
-            layer_data = layer["data"]
-
-            # Direct tile rendering loop - no method calls
-            for grid_y in range(int(start_y), min(int(end_y), len(layer_data))):
-                row = layer_data[grid_y]
-                for grid_x in range(int(start_x), min(int(end_x), len(row))):
-                    tile_id = row[grid_x]
-
-                    if tile_id != -1:  # -1 means empty tile
-                        # Skip player/enemy tiles if requested
-                        if skip_player_enemy_tiles and self._is_player_or_enemy_tile(tile_id):
-                            continue
-
-                        # Calculate screen position - proper logical to screen coordinate conversion
-                        logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
-                        logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
-                        screen_x = logical_x * self.zoom_factor
-                        screen_y = logical_y * self.zoom_factor
-
-                        # Render tile directly
-                        self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
-
-    def _draw_legacy_map_optimized(self, surface, skip_player_enemy_tiles=False):
-        """Optimized legacy map rendering with minimal method call overhead"""
-        map_data = self.map_system.processor.map_data
-        tiles = self.map_system.tile_manager.tiles
-
-        # Calculate visible range once
-        visible_left = self.camera_x - self.center_offset_x
-        visible_top = self.camera_y - self.center_offset_y
-        visible_right = visible_left + surface.get_width()
-        visible_bottom = visible_top + surface.get_height()
-
-        # Convert to grid coordinates using base grid size for logical coordinates
-        padding = max(1, 3 - int(self.base_grid_cell_size / 16))
-        start_x = max(0, (visible_left // self.base_grid_cell_size) - padding)
-        end_x = (visible_right // self.base_grid_cell_size) + padding + 1
-        start_y = max(0, (visible_top // self.base_grid_cell_size) - padding)
-        end_y = (visible_bottom // self.base_grid_cell_size) + padding + 1
-
-        # Direct tile rendering loop - no method calls
-        for grid_y in range(int(start_y), min(int(end_y), len(map_data))):
-            row = map_data[grid_y]
-            for grid_x in range(int(start_x), min(int(end_x), len(row))):
-                tile_id = row[grid_x]
-
-                if tile_id != -1:  # -1 means empty tile
-                    # Skip player/enemy tiles if requested
-                    if skip_player_enemy_tiles and self._is_player_or_enemy_tile(tile_id):
-                        continue
-
-                    # Calculate screen position - proper logical to screen coordinate conversion
-                    logical_x = grid_x * self.base_grid_cell_size - self.camera_x + self.center_offset_x
-                    logical_y = grid_y * self.base_grid_cell_size - self.camera_y + self.center_offset_y
-                    screen_x = logical_x * self.zoom_factor
-                    screen_y = logical_y * self.zoom_factor
-
-                    # Render tile directly
-                    self._render_tile_direct(surface, tile_id, screen_x, screen_y, tiles)
-
-    def _render_tile_direct(self, surface, tile_id, screen_x, screen_y, tiles):
-        """Direct tile rendering with optimized caching"""
-        # Check if this is an animated tile
-        if self.animated_tile_manager.is_animated_tile_id(tile_id):
-            # Get the current frame of the animated tile
-            frame = self.animated_tile_manager.get_animated_tile_frame(tile_id)
-            if frame:
-                # For animated tiles, don't cache the scaled frames since they change every update
-                # Instead, scale them directly each time to ensure animation works
-                tile_size = (self.grid_cell_size, self.grid_cell_size)
-                if frame.get_size() != tile_size:
-                    scaled_frame = pygame.transform.scale(frame, tile_size)
-                else:
-                    scaled_frame = frame
-                # Draw the animated tile frame
-                surface.blit(scaled_frame, (screen_x, screen_y))
-        # Draw the tile if we have it loaded
-        elif tile_id in tiles:
-            # Use sprite cache for scaled tiles to improve performance
-            tile_size = (self.grid_cell_size, self.grid_cell_size)
-            if tiles[tile_id].get_size() != tile_size:
-                # Create a cache key for static tiles
-                cache_key = (f"static_tile_{tile_id}", self.grid_cell_size)
-
-                # Check if we have this scaled version cached
-                if cache_key in sprite_cache._scaled_cache:
-                    scaled_tile = sprite_cache._scaled_cache[cache_key]
-                else:
-                    # If not in cache, scale and cache it
-                    scaled_tile = pygame.transform.scale(tiles[tile_id], tile_size)
-                    # Store in cache with proper key format
-                    sprite_cache._scaled_cache[cache_key] = scaled_tile
-            else:
-                scaled_tile = tiles[tile_id]
-            surface.blit(scaled_tile, (screen_x, screen_y))
-
-
-
-    def _is_player_or_enemy_tile(self, tile_id: int) -> bool:
-        """Check if a tile ID represents a player or enemy tile"""
-        # This would need to be implemented based on your tile ID ranges
-        # For now, return False as a placeholder
-        return False
+    # Legacy rendering methods removed - now handled by RenderingPipeline
+    # _render_tile_direct() and _is_player_or_enemy_tile() have been replaced by the modularized rendering system
 
     def handle_common_events(self, event, mouse_pos):
         """Override handle_common_events to add auto-save when clicking back button"""
@@ -1702,6 +1249,11 @@ class PlayScreen(BaseScreen):
         if hasattr(self, 'camera_controller'):
             self.camera_controller.handle_resize(old_center_offset_x, old_center_offset_y)
 
+        # Update UI manager dimensions (handles inventory positioning)
+        if hasattr(self, 'ui_manager'):
+            self.ui_manager.resize(new_width, new_height)
+
+        # Legacy inventory resize handling (will be removed when fully migrated to UI Manager)
         # If both inventories are visible, maintain their side-by-side positioning
         if self.chest_inventory.is_visible() and self.player_inventory.is_visible():
             # Calculate the new positions based on the new screen dimensions

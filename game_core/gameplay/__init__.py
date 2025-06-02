@@ -1,7 +1,7 @@
 """
 Gameplay package - contains all components for world selection and gameplay
 """
-from gameplay.play_screen import PlayScreen
+from .play_screen import PlayScreen
 from playscreen_components.map_system import MapSelectScreen, WorldSelectScreen, WorldManager
 
 # Export the main classes

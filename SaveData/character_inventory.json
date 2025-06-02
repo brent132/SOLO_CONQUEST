@@ -2,9 +2,9 @@
   "version": 1,
   "inventory": [
     {
-      "slot": 57,
-      "name": "Crystal",
-      "count": 4
+      "slot": 60,
+      "name": "Key",
+      "count": 1
     }
   ]
 }

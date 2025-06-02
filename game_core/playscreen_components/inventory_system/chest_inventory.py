@@ -153,24 +153,7 @@ class ChestInventory:
                     count_rect = count_text.get_rect(bottomright=(rect.right - 2, rect.bottom - 2))
                     surface.blit(count_text, count_rect)
 
-        # Draw cursor item if holding one
-        if self.cursor_item:
-            mouse_pos = pygame.mouse.get_pos()
-            if "image" in self.cursor_item:
-                cursor_image = self.cursor_item["image"]
-                cursor_size = self.slot_size - 8
-                scaled_cursor = pygame.transform.scale(cursor_image, (cursor_size, cursor_size))
-                cursor_x = mouse_pos[0] - cursor_size // 2
-                cursor_y = mouse_pos[1] - cursor_size // 2
-                surface.blit(scaled_cursor, (cursor_x, cursor_y))
-
-                # Draw count
-                count = self.cursor_item.get("count", 1)
-                if count > 1:
-                    font = pygame.font.SysFont(None, 16)
-                    count_text = font.render(str(count), True, (255, 255, 255))
-                    count_rect = count_text.get_rect(bottomright=(cursor_x + cursor_size, cursor_y + cursor_size))
-                    surface.blit(count_text, count_rect)
+        # Cursor item rendering is now handled centrally by the UI renderer
 
     def show(self, chest_pos, chest_contents):
         """Show the chest inventory with the given contents"""
