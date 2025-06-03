@@ -301,7 +301,7 @@ class PlayScreen(BaseScreen):
         self.rendering_pipeline.ui_renderer.set_back_button(self.back_button)
 
         # Initialize UI manager with all UI components
-        self.ui_manager.initialize(self.hud, self.player_inventory, self.chest_inventory, self.game_over_screen)
+        self.ui_manager.initialize(self.hud, self.player_inventory, self.chest_inventory, self.game_over_screen, self.lootchest_manager)
         self.ui_manager.set_save_callback(self.save_character_inventory)
 
         # Set UI manager reference in the UI renderer
@@ -514,6 +514,9 @@ class PlayScreen(BaseScreen):
             return "back"
         elif ui_result == "escape_handled":
             return None  # Event was handled by UI
+        elif ui_result == "inventory_handled":
+            # UI Manager handled the inventory click, don't pass to input system
+            return None
 
         # Handle common events (back button also saves)
         result = self.handle_common_events(event, mouse_pos)
@@ -738,6 +741,13 @@ class PlayScreen(BaseScreen):
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Check if back button was clicked
             if self.back_button.is_clicked(event):
+                # Close any open inventories and save character inventory
+                if hasattr(self, 'ui_manager') and self.ui_manager:
+                    # Close all inventories
+                    self.ui_manager.hide_all_inventories()
+                    # Save character inventory
+                    self.save_character_inventory()
+
                 # Auto-save the game before returning to map selection
                 if self.player and not self.player.is_dead and self.map_name:
                     # Make sure relation points are saved
@@ -953,6 +963,23 @@ class PlayScreen(BaseScreen):
         for i in range(min(self.hud.inventory.num_slots, self.player_inventory.grid_width)):
             # Copy HUD inventory item to corresponding slot in bottom row
             self.player_inventory.inventory_items[bottom_row_start + i] = self.hud.inventory.inventory_items[i]
+
+    def _sync_player_to_hud_inventory(self):
+        """Sync player inventory bottom row to HUD inventory
+
+        This ensures that items in the player inventory bottom row are transferred to the HUD
+        after loading, so they appear in the hotbar.
+        """
+        if not self.player_inventory or not self.hud or not self.hud.inventory:
+            return
+
+        # Calculate the starting index for the bottom row of player inventory
+        bottom_row_start = self.player_inventory.grid_width * (self.player_inventory.grid_height - 1)
+
+        # Copy items from player inventory bottom row to HUD inventory
+        for i in range(min(self.hud.inventory.num_slots, self.player_inventory.grid_width)):
+            # Copy player inventory bottom row item to corresponding HUD slot
+            self.hud.inventory.inventory_items[i] = self.player_inventory.inventory_items[bottom_row_start + i]
 
     def load_character_inventory(self):
         """Load the character's inventory using the centralized save/load manager"""
@@ -1252,6 +1279,10 @@ class PlayScreen(BaseScreen):
         # Update UI manager dimensions (handles inventory positioning)
         if hasattr(self, 'ui_manager'):
             self.ui_manager.resize(new_width, new_height)
+
+        # Update rendering pipeline dimensions (handles UI renderer background overlay)
+        if hasattr(self, 'rendering_pipeline'):
+            self.rendering_pipeline.resize(new_width, new_height)
 
         # Legacy inventory resize handling (will be removed when fully migrated to UI Manager)
         # If both inventories are visible, maintain their side-by-side positioning

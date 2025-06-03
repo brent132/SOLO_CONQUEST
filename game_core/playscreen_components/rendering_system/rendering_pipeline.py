@@ -85,7 +85,15 @@ class RenderingPipeline:
         self.layer_renderer.set_entity_renderer(self.entity_renderer)
         
         self.is_initialized = True
-    
+
+    def resize(self, new_width: int, new_height: int):
+        """Handle screen resize by updating all renderer dimensions"""
+        self.width = new_width
+        self.height = new_height
+
+        # Update UI renderer dimensions
+        self.ui_renderer.resize(new_width, new_height)
+
     def update_zoom(self, grid_cell_size: int, zoom_factor: float):
         """Update zoom settings for all renderers"""
         self.layer_renderer.set_grid_size(grid_cell_size)

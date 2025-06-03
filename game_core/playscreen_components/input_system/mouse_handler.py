@@ -98,20 +98,17 @@ class MouseHandler:
 
     def _handle_left_click(self, mouse_pos: Tuple[int, int], shift_held: bool) -> Optional[Any]:
         """Handle left mouse button clicks"""
-        # Check if chest inventory is visible and handle clicks
-        if self.chest_inventory and self.chest_inventory.is_visible():
-            # Handle click in chest inventory
-            self.chest_inventory.handle_click(mouse_pos, shift_held=shift_held,
-                                            player_inventory=self.player_inventory)
-            # Also check player inventory if it's visible
-            if self.player_inventory and self.player_inventory.is_visible():
-                self.player_inventory.handle_click(mouse_pos, shift_held=shift_held,
-                                                 chest_inventory=self.chest_inventory)
-        # Check if only player inventory is visible and handle clicks
-        elif self.player_inventory and self.player_inventory.is_visible():
-            # Handle click in player inventory (but don't close it on click outside)
-            self.player_inventory.handle_click(mouse_pos, shift_held=shift_held)
-        # Check if clicking on an inventory slot
+        # NOTE: Inventory clicks are now handled by UIManager → InventoryManager
+        # This handler should only deal with non-inventory interactions
+
+        # Check if any inventory is visible - if so, don't handle clicks here
+        # The UIManager will handle inventory clicks with proper bounds checking
+        if ((self.chest_inventory and self.chest_inventory.is_visible()) or
+            (self.player_inventory and self.player_inventory.is_visible())):
+            # Inventory is visible, UIManager should handle this
+            return None
+
+        # Check if clicking on an inventory slot in the HUD
         elif self.hud and self.hud.inventory.hovered_slot != -1:
             # Select the clicked slot
             if self.on_inventory_slot_clicked:
@@ -127,23 +124,18 @@ class MouseHandler:
                            camera_x: float, camera_y: float, center_offset_x: float,
                            center_offset_y: float, zoom_factor_inv: float) -> Optional[Any]:
         """Handle right mouse button clicks"""
-        # Check if chest inventory is visible and handle right-clicks
-        if self.chest_inventory and self.chest_inventory.is_visible():
-            # Handle right-click in chest inventory
-            self.chest_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held,
-                                            player_inventory=self.player_inventory)
-            # Also check player inventory if it's visible
-            if self.player_inventory and self.player_inventory.is_visible():
-                self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held,
-                                                 chest_inventory=self.chest_inventory)
-        # Check if only player inventory is visible and handle right-clicks
-        elif self.player_inventory and self.player_inventory.is_visible():
-            # Handle right-click in player inventory
-            self.player_inventory.handle_click(mouse_pos, right_click=True, shift_held=shift_held)
+        # NOTE: Inventory clicks are now handled by UIManager → InventoryManager
+        # This handler should only deal with non-inventory interactions
+
+        # Check if any inventory is visible - if so, don't handle clicks here
+        # The UIManager will handle inventory clicks with proper bounds checking
+        if ((self.chest_inventory and self.chest_inventory.is_visible()) or
+            (self.player_inventory and self.player_inventory.is_visible())):
+            # Inventory is visible, UIManager should handle this
+            return None
+
         # Check if clicking on a lootchest (only when inventories are not visible)
-        elif (not (self.chest_inventory and self.chest_inventory.is_visible()) and
-              not (self.player_inventory and self.player_inventory.is_visible()) and
-              self.player and not self.player.is_dead):
+        elif self.player and not self.player.is_dead:
             # Use game systems coordinator to handle lootchest interaction
             if self.on_lootchest_interaction:
                 return self.on_lootchest_interaction(

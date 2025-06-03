@@ -39,15 +39,15 @@ class UIManager:
         # Save/load callback
         self.save_character_inventory_callback = None
         
-    def initialize(self, hud, player_inventory, chest_inventory, game_over_screen):
+    def initialize(self, hud, player_inventory, chest_inventory, game_over_screen, lootchest_manager=None):
         """Initialize UI manager with all UI components"""
         self.hud = hud
         self.player_inventory = player_inventory
         self.chest_inventory = chest_inventory
         self.game_over_screen = game_over_screen
-        
+
         # Initialize sub-systems
-        self.inventory_manager.initialize(player_inventory, chest_inventory)
+        self.inventory_manager.initialize(player_inventory, chest_inventory, hud.inventory if hud else None, lootchest_manager)
         self.ui_state_manager.initialize(game_over_screen)
         
     def set_save_callback(self, callback):
@@ -97,16 +97,16 @@ class UIManager:
             right_click = event.button == 3
 
             if self.inventory_manager.handle_click(mouse_pos, right_click, shift_held):
-                return None  # Event handled by inventory
+                return "inventory_handled"  # Event handled by inventory
                 
         # Handle escape key for inventory management
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             result = self.inventory_manager.handle_escape_key()
-            
+
             # Save inventory when closing
             if result in ["both_closed", "player_closed"] and self.save_character_inventory_callback:
                 self.save_character_inventory_callback()
-                
+
             return "escape_handled"
             
         return None

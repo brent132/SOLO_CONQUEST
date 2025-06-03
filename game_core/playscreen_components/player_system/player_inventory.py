@@ -129,8 +129,10 @@ class PlayerInventory:
 
         # Draw background if not skipped
         if not skip_background:
-            # Draw semi-transparent black background
-            bg_surface = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+            # Draw semi-transparent black background using current surface dimensions
+            surface_width = surface.get_width()
+            surface_height = surface.get_height()
+            bg_surface = pygame.Surface((surface_width, surface_height), pygame.SRCALPHA)
             bg_surface.fill((0, 0, 0, 180))  # Semi-transparent black
             surface.blit(bg_surface, (0, 0))
 

@@ -168,8 +168,17 @@ class ChestInventory:
             if i < len(self.inventory_items):
                 self.inventory_items[i] = item
 
-    def hide(self):
-        """Hide the chest inventory"""
+    def hide(self, sync_callback=None):
+        """Hide the chest inventory and optionally sync changes
+
+        Args:
+            sync_callback: Optional callback function to sync chest contents back to manager
+                          Should accept (chest_pos, inventory_items) as parameters
+        """
+        # Sync changes back to lootchest manager before hiding
+        if sync_callback and self.current_chest_pos is not None:
+            sync_callback(self.current_chest_pos, self.inventory_items.copy())
+
         self.visible = False
         self.current_chest_pos = None
         # Clear cursor item when closing

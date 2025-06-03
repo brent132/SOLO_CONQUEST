@@ -586,3 +586,16 @@ class LootchestManager:
 
         # Store the contents
         self.chest_contents[position] = contents
+
+    def update_chest_contents(self, position, new_contents):
+        """Update chest contents with new inventory items
+
+        Args:
+            position: Position of the chest (x, y) tuple
+            new_contents: List of items representing the new chest contents
+        """
+        if position in self.chest_contents:
+            self.chest_contents[position] = new_contents.copy()
+            print(f"Updated chest contents for position {position}")
+        else:
+            print(f"Warning: Tried to update contents for non-existent chest at {position}")

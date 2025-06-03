@@ -54,7 +54,12 @@ class UIRenderer:
     def set_cursor_manager(self, cursor_manager):
         """Set the cursor manager reference"""
         self.cursor_manager = cursor_manager
-    
+
+    def resize(self, new_width: int, new_height: int):
+        """Handle screen resize by updating dimensions"""
+        self.width = new_width
+        self.height = new_height
+
     def render_hud(self, surface: pygame.Surface, player):
         """Render the HUD with player information"""
         if self.hud and player:

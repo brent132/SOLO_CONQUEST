@@ -19,22 +19,26 @@ class InventoryManager:
     def __init__(self, screen_width: int, screen_height: int):
         self.screen_width = screen_width
         self.screen_height = screen_height
-        
+
         # Inventory references
         self.player_inventory = None
         self.chest_inventory = None
-        
+        self.hud_inventory = None  # Reference to HUD inventory for syncing
+        self.lootchest_manager = None  # Reference to lootchest manager for chest syncing
+
         # State tracking
         self.both_inventories_visible = False
         self.current_chest_pos = None
-        
+
         # Interaction state
         self.last_mouse_pos = (0, 0)
         
-    def initialize(self, player_inventory, chest_inventory):
+    def initialize(self, player_inventory, chest_inventory, hud_inventory=None, lootchest_manager=None):
         """Initialize with inventory references"""
         self.player_inventory = player_inventory
         self.chest_inventory = chest_inventory
+        self.hud_inventory = hud_inventory
+        self.lootchest_manager = lootchest_manager
         
     def resize(self, new_width: int, new_height: int):
         """Update inventory manager for new screen dimensions"""
@@ -58,9 +62,10 @@ class InventoryManager:
                 self.player_inventory.show(None)  # Use default positioning
                 
     def hide_player_inventory(self):
-        """Hide the player inventory"""
+        """Hide the player inventory and sync to HUD"""
         if self.player_inventory:
-            self.player_inventory.hide(None)
+            # Pass HUD inventory to sync bottom row to HUD when hiding
+            self.player_inventory.hide(self.hud_inventory)
             self.both_inventories_visible = False
             
     def show_chest_inventory(self, chest_pos: Tuple[int, int], chest_contents: list):
@@ -78,9 +83,15 @@ class InventoryManager:
                 self.both_inventories_visible = False
                 
     def hide_chest_inventory(self):
-        """Hide the chest inventory"""
+        """Hide the chest inventory and sync changes back to lootchest manager"""
         if self.chest_inventory:
-            self.chest_inventory.hide()
+            # Create sync callback to update lootchest manager
+            sync_callback = None
+            if self.lootchest_manager:
+                sync_callback = self.lootchest_manager.update_chest_contents
+
+            # Hide chest inventory with sync callback
+            self.chest_inventory.hide(sync_callback)
             self.current_chest_pos = None
             self.both_inventories_visible = False
             
@@ -129,6 +140,7 @@ class InventoryManager:
                 )
                 return True
 
+        # Only check player inventory if chest inventory didn't handle the click
         # Check player inventory
         if self.player_inventory and self.player_inventory.is_visible():
             # Check if click is within player inventory bounds

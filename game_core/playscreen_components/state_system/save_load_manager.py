@@ -118,9 +118,9 @@ class SaveLoadManager:
             if inventory_success and hasattr(play_screen, '_update_inventory_images'):
                 play_screen._update_inventory_images()
 
-            # Sync HUD inventory from player inventory
+            # Sync HUD inventory from player inventory after loading
             if inventory_success and hasattr(play_screen, 'player_inventory') and hasattr(play_screen, 'hud'):
-                play_screen.player_inventory.hide(play_screen.hud.inventory)
+                play_screen._sync_player_to_hud_inventory()
 
             # Determine overall success
             if inventory_success:
