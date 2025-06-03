@@ -333,10 +333,6 @@ class EditorApp:
             self._update_fps_monitoring()
 
             # Log performance stats every 60 frames
-            performance_monitor.increment_counter("frames")
-            if performance_monitor.get_counter("frames") % 60 == 0:
-                performance_monitor.log_performance_stats()
-                print(f"Editor FPS: {self.current_fps:.1f}")
 
         # Quit pygame
         pygame.quit()

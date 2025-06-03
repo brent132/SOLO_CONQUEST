@@ -53,24 +53,40 @@ class MapProcessor:
     
     def process_layered_format(self, map_data: Dict[Any, Any]) -> Dict[str, Any]:
         """Process a map in the layered format"""
+        print(f"MapProcessor: Processing layered format map")
+
         # Process tile mapping
         tile_mapping = map_data["tile_mapping"]
         self.expanded_mapping = self._expand_tile_mapping(tile_mapping)
-        
+        print(f"  Expanded mapping has {len(self.expanded_mapping)} tiles")
+
         # Store all layers separately instead of merging them
         self.layers = []
         width = map_data.get("width", 0)
         height = map_data.get("height", 0)
-        
+        print(f"  Map dimensions: {width}x{height}")
+
         # Process each layer
-        for layer_idx, layer in enumerate(map_data.get("layers", [])):
+        layers_data = map_data.get("layers", [])
+        print(f"  Found {len(layers_data)} layers to process")
+
+        for layer_idx, layer in enumerate(layers_data):
             layer_visible = layer.get("visible", True)
             layer_data = layer.get("data", layer.get("map_data", []))  # Handle both "data" and "map_data"
+
+            print(f"  Processing layer {layer_idx}: visible={layer_visible}, data_type={type(layer_data)}")
+            if isinstance(layer_data, list):
+                print(f"    Layer data length: {len(layer_data)}")
+                if layer_data and isinstance(layer_data[0], list):
+                    print(f"    Already 2D array with {len(layer_data)} rows")
+                elif layer_data and isinstance(layer_data[0], int):
+                    print(f"    Flat array, will convert to 2D")
 
             # Convert flat array to 2D array if needed
             if isinstance(layer_data, list) and len(layer_data) > 0:
                 if isinstance(layer_data[0], int):
                     # Flat array - convert to 2D
+                    print(f"    Converting flat array to 2D ({width}x{height})")
                     layer_2d = []
                     for y in range(height):
                         row = []
@@ -82,13 +98,18 @@ class MapProcessor:
                                 row.append(-1)  # Empty tile
                         layer_2d.append(row)
                     layer_data = layer_2d
+                    print(f"    Converted to 2D array with {len(layer_data)} rows")
 
             # Store the layer
-            self.layers.append({
+            processed_layer = {
                 "data": layer_data,
                 "visible": layer_visible,
                 "name": layer.get("name", f"Layer {layer_idx}")
-            })
+            }
+            self.layers.append(processed_layer)
+            print(f"    Added layer {layer_idx} to processed layers")
+
+        print(f"  Total processed layers: {len(self.layers)}")
         
         return {
             "format": "layered",

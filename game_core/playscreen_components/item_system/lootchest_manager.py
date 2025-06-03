@@ -39,7 +39,11 @@ class LootchestManager:
         """
         # If the map is changing, clear the lootchests
         if self.current_map != map_name:
-            print(f"Changing map from {self.current_map} to {map_name}, clearing lootchests")
+            print(f"LootchestManager: Changing map from {self.current_map} to {map_name}")
+            print(f"  Previous lootchests count: {len(self.lootchests)}")
+            print(f"  Previous opened chests count: {len(self.opened_chests)}")
+            print(f"  Previous opening chests count: {len(self.opening_chests)}")
+
             self.lootchests = {}
             self.opened_chests = []
             self.opening_chests = {}
@@ -48,6 +52,7 @@ class LootchestManager:
         # Set the current map
         self.current_map = map_name
         print(f"LootchestManager current map set to: {self.current_map}")
+        print(f"  Current lootchests count: {len(self.lootchests)}")
 
     def load_animations(self):
         """Load the lootchest opening animation and static open frame"""
@@ -125,20 +130,41 @@ class LootchestManager:
             tile_id: ID of the lootchest tile
             layer: Layer number the lootchest is on (for proper layering)
         """
-        position = (grid_x, grid_y)
-        print(f"Adding lootchest at position {position} with tile_id {tile_id} on layer {layer}")
-        self.lootchests[position] = {
-            "tile_id": tile_id,
-            "opened": False,
-            "layer": layer  # Store which layer this lootchest belongs to
-        }
-        print(f"Lootchests after adding: {self.lootchests}")
+        # Precaution: Validate input parameters
+        if not isinstance(grid_x, (int, float)) or not isinstance(grid_y, (int, float)):
+            print(f"Warning: Invalid grid coordinates - x: {grid_x} ({type(grid_x)}), y: {grid_y} ({type(grid_y)})")
+            return
 
-        # Initialize empty chest contents if not already set
-        if position not in self.chest_contents:
-            # Initialize with an empty inventory
-            self.initialize_chest_contents(position)
-            print(f"Initialized empty chest contents for position {position}")
+        if not isinstance(tile_id, (int, float)):
+            print(f"Warning: Invalid tile_id: {tile_id} ({type(tile_id)})")
+            return
+
+        position = (int(grid_x), int(grid_y))
+        print(f"LootchestManager: Adding lootchest at position {position} with tile_id {tile_id} on layer {layer} for map {self.current_map}")
+
+        # Precaution: Check if lootchest already exists at this position
+        if position in self.lootchests:
+            print(f"Warning: Lootchest already exists at position {position}, overwriting")
+
+        try:
+            self.lootchests[position] = {
+                "tile_id": tile_id,
+                "opened": False,
+                "layer": layer  # Store which layer this lootchest belongs to
+            }
+            print(f"Successfully added lootchest. Total lootchests: {len(self.lootchests)}")
+
+            # Initialize empty chest contents if not already set
+            if position not in self.chest_contents:
+                # Initialize with an empty inventory
+                self.initialize_chest_contents(position)
+                print(f"Initialized empty chest contents for position {position}")
+            else:
+                print(f"Chest contents already exist for position {position}")
+
+        except Exception as e:
+            print(f"Error adding lootchest at position {position}: {e}")
+            raise
 
     def handle_right_click(self, mouse_pos, camera_x, camera_y, grid_cell_size, player_rect=None):
         """Handle right-click on a lootchest
@@ -153,25 +179,47 @@ class LootchestManager:
         Returns:
             True if a lootchest was clicked, False otherwise
         """
-        print("LootchestManager.handle_right_click called")
+        print(f"LootchestManager.handle_right_click called for map: {self.current_map}")
         print(f"  Mouse position: {mouse_pos}")
         print(f"  Camera position: ({camera_x}, {camera_y})")
         print(f"  Grid cell size: {grid_cell_size}")
         print(f"  Player rect: {player_rect}")
+        print(f"  Available lootchests: {len(self.lootchests)}")
+        if self.lootchests:
+            print(f"  Lootchest positions: {list(self.lootchests.keys())}")
 
-        # Calculate precise grid position from mouse position
-        world_x = mouse_pos[0] + camera_x
-        world_y = mouse_pos[1] + camera_y
-        grid_x = int(world_x // grid_cell_size)
-        grid_y = int(world_y // grid_cell_size)
+        # Precaution: Validate input parameters
+        if not mouse_pos or len(mouse_pos) != 2:
+            print(f"Warning: Invalid mouse position: {mouse_pos}")
+            return False
 
-        # Calculate the position within the tile (0.0 to 1.0)
-        tile_offset_x = (world_x % grid_cell_size) / grid_cell_size
-        tile_offset_y = (world_y % grid_cell_size) / grid_cell_size
+        if not isinstance(camera_x, (int, float)) or not isinstance(camera_y, (int, float)):
+            print(f"Warning: Invalid camera position - x: {camera_x}, y: {camera_y}")
+            return False
 
-        position = (grid_x, grid_y)
-        print(f"  Calculated grid position: ({grid_x}, {grid_y})")
-        print(f"  Tile offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
+        if not isinstance(grid_cell_size, (int, float)) or grid_cell_size <= 0:
+            print(f"Warning: Invalid grid cell size: {grid_cell_size}")
+            return False
+
+        try:
+            # Calculate precise grid position from mouse position
+            world_x = mouse_pos[0] + camera_x
+            world_y = mouse_pos[1] + camera_y
+            grid_x = int(world_x // grid_cell_size)
+            grid_y = int(world_y // grid_cell_size)
+
+            # Calculate the position within the tile (0.0 to 1.0)
+            tile_offset_x = (world_x % grid_cell_size) / grid_cell_size
+            tile_offset_y = (world_y % grid_cell_size) / grid_cell_size
+
+            position = (grid_x, grid_y)
+            print(f"  World position: ({world_x}, {world_y})")
+            print(f"  Calculated grid position: ({grid_x}, {grid_y})")
+            print(f"  Tile offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
+
+        except Exception as e:
+            print(f"Error in coordinate calculation: {e}")
+            return False
 
         # Check if there's a lootchest at this exact position
         if position not in self.lootchests:

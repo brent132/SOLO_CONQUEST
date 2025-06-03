@@ -165,7 +165,9 @@
     "inventory": [],
     "collected_keys": [],
     "collected_crystals": [],
-    "opened_lootchests": [],
+    "opened_lootchests": [
+      [14, 3],[16, 3]
+    ],
     "chest_contents": {}
   }
 }

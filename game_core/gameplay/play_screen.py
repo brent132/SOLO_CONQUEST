@@ -497,10 +497,28 @@ class PlayScreen(BaseScreen):
 
     def _scan_for_special_items(self):
         """Scan the map layers for special items (keys, crystals, lootchests)"""
+        print(f"PlayScreen._scan_for_special_items called for map: {self.map_name}")
+
+        # Precaution: Check if layers exist and are valid
+        if not hasattr(self, 'layers') or not self.layers:
+            print(f"Warning: No layers found for map {self.map_name}. Layers: {getattr(self, 'layers', 'Not set')}")
+            return
+
+        print(f"Found {len(self.layers)} layers to scan")
+
         # Set up item IDs from animated tile manager
         key_item_id = None
         crystal_item_id = None
         lootchest_item_id = None
+
+        # Precaution: Check if animated tile manager exists
+        if not hasattr(self, 'animated_tile_manager') or not self.animated_tile_manager:
+            print("Warning: No animated tile manager found")
+            return
+
+        if not hasattr(self.animated_tile_manager, 'animated_tile_ids'):
+            print("Warning: Animated tile manager has no animated_tile_ids")
+            return
 
         for tile_id, tile_name in self.animated_tile_manager.animated_tile_ids.items():
             if tile_name == "key_item":
@@ -513,23 +531,50 @@ class PlayScreen(BaseScreen):
                 lootchest_item_id = tile_id
                 self.lootchest_item_id = tile_id  # Keep for backward compatibility
 
+        print(f"Item IDs found - Key: {key_item_id}, Crystal: {crystal_item_id}, Lootchest: {lootchest_item_id}")
+
         # Use game systems coordinator to scan and setup items
-        self.game_systems_coordinator.scan_and_setup_items(
-            self.layers, key_item_id, crystal_item_id, lootchest_item_id
-        )
+        try:
+            self.game_systems_coordinator.scan_and_setup_items(
+                self.layers, key_item_id, crystal_item_id, lootchest_item_id
+            )
+        except Exception as e:
+            print(f"Error in game_systems_coordinator.scan_and_setup_items: {e}")
 
         # Handle lootchest setup separately since it's more complex
-        for layer_idx, layer in enumerate(self.layers):
-            if not layer.get("visible", True):
-                continue
+        lootchests_found = 0
+        try:
+            for layer_idx, layer in enumerate(self.layers):
+                if not layer.get("visible", True):
+                    print(f"Skipping invisible layer {layer_idx}")
+                    continue
 
-            layer_data = layer.get("data", [])
+                layer_data = layer.get("data", [])
+                if not layer_data:
+                    print(f"Layer {layer_idx} has no data")
+                    continue
 
-            for y, row in enumerate(layer_data):
-                for x, tile_id in enumerate(row):
-                    # Check for lootchest items
-                    if lootchest_item_id and tile_id == lootchest_item_id:
-                        self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
+                print(f"Scanning layer {layer_idx} with {len(layer_data)} rows")
+
+                for y, row in enumerate(layer_data):
+                    if not isinstance(row, list):
+                        print(f"Warning: Row {y} in layer {layer_idx} is not a list: {type(row)}")
+                        continue
+
+                    for x, tile_id in enumerate(row):
+                        # Check for lootchest items
+                        if lootchest_item_id and tile_id == lootchest_item_id:
+                            print(f"Found lootchest at position ({x}, {y}) in layer {layer_idx}")
+                            try:
+                                self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
+                                lootchests_found += 1
+                            except Exception as e:
+                                print(f"Error adding lootchest at ({x}, {y}): {e}")
+
+        except Exception as e:
+            print(f"Error during lootchest scanning: {e}")
+
+        print(f"Total lootchests found and added: {lootchests_found}")
 
     # OLD ZOOM METHODS REMOVED - NOW HANDLED BY InputSystem
     # zoom_in(), zoom_out(), reset_zoom(), update_zoom() have been replaced by the modularized input system

@@ -94,15 +94,19 @@ class InteractionCoordinator:
             print(f"No lootchest found at position {position}")
             print(f"Available lootchests: {list(self.lootchest_manager.lootchests.keys())}")
 
-        # Adjust world mouse position for center offset
+        # For smaller maps, the center offset represents how much the map is shifted to center it
+        # We need to account for this when converting mouse coordinates to world coordinates
+        # The mouse position needs to be adjusted by subtracting the center offset
+        # But the camera position should remain as-is since it's already in world coordinates
         adjusted_mouse_pos = (
             world_mouse_x - center_offset_x,
             world_mouse_y - center_offset_y
         )
 
-        # Adjust camera position for center offset
-        adjusted_camera_x = camera_x - center_offset_x
-        adjusted_camera_y = camera_y - center_offset_y
+        # Camera position should not be adjusted by center offset for coordinate calculation
+        # The center offset is already accounted for in the rendering system
+        adjusted_camera_x = camera_x
+        adjusted_camera_y = camera_y
 
         print(f"Adjusted mouse position: {adjusted_mouse_pos}")
         print(f"Adjusted camera position: ({adjusted_camera_x}, {adjusted_camera_y})")
