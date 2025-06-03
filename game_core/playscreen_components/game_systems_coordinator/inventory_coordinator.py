@@ -16,10 +16,24 @@ class InventoryCoordinator:
     
     def __init__(self):
         self.hud = None
+        self.save_callback = None
         
     def initialize(self, hud):
         """Initialize with the HUD system"""
         self.hud = hud
+
+    def set_save_callback(self, callback):
+        """Set the callback function to call when inventory changes
+
+        Args:
+            callback: Function to call when inventory is modified
+        """
+        self.save_callback = callback
+
+    def _trigger_save(self):
+        """Trigger the save callback if it's set"""
+        if self.save_callback:
+            self.save_callback()
         
     def handle_inventory_updates(self, collected_items: List[Dict]):
         """
@@ -59,6 +73,8 @@ class InventoryCoordinator:
                 else:
                     # First time adding a count to this key
                     self.hud.inventory.inventory_items[i]["count"] = 2
+                # Trigger save after updating existing item
+                self._trigger_save()
                 break
 
         # If no key was found, add to first empty slot
@@ -71,6 +87,8 @@ class InventoryCoordinator:
                         "image": item_image,
                         "count": 1
                     }
+                    # Trigger save after collecting item
+                    self._trigger_save()
                     break
                     
         # Remove the key from map layers
@@ -94,6 +112,8 @@ class InventoryCoordinator:
                 else:
                     # First time adding a count to this crystal
                     self.hud.inventory.inventory_items[i]["count"] = 2
+                # Trigger save after updating existing item
+                self._trigger_save()
                 break
 
         # If no crystal was found, add to first empty slot
@@ -106,6 +126,8 @@ class InventoryCoordinator:
                         "image": item_image,
                         "count": 1
                     }
+                    # Trigger save after collecting item
+                    self._trigger_save()
                     break
                     
         # Remove the crystal from map layers

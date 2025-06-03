@@ -424,9 +424,18 @@
       [16, 9]
     ],
     "collected_crystals": [
-      [25, 14],[17, 9],[15, 12],[16, 12],[17, 12],[18, 12],[19, 12]
+      [17, 9],[15, 12],[16, 12],[17, 12]
     ],
-    "opened_lootchests": [],
-    "chest_contents": {}
+    "opened_lootchests": [
+      [14, 9]
+    ],
+    "chest_contents": {
+      "14,9": {
+        "10": {
+          "name": "Crystal",
+          "count": 4
+        }
+      }
+    }
   }
 }

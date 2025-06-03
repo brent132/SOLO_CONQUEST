@@ -32,6 +32,10 @@ class InventoryManager:
 
         # Interaction state
         self.last_mouse_pos = (0, 0)
+
+        # Save callbacks
+        self.save_callback = None  # For character inventory saves
+        self.game_state_save_callback = None  # For game state saves (chest contents)
         
     def initialize(self, player_inventory, chest_inventory, hud_inventory=None, lootchest_manager=None):
         """Initialize with inventory references"""
@@ -39,6 +43,14 @@ class InventoryManager:
         self.chest_inventory = chest_inventory
         self.hud_inventory = hud_inventory
         self.lootchest_manager = lootchest_manager
+
+    def set_save_callback(self, callback):
+        """Set the callback for character inventory saves"""
+        self.save_callback = callback
+
+    def set_game_state_save_callback(self, callback):
+        """Set the callback for game state saves (chest contents)"""
+        self.game_state_save_callback = callback
         
     def resize(self, new_width: int, new_height: int):
         """Update inventory manager for new screen dimensions"""
@@ -71,6 +83,10 @@ class InventoryManager:
             # Pass HUD inventory to sync bottom row to HUD when hiding
             self.player_inventory.hide(self.hud_inventory)
             self.both_inventories_visible = False
+
+            # Trigger save when player inventory is closed
+            if self.save_callback:
+                self.save_callback()
             
     def show_chest_inventory(self, chest_pos: Tuple[int, int], chest_contents: list):
         """Show the chest inventory with contents"""
@@ -98,6 +114,10 @@ class InventoryManager:
             self.chest_inventory.hide(sync_callback)
             self.current_chest_pos = None
             self.both_inventories_visible = False
+
+            # Trigger game state save when chest inventory is closed
+            if self.game_state_save_callback:
+                self.game_state_save_callback()
             
     def hide_all_inventories(self):
         """Hide all inventories"""

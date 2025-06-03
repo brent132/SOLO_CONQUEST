@@ -596,6 +596,6 @@ class LootchestManager:
         """
         if position in self.chest_contents:
             self.chest_contents[position] = new_contents.copy()
-            print(f"Updated chest contents for position {position}")
         else:
-            print(f"Warning: Tried to update contents for non-existent chest at {position}")
+            # Initialize the chest if it doesn't exist
+            self.chest_contents[position] = new_contents.copy()

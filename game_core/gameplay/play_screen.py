@@ -280,6 +280,9 @@ class PlayScreen(BaseScreen):
             self.player_system, self.relation_handler
         )
 
+        # Set up save callback for item collection
+        self.game_systems_coordinator.inventory_coordinator.set_save_callback(self.save_character_inventory)
+
         # Initialize input system with game references
         self.input_system.initialize_systems(
             self.hud, self.player_inventory, self.chest_inventory, self.player,
@@ -303,6 +306,10 @@ class PlayScreen(BaseScreen):
         # Initialize UI manager with all UI components
         self.ui_manager.initialize(self.hud, self.player_inventory, self.chest_inventory, self.game_over_screen, self.lootchest_manager)
         self.ui_manager.set_save_callback(self.save_character_inventory)
+
+        # Set up save callbacks for inventory exit saves
+        self.ui_manager.inventory_manager.set_save_callback(self.save_character_inventory)
+        self.ui_manager.inventory_manager.set_game_state_save_callback(self._save_game_state_for_chest_exit)
 
         # Set UI manager reference in the UI renderer
         self.rendering_pipeline.ui_renderer.set_ui_manager(self.ui_manager)
@@ -946,6 +953,15 @@ class PlayScreen(BaseScreen):
 
         # Save the inventory data
         return self.character_inventory_saver.save_inventory(self.player_inventory)
+
+    def _save_game_state_for_chest_exit(self):
+        """Save game state when chest inventory is closed"""
+        try:
+            success, message = self.save_load_manager.save_quick(self)
+            if not success:
+                print(f"Warning: Failed to save game state on chest exit: {message}")
+        except Exception as e:
+            print(f"Error during chest exit game state save: {e}")
 
     def _sync_hud_to_player_inventory(self):
         """Sync HUD inventory items to the bottom row of player inventory
