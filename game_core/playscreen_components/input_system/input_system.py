@@ -44,6 +44,12 @@ class InputSystem:
         self.game_systems_coordinator = None
         self.animated_tile_manager = None
 
+        # Collision system references for unstuck functionality
+        self.player_system = None
+        self.collision_handler = None
+        self.expanded_mapping = None
+        self.map_data = None
+
         # Setup callbacks between components
         self._setup_callbacks()
 
@@ -66,6 +72,20 @@ class InputSystem:
         self.cursor_manager.setup_shared_cursor_system(player_inventory, chest_inventory)
 
         self.is_initialized = True
+
+    def set_collision_system(self, player_system, collision_handler, expanded_mapping, map_data):
+        """Set collision system references for unstuck functionality
+
+        Args:
+            player_system: The player system instance
+            collision_handler: The collision handler instance
+            expanded_mapping: The tile mapping
+            map_data: The map data for collision detection
+        """
+        self.player_system = player_system
+        self.collision_handler = collision_handler
+        self.expanded_mapping = expanded_mapping
+        self.map_data = map_data
 
     def _setup_callbacks(self):
         """Setup callbacks between input components"""
@@ -91,6 +111,7 @@ class InputSystem:
 
         # Other callbacks
         self.keyboard_handler.set_escape_callback(self._on_escape_pressed)
+        self.keyboard_handler.set_unstuck_callback(self._on_unstuck_player)
         self.mouse_handler.set_player_attack_callback(self._on_player_attack)
         self.mouse_handler.set_lootchest_callback(self._on_lootchest_interaction)
 
@@ -214,6 +235,20 @@ class InputSystem:
         # This will be implemented by the PlayScreen
         # Return a signal that ESC was pressed
         return "escape_pressed"
+
+    def _on_unstuck_player(self):
+        """Handle unstuck player request"""
+        if not all([self.player_system, self.collision_handler, self.expanded_mapping, self.map_data]):
+            print("Warning: Cannot unstuck player - collision system not initialized")
+            return
+
+        # Attempt to unstuck the player
+        unstuck_success = self.player_system.unstuck_player(
+            self.collision_handler, self.expanded_mapping, self.map_data
+        )
+
+        if not unstuck_success:
+            print("Player is not stuck or could not be unstuck")
 
     # Public interface methods
     def get_zoom_controller(self) -> ZoomController:

@@ -1,8 +1,14 @@
 """
-Character Inventory Saver - Handles saving and loading character inventory data
+DEPRECATED: Character Inventory Saver
 
-This module provides functionality to save and load the player's inventory
-to a separate JSON file, allowing inventory items to persist between game sessions.
+⚠️  WARNING: This module is DEPRECATED and should not be used! ⚠️
+
+This functionality has been consolidated into PlayerInventory class for better
+architecture and to eliminate redundant inventory logic.
+
+Use PlayerInventory.save_to_file() and PlayerInventory.load_from_file() instead.
+
+This file will be removed in a future update.
 """
 import os
 import json

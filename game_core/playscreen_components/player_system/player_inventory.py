@@ -1,8 +1,12 @@
 """
-Player Inventory - handles the display and interaction with the player's full inventory
+Player Inventory - handles the display, interaction, and persistence of the player's full inventory
+
+This module consolidates both UI display and data persistence functionality
+to provide a single, coherent inventory system.
 """
 import pygame
 import os
+import json
 from game_core.sprite_cache import sprite_cache
 
 class PlayerInventory:
@@ -11,6 +15,12 @@ class PlayerInventory:
         """Initialize the player inventory"""
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+        # Initialize save system
+        self.save_dir = "SaveData"
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
+        self.inventory_save_path = os.path.join(self.save_dir, "character_inventory.json")
 
         # Load the item box image
         original_item_box = self.load_image("character/Hud_Ui/item_box_hud.png")
@@ -398,4 +408,117 @@ class PlayerInventory:
             if rect.collidepoint(mouse_pos):
                 return i
         return -1
+
+    # ===== PERSISTENCE METHODS =====
+
+    def save_to_file(self):
+        """Save the inventory to a file
+
+        Returns:
+            tuple: (success, message)
+        """
+        try:
+            # Extract inventory data
+            inventory_data = self._get_inventory_data()
+
+            # Create the save data structure
+            save_data = {
+                "version": 1,
+                "inventory": inventory_data
+            }
+
+            # Save to file
+            with open(self.inventory_save_path, 'w') as f:
+                json.dump(save_data, f, indent=2)
+
+            return True, "Character inventory saved successfully"
+        except Exception as e:
+            return False, f"Error saving character inventory: {str(e)}"
+
+    def load_from_file(self):
+        """Load the inventory from the save file
+
+        Returns:
+            tuple: (success, message)
+        """
+        try:
+            # Check if save file exists
+            if not os.path.exists(self.inventory_save_path):
+                return False, "No saved inventory found"
+
+            # Load the save data
+            with open(self.inventory_save_path, 'r') as f:
+                save_data = json.load(f)
+
+            # Check version
+            if "version" not in save_data or save_data["version"] != 1:
+                return False, "Incompatible save version"
+
+            # Check if inventory data exists
+            if "inventory" not in save_data:
+                return False, "No inventory data in save file"
+
+            # Update the inventory
+            self._load_inventory_data(save_data["inventory"])
+
+            return True, "Character inventory loaded successfully"
+        except Exception as e:
+            return False, f"Error loading character inventory: {str(e)}"
+
+    def _get_inventory_data(self):
+        """Extract inventory data for saving
+
+        Returns:
+            list: List of item data dictionaries
+        """
+        inventory_data = []
+
+        # Go through each inventory slot
+        for i in range(self.num_slots):
+            item = self.inventory_items[i]
+            if item:
+                # Create a simplified item data structure
+                item_data = {
+                    "slot": i,
+                    "name": item.get("name", "Unknown"),
+                    "count": item.get("count", 1)
+                }
+                inventory_data.append(item_data)
+
+        return inventory_data
+
+    def _load_inventory_data(self, inventory_data):
+        """Update the inventory with loaded data
+
+        Args:
+            inventory_data: List of item data dictionaries
+        """
+        # Clear existing inventory
+        self.inventory_items = [None] * self.num_slots
+
+        # Load each inventory item
+        for item_data in inventory_data:
+            slot = item_data.get("slot", 0)
+            if 0 <= slot < self.num_slots:
+                # Create the item
+                item_name = item_data.get("name", "Unknown")
+                item_count = item_data.get("count", 1)
+
+                # Create a placeholder image if needed
+                placeholder_image = pygame.Surface((16, 16), pygame.SRCALPHA)
+
+                # Set different colors based on item type for placeholder
+                if item_name == "Key":
+                    placeholder_image.fill((255, 215, 0, 200))  # Gold for keys
+                elif item_name == "Crystal":
+                    placeholder_image.fill((0, 191, 255, 200))  # Blue for crystals
+                else:
+                    placeholder_image.fill((255, 0, 0, 200))  # Red for unknown items
+
+                # Add to inventory with placeholder image
+                self.inventory_items[slot] = {
+                    "name": item_name,
+                    "count": item_count,
+                    "image": placeholder_image
+                }
 

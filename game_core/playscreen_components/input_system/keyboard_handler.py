@@ -24,6 +24,7 @@ class KeyboardHandler:
         self.on_inventory_previous = None
         self.on_inventory_next = None
         self.on_escape_pressed = None
+        self.on_unstuck_player = None
         
     def set_zoom_callbacks(self, zoom_in_callback: Callable, zoom_out_callback: Callable, 
                           zoom_reset_callback: Callable):
@@ -42,6 +43,10 @@ class KeyboardHandler:
     def set_escape_callback(self, escape_callback: Callable):
         """Set callback for ESC key"""
         self.on_escape_pressed = escape_callback
+
+    def set_unstuck_callback(self, unstuck_callback: Callable):
+        """Set callback for unstuck player action"""
+        self.on_unstuck_player = unstuck_callback
         
     def handle_keydown_event(self, event: pygame.event.Event) -> Optional[str]:
         """
@@ -99,6 +104,11 @@ class KeyboardHandler:
             # Next slot
             if self.on_inventory_next:
                 self.on_inventory_next()
+
+        # U key for unstuck player
+        elif event.key == pygame.K_u:
+            if self.on_unstuck_player:
+                self.on_unstuck_player()
 
         return None
         

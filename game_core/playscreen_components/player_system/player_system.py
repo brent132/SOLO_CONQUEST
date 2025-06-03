@@ -72,7 +72,20 @@ class PlayerSystem:
             bool: True if player died this frame
         """
         return self.player_manager.update_player(collision_handler, expanded_mapping, map_data)
-    
+
+    def unstuck_player(self, collision_handler, expanded_mapping, map_data):
+        """Attempt to unstuck the player if they're stuck in a collision
+
+        Args:
+            collision_handler: The collision handler instance
+            expanded_mapping: The tile mapping
+            map_data: The map data for collision detection
+
+        Returns:
+            bool: True if player was successfully unstuck, False otherwise
+        """
+        return self.player_manager.unstuck_player(collision_handler, expanded_mapping, map_data)
+
     def get_player(self) -> Optional[PlayerCharacter]:
         """Get the current player instance"""
         return self.player_manager.get_player()

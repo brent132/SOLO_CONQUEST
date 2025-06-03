@@ -2,10 +2,10 @@
   "current_world": "firstlevel",
   "worlds": {
     "firstlevel": {
-      "map_name": "firstlevel",
-      "x": 231,
-      "y": 159,
-      "direction": "up",
+      "map_name": "house",
+      "x": 16,
+      "y": 192,
+      "direction": "down",
       "health": 100,
       "shield_durability": 3
     }

@@ -136,7 +136,8 @@
     ],
     "Tilesets/Overworld\\tile136.png": [
       0,
-      1
+      1,
+      3
     ],
     "Tilesets/Overworld\\tile153.png": [
       1
@@ -163,17 +164,66 @@
     ],
     "Tilesets/Overworld\\tile137.png": [
       0,
-      1
+      1,
+      2,
+      3
     ],
     "Tilesets/Overworld\\tile138.png": [
       0,
-      1
+      1,
+      2,
+      3
     ],
     "Tilesets/Overworld\\tile139.png": [
-      0
+      0,
+      2
     ],
     "Tilesets/Overworld\\tile157.png": [
       0
+    ],
+    "Tilesets/Overworld\\tile140.png": [
+      0,
+      1,
+      2
+    ],
+    "Tilesets/Overworld\\tile141.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile142.png": [
+      0,
+      1
+    ],
+    "Tilesets/Overworld\\tile143.png": [
+      0,
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile158.png": [
+      0,
+      2
+    ],
+    "Tilesets/Overworld\\tile161.png": [
+      1,
+      3
+    ],
+    "Tilesets/Overworld\\tile176.png": [
+      0,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile179.png": [
+      1,
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile177.png": [
+      2,
+      3
+    ],
+    "Tilesets/Overworld\\tile178.png": [
+      2,
+      3
     ]
   }
 }

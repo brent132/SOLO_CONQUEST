@@ -117,7 +117,7 @@ class PlayScreen(BaseScreen):
 
         # Legacy components (for backward compatibility)
         self.game_state_saver = self.save_load_manager.game_state_saver
-        self.character_inventory_saver = self.save_load_manager.character_inventory_saver
+        # character_inventory_saver removed - now handled by PlayerInventory directly
         self.player_location_tracker = self.save_load_manager.player_location_tracker
 
         # Initialize key item collection variables
@@ -334,6 +334,8 @@ class PlayScreen(BaseScreen):
             self.player_location_tracker, self.save_game, self.load_map
         )
 
+
+
         # Set up tiles dictionary for backward compatibility
         self.tiles = {}
         for tile_id in range(1000):  # Reasonable range for tile IDs
@@ -443,6 +445,9 @@ class PlayScreen(BaseScreen):
             # This happens after map loading so we have the player and inventory initialized
             self.load_character_inventory()
 
+            # Set up collision system for unstuck functionality after all systems are initialized
+            self._setup_collision_system_for_unstuck()
+
             # Calculate center offset for small maps using camera controller
             center_offset_x, center_offset_y = self.camera_controller.calculate_center_offset()
             print(f"Map dimensions: {self.map_width}x{self.map_height} pixels: {self.map_width * self.grid_cell_size}x{self.map_height * self.grid_cell_size}")
@@ -457,6 +462,26 @@ class PlayScreen(BaseScreen):
         except Exception as e:
             self.ui_manager.show_status_message(f"Error loading map: {str(e)}", 180)
             return False
+
+    def _setup_collision_system_for_unstuck(self):
+        """Set up collision system references for unstuck functionality"""
+        try:
+            # Get the current collision map data
+            collision_map_data = self.map_system.get_collision_map_data()
+
+            # Set up collision system for teleportation unstuck logic
+            self.teleportation_manager.set_collision_system(
+                self.collision_handler, self.expanded_mapping, collision_map_data
+            )
+
+            # Set up collision system for input system unstuck functionality
+            self.input_system.set_collision_system(
+                self.player_system, self.collision_handler, self.expanded_mapping, collision_map_data
+            )
+
+            print("✅ Collision system set up for unstuck functionality")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not set up collision system for unstuck: {e}")
 
     # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
     # process_layered_format_map() has been replaced by the modularized map system
@@ -951,8 +976,8 @@ class PlayScreen(BaseScreen):
         # never opened the full inventory screen
         self._sync_hud_to_player_inventory()
 
-        # Save the inventory data
-        return self.character_inventory_saver.save_inventory(self.player_inventory)
+        # Save the inventory data using the consolidated PlayerInventory
+        return self.player_inventory.save_to_file()
 
     def _save_game_state_for_chest_exit(self):
         """Save game state when chest inventory is closed"""
@@ -998,17 +1023,23 @@ class PlayScreen(BaseScreen):
             self.hud.inventory.inventory_items[i] = self.player_inventory.inventory_items[bottom_row_start + i]
 
     def load_character_inventory(self):
-        """Load the character's inventory using the centralized save/load manager"""
+        """Load the character's inventory using the consolidated PlayerInventory"""
         # Skip if player inventory is not initialized
         if not self.player_inventory:
             return False, "Player inventory not initialized"
 
-        # Use the centralized load manager
-        success, message = self.save_load_manager.load_all(self)
+        # Load inventory using the consolidated PlayerInventory
+        success, message = self.player_inventory.load_from_file()
 
         if success:
+            # Update inventory images with proper sprites
+            self._update_inventory_images()
+
+            # Sync player inventory to HUD after loading
+            self._sync_player_to_hud_inventory()
+
             # Log success using debug manager
-            debug_manager.log("Character data loaded successfully", "player")
+            debug_manager.log("Character inventory loaded successfully", "player")
         else:
             # Log message using debug manager
             # This is expected when starting a new game

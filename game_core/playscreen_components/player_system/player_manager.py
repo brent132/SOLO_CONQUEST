@@ -140,7 +140,50 @@ class PlayerManager:
                 self.player.knockback_velocity[1] *= 0.5
         
         return False
-    
+
+    def unstuck_player(self, collision_handler, expanded_mapping, map_data):
+        """Attempt to unstuck the player if they're stuck in a collision
+
+        Args:
+            collision_handler: The collision handler instance
+            expanded_mapping: The tile mapping
+            map_data: The map data for collision detection
+
+        Returns:
+            bool: True if player was successfully unstuck, False otherwise
+        """
+        if not self.player:
+            return False
+
+        # Check if player is currently stuck in a collision
+        if not collision_handler.check_collision(self.player.rect, expanded_mapping, map_data):
+            return False  # Player is not stuck
+
+        print(f"Player is stuck at position ({self.player.rect.x}, {self.player.rect.y}), attempting to unstuck...")
+
+        # Find the nearest free space
+        free_position = collision_handler.find_nearest_free_space(
+            self.player.rect, expanded_mapping, map_data
+        )
+
+        if free_position:
+            old_x, old_y = self.player.rect.x, self.player.rect.y
+            self.player.rect.x, self.player.rect.y = free_position
+
+            # Update the player's position in the physics system
+            self.player.update_position()
+
+            # Reset movement states to prevent further issues
+            self.player.velocity = [0, 0]
+            self.player.is_knocked_back = False
+            self.player.knockback_velocity = [0, 0]
+
+            print(f"Player unstuck: moved from ({old_x}, {old_y}) to ({self.player.rect.x}, {self.player.rect.y})")
+            return True
+        else:
+            print("Warning: Could not find free space to unstuck player!")
+            return False
+
     def get_player(self) -> Optional[PlayerCharacter]:
         """Get the current player instance"""
         return self.player
