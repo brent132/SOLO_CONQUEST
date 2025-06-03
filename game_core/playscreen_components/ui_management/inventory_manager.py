@@ -50,8 +50,12 @@ class InventoryManager:
             self._position_side_by_side_inventories()
             
     def show_player_inventory(self):
-        """Show the player inventory"""
+        """Show the player inventory and sync from HUD"""
         if self.player_inventory:
+            # IMPORTANT: Sync HUD inventory to player inventory bottom row before showing
+            # This ensures that items collected and visible in the HUD appear in the player inventory
+            self._sync_hud_to_player_inventory()
+
             if self.chest_inventory and self.chest_inventory.is_visible():
                 # Both inventories will be visible
                 self.both_inventories_visible = True
@@ -268,7 +272,24 @@ class InventoryManager:
             if rect.collidepoint(mouse_pos):
                 return True
         return False
-        
+
+    def _sync_hud_to_player_inventory(self):
+        """Sync HUD inventory items to the bottom row of player inventory
+
+        This ensures that items in the HUD hotbar are transferred to the player inventory
+        when opening the full inventory screen.
+        """
+        if not self.player_inventory or not self.hud_inventory:
+            return
+
+        # Calculate the starting index for the bottom row of player inventory
+        bottom_row_start = self.player_inventory.grid_width * (self.player_inventory.grid_height - 1)
+
+        # Copy items from HUD inventory to the bottom row of player inventory
+        for i in range(min(self.hud_inventory.num_slots, self.player_inventory.grid_width)):
+            # Copy HUD inventory item to corresponding slot in bottom row
+            self.player_inventory.inventory_items[bottom_row_start + i] = self.hud_inventory.inventory_items[i]
+
     def _is_click_in_chest_inventory(self, mouse_pos: Tuple[int, int]) -> bool:
         """Check if click is within chest inventory bounds"""
         if not self.chest_inventory:

@@ -369,25 +369,64 @@
       "x": 0.0,
       "y": 0.0
     },
-    "enemies": [],
+    "enemies": [
+      {
+        "type": "bomberplant",
+        "position": {"x": 656, "y": 112},
+        "direction": "right",
+        "health": 100,
+        "state": "idle",
+        "float_position": {"x": 656.0, "y": 112.0}
+      },
+      {
+        "type": "spinner",
+        "position": {"x": 1344, "y": 224},
+        "direction": "right",
+        "health": 60,
+        "state": "idle",
+        "float_position": {"x": 1344.0, "y": 224.0}
+      },
+      {
+        "type": "phantom",
+        "position": {"x": 1248, "y": 688},
+        "direction": "left",
+        "health": 100,
+        "state": "idle",
+        "float_position": {"x": 1248.0, "y": 688.0}
+      },
+      {
+        "type": "spider",
+        "position": {"x": 768, "y": 992},
+        "direction": "right",
+        "health": 100,
+        "state": "idle",
+        "float_position": {"x": 768.0, "y": 992.0}
+      },
+      {
+        "type": "pinkbat_right",
+        "position": {"x": 144, "y": 1056},
+        "direction": "right",
+        "health": 100,
+        "state": "idle",
+        "float_position": {"x": 144.0, "y": 1056.0}
+      },
+      {
+        "type": "pinkslime",
+        "position": {"x": 1344, "y": 1072},
+        "direction": "right",
+        "health": 100,
+        "state": "idle",
+        "float_position": {"x": 1344.0, "y": 1072.0}
+      }
+    ],
     "inventory": [],
     "collected_keys": [
       [16, 9]
     ],
     "collected_crystals": [
-      [15, 12],[25, 14],[24, 14],[24, 13],[23, 13],[22, 13],[20, 12],[19, 12],[18, 12],[17, 12],
-      [16, 12],[17, 9]
+      [25, 14],[17, 9],[15, 12],[16, 12],[17, 12],[18, 12],[19, 12]
     ],
-    "opened_lootchests": [
-      [14, 9]
-    ],
-    "chest_contents": {
-      "14,9": {
-        "40": {
-          "name": "Crystal",
-          "count": 5
-        }
-      }
-    }
+    "opened_lootchests": [],
+    "chest_contents": {}
   }
 }
