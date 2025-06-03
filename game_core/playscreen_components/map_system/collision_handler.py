@@ -134,23 +134,129 @@ class CollisionHandler:
 
         return False
 
-    def find_nearest_free_space(self, player_rect, tile_mapping, map_data, max_search_radius=64):
+    def find_directional_free_space(self, player_rect, tile_mapping, map_data, map_width, map_height, max_search_radius=64):
+        """Find free space by moving away from walls in a straight line
+
+        Args:
+            player_rect: The player's current rect
+            tile_mapping: The tile mapping
+            map_data: The map data for collision detection
+            map_width: Map width in tiles
+            map_height: Map height in tiles
+            max_search_radius: Maximum distance to search for free space (in pixels)
+
+        Returns:
+            tuple: (x, y) position of free space away from walls, or None if not found
+        """
+        # Calculate map boundaries in pixels
+        max_x = map_width * self.grid_cell_size
+        max_y = map_height * self.grid_cell_size
+
+        # Start from the player's current center position
+        center_x = player_rect.centerx
+        center_y = player_rect.centery
+
+        # Analyze collision density in each cardinal direction
+        directions = {
+            'up': (0, -1),
+            'down': (0, 1),
+            'left': (-1, 0),
+            'right': (1, 0)
+        }
+
+        collision_density = {}
+
+        # Check collision density in each direction
+        for direction_name, (dx, dy) in directions.items():
+            density = 0
+            # Check several positions in this direction to gauge wall density
+            for check_distance in range(self.grid_cell_size, min(max_search_radius, 48), self.grid_cell_size // 2):
+                check_x = center_x + dx * check_distance
+                check_y = center_y + dy * check_distance
+
+                check_rect = pygame.Rect(
+                    check_x - player_rect.width // 2,
+                    check_y - player_rect.height // 2,
+                    player_rect.width,
+                    player_rect.height
+                )
+
+                # Skip if out of bounds
+                if (check_rect.x < 0 or check_rect.y < 0 or
+                    check_rect.right > max_x or check_rect.bottom > max_y):
+                    density += 2  # Penalize out of bounds heavily
+                    continue
+
+                # Check for collision
+                if self.check_collision(check_rect, tile_mapping, map_data):
+                    density += 1
+
+            collision_density[direction_name] = density
+
+        # Sort directions by collision density (lowest first = least walls)
+        sorted_directions = sorted(collision_density.items(), key=lambda x: x[1])
+
+        # Try to move in the direction with least walls (away from walls)
+        for direction_name, density in sorted_directions:
+            dx, dy = directions[direction_name]
+
+            # Try increasing distances in this direction
+            for distance in range(self.grid_cell_size, max_search_radius + 1, self.grid_cell_size // 4):
+                test_x = center_x + dx * distance
+                test_y = center_y + dy * distance
+
+                test_rect = pygame.Rect(
+                    test_x - player_rect.width // 2,
+                    test_y - player_rect.height // 2,
+                    player_rect.width,
+                    player_rect.height
+                )
+
+                # Check if this position is within map boundaries
+                if (test_rect.x < 0 or test_rect.y < 0 or
+                    test_rect.right > max_x or test_rect.bottom > max_y):
+                    continue  # Skip positions outside map boundaries
+
+                # Check if this position is free of collisions
+                if not self.check_collision(test_rect, tile_mapping, map_data):
+                    print(f"Found directional free space moving {direction_name}: ({test_rect.x}, {test_rect.y})")
+                    return (test_rect.x, test_rect.y)
+
+        # If directional approach failed, return None
+        return None
+
+    def find_nearest_free_space(self, player_rect, tile_mapping, map_data, map_width, map_height, max_search_radius=64):
         """Find the nearest free space around the player when stuck in collision
 
         Args:
             player_rect: The player's current rect
             tile_mapping: The tile mapping
             map_data: The map data for collision detection
+            map_width: Map width in tiles
+            map_height: Map height in tiles
             max_search_radius: Maximum distance to search for free space (in pixels)
 
         Returns:
             tuple: (x, y) position of nearest free space, or None if not found
         """
+        # First try the directional approach (move away from walls)
+        directional_position = self.find_directional_free_space(
+            player_rect, tile_mapping, map_data, map_width, map_height, max_search_radius
+        )
+        if directional_position:
+            return directional_position
+
+        print("Directional unstuck failed, falling back to circular search...")
+
+        # Calculate map boundaries in pixels
+        max_x = map_width * self.grid_cell_size
+        max_y = map_height * self.grid_cell_size
+
         # Start from the player's current center position
         center_x = player_rect.centerx
         center_y = player_rect.centery
 
-        # Search in expanding circles around the player
+        # Search in expanding circles around the player (fallback method)
         for radius in range(self.grid_cell_size, max_search_radius + 1, self.grid_cell_size // 2):
             # Check positions in a circle around the player
             for angle_step in range(0, 360, 15):  # Check every 15 degrees
@@ -168,6 +274,11 @@ class CollisionHandler:
                     player_rect.width,
                     player_rect.height
                 )
+
+                # Check if this position is within map boundaries
+                if (test_rect.x < 0 or test_rect.y < 0 or
+                    test_rect.right > max_x or test_rect.bottom > max_y):
+                    continue  # Skip positions outside map boundaries
 
                 # Check if this position is free of collisions
                 if not self.check_collision(test_rect, tile_mapping, map_data):
@@ -187,6 +298,11 @@ class CollisionHandler:
                     player_rect.width,
                     player_rect.height
                 )
+
+                # Check if this position is within map boundaries
+                if (test_rect.x < 0 or test_rect.y < 0 or
+                    test_rect.right > max_x or test_rect.bottom > max_y):
+                    continue  # Skip positions outside map boundaries
 
                 if not self.check_collision(test_rect, tile_mapping, map_data):
                     return (test_rect.x, test_rect.y)

@@ -224,6 +224,12 @@
     "Tilesets/Overworld\\tile178.png": [
       2,
       3
+    ],
+    "Tilesets/Overworld\\tile155.png": [
+      1
+    ],
+    "Tilesets/Overworld\\tile156.png": [
+      0
     ]
   }
 }

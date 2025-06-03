@@ -3,7 +3,7 @@
   "worlds": {
     "firstlevel": {
       "map_name": "house",
-      "x": 16,
+      "x": 144,
       "y": 192,
       "direction": "down",
       "health": 100,

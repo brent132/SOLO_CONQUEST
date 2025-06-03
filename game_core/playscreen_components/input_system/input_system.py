@@ -49,6 +49,8 @@ class InputSystem:
         self.collision_handler = None
         self.expanded_mapping = None
         self.map_data = None
+        self.map_width = 0
+        self.map_height = 0
 
         # Setup callbacks between components
         self._setup_callbacks()
@@ -73,7 +75,7 @@ class InputSystem:
 
         self.is_initialized = True
 
-    def set_collision_system(self, player_system, collision_handler, expanded_mapping, map_data):
+    def set_collision_system(self, player_system, collision_handler, expanded_mapping, map_data, map_width, map_height):
         """Set collision system references for unstuck functionality
 
         Args:
@@ -81,11 +83,15 @@ class InputSystem:
             collision_handler: The collision handler instance
             expanded_mapping: The tile mapping
             map_data: The map data for collision detection
+            map_width: Map width in tiles
+            map_height: Map height in tiles
         """
         self.player_system = player_system
         self.collision_handler = collision_handler
         self.expanded_mapping = expanded_mapping
         self.map_data = map_data
+        self.map_width = map_width
+        self.map_height = map_height
 
     def _setup_callbacks(self):
         """Setup callbacks between input components"""
@@ -244,7 +250,7 @@ class InputSystem:
 
         # Attempt to unstuck the player
         unstuck_success = self.player_system.unstuck_player(
-            self.collision_handler, self.expanded_mapping, self.map_data
+            self.collision_handler, self.expanded_mapping, self.map_data, self.map_width, self.map_height
         )
 
         if not unstuck_success:

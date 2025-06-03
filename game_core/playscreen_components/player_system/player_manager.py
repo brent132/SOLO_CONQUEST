@@ -141,13 +141,15 @@ class PlayerManager:
         
         return False
 
-    def unstuck_player(self, collision_handler, expanded_mapping, map_data):
+    def unstuck_player(self, collision_handler, expanded_mapping, map_data, map_width, map_height):
         """Attempt to unstuck the player if they're stuck in a collision
 
         Args:
             collision_handler: The collision handler instance
             expanded_mapping: The tile mapping
             map_data: The map data for collision detection
+            map_width: Map width in tiles
+            map_height: Map height in tiles
 
         Returns:
             bool: True if player was successfully unstuck, False otherwise
@@ -163,7 +165,7 @@ class PlayerManager:
 
         # Find the nearest free space
         free_position = collision_handler.find_nearest_free_space(
-            self.player.rect, expanded_mapping, map_data
+            self.player.rect, expanded_mapping, map_data, map_width, map_height
         )
 
         if free_position:

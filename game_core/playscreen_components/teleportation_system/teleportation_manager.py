@@ -32,6 +32,8 @@ class TeleportationManager:
         self.collision_handler = None
         self.expanded_mapping = None
         self.map_data = None
+        self.map_width = 0
+        self.map_height = 0
         
     def initialize(self, player_system, camera_controller, relation_handler, 
                   player_location_tracker, save_callback, load_map_callback):
@@ -43,17 +45,21 @@ class TeleportationManager:
         self.save_callback = save_callback
         self.load_map_callback = load_map_callback
 
-    def set_collision_system(self, collision_handler, expanded_mapping, map_data):
+    def set_collision_system(self, collision_handler, expanded_mapping, map_data, map_width, map_height):
         """Set collision system references for unstuck logic
 
         Args:
             collision_handler: The collision handler instance
             expanded_mapping: The tile mapping
             map_data: The map data for collision detection
+            map_width: Map width in tiles
+            map_height: Map height in tiles
         """
         self.collision_handler = collision_handler
         self.expanded_mapping = expanded_mapping
         self.map_data = map_data
+        self.map_width = map_width
+        self.map_height = map_height
         
     def handle_teleportation(self, relation, current_map_name):
         """Handle teleportation when player touches a relation point
@@ -212,7 +218,7 @@ class TeleportationManager:
 
         # Attempt to unstuck the player if they're stuck in a collision
         unstuck_success = self.player_system.unstuck_player(
-            self.collision_handler, self.expanded_mapping, self.map_data
+            self.collision_handler, self.expanded_mapping, self.map_data, self.map_width, self.map_height
         )
 
         if unstuck_success:

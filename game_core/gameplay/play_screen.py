@@ -469,14 +469,17 @@ class PlayScreen(BaseScreen):
             # Get the current collision map data
             collision_map_data = self.map_system.get_collision_map_data()
 
+            # Get map dimensions
+            map_width, map_height = self.map_system.get_map_dimensions()
+
             # Set up collision system for teleportation unstuck logic
             self.teleportation_manager.set_collision_system(
-                self.collision_handler, self.expanded_mapping, collision_map_data
+                self.collision_handler, self.expanded_mapping, collision_map_data, map_width, map_height
             )
 
             # Set up collision system for input system unstuck functionality
             self.input_system.set_collision_system(
-                self.player_system, self.collision_handler, self.expanded_mapping, collision_map_data
+                self.player_system, self.collision_handler, self.expanded_mapping, collision_map_data, map_width, map_height
             )
 
             print("✅ Collision system set up for unstuck functionality")
