@@ -133,7 +133,12 @@ class PlayerManager:
             # Collision detected, revert to original position
             self.player.rect.x = original_x
             self.player.rect.y = original_y
-            
+
+            # CRITICAL: Sync precise position with the reverted rect position
+            # This prevents jittering when changing direction after hitting a wall
+            self.player.precise_x = float(self.player.rect.midbottom[0])
+            self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
+
             # If player is being knocked back, reduce knockback velocity to prevent getting stuck
             if self.player.is_knocked_back:
                 self.player.knockback_velocity[0] *= 0.5
@@ -171,6 +176,10 @@ class PlayerManager:
         if free_position:
             old_x, old_y = self.player.rect.x, self.player.rect.y
             self.player.rect.x, self.player.rect.y = free_position
+
+            # Sync precise position with the new rect position
+            self.player.precise_x = float(self.player.rect.midbottom[0])
+            self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
 
             # Update the player's position in the physics system
             self.player.update_position()
@@ -225,6 +234,9 @@ class PlayerManager:
         if self.player:
             self.player.rect.x = x
             self.player.rect.y = y
+            # Sync precise position with the new rect position
+            self.player.precise_x = float(self.player.rect.midbottom[0])
+            self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
             self.player.update_position()
     
     def save_player_location(self, map_name: str, player_location_tracker):
@@ -239,6 +251,9 @@ class PlayerManager:
         if self.player:
             self.player.rect.x, self.player.rect.y = target_position
             self.player.direction = target_direction
+            # Sync precise position with the new rect position
+            self.player.precise_x = float(self.player.rect.midbottom[0])
+            self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
             self.player.update_position()
     
     def reset_player(self):

@@ -7,7 +7,7 @@ movement mechanics and the main player character class.
 """
 
 import pygame
-from typing import Dict, Tuple, Optional
+from typing import Dict
 
 
 class PlayerMovement:
@@ -103,26 +103,18 @@ class PlayerMovement:
                 direction = "down"
             state = "run"
 
-        # Enhanced debug output for all movement keys
-        if any(self.movement_keys_pressed.values()):
-            running_status = "RUNNING" if self.is_running else "WALKING"
-            keys_active = []
-            if self.movement_keys_pressed['left']: keys_active.append("A(left)")
-            if self.movement_keys_pressed['right']: keys_active.append("D(right)")
-            if self.movement_keys_pressed['up']: keys_active.append("W(up)")
-            if self.movement_keys_pressed['down']: keys_active.append("S(down)")
+        # Normalize diagonal movement to maintain consistent speed
+        # If moving diagonally, the combined velocity would be faster due to Pythagorean theorem
+        # We need to normalize it to maintain the intended speed
+        if velocity[0] != 0 and velocity[1] != 0:
+            # Calculate the current diagonal distance (before normalization)
+            original_distance = (velocity[0]**2 + velocity[1]**2)**0.5
 
-            shift_status = "SHIFT_HELD" if shift_held else "NO_SHIFT"
-            keys_str = "+".join(keys_active)
-
-            # Calculate actual movement distance for this frame
-            movement_distance = (velocity[0]**2 + velocity[1]**2)**0.5
-
-            print(f"🔍 {keys_str} {running_status} {shift_status}: velocity=({velocity[0]:.1f}, {velocity[1]:.1f}) distance={movement_distance:.1f}")
-            print(f"   📊 base_speed={base_speed:.1f}, current_speed={self.current_speed:.1f}, final_speed={final_speed:.1f}, speed_multiplier={self.player.speed_multiplier:.1f}")
-
-            # Store velocity for position tracking
-            self.last_velocity = velocity.copy()
+            # Normalize to the intended speed (final_speed)
+            if original_distance > 0:
+                normalization_factor = final_speed / original_distance
+                velocity[0] *= normalization_factor
+                velocity[1] *= normalization_factor
 
         return {
             'velocity': velocity,

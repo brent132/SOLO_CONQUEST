@@ -15,20 +15,10 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self.height = 16
         self.speed = 1  # Movement speed changed from 2 to 1
 
-        # Animation variables
+        # Animation and state variables
         self.direction = "down"  # Current facing direction
         self.state = "idle"  # Current animation state (idle, walk, attack)
-        self.frame = 0  # Current animation frame
-        self.animation_speed = 0.1  # Animation speed (frames per update)
-        self.animation_timer = 0  # Timer for animation updates
-
-        # Attack variables
-        self.is_attacking = False
-        self.attack_frame = 0
-        self.attack_speed = 0.2  # Attack animation speed (faster than idle)
-
-        # Animation frame counts (will be set after loading sprites)
-        self.animation_frame_counts = {}
+        self.is_attacking = False  # Attack state flag
 
         # Load character sprites
         self.sprites = load_character_sprites()
@@ -64,8 +54,6 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self.knockback_duration = 25  # Increased frames to show knockback effect
         self.knockback_strength = 2.5  # Reduced strength of knockback when hit by enemies (was 5.0)
         self.knockback_velocity = [0, 0]  # Direction and speed of knockback
-        self.hit_frame = 0  # Current frame of hit animation
-        self.hit_animation_speed = 0.15  # Speed of hit animation
 
         # Health system
         self.max_health = 100
@@ -73,12 +61,8 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self.invincibility_timer = 0
         self.invincibility_duration = 60  # 1 second of invincibility after being hit (60 frames)
 
-        # Death animation
+        # Death state
         self.is_dead = False
-        self.death_animation_timer = 0
-        self.death_animation_speed = 0.1
-        self.death_frame = 0
-        self.death_animation_complete = False
 
         # Shield system
         self.is_shielded = False
@@ -108,6 +92,10 @@ class PlayerCharacter(pygame.sprite.Sprite):
         # Initialize movement system (import here to avoid circular imports)
         from game_core.playscreen_components.player_system.player_movement import PlayerMovement
         self.movement_system = PlayerMovement(self)
+
+        # Initialize animation system (import here to avoid circular imports)
+        from game_core.playscreen_components.player_system.player_animation import PlayerAnimation
+        self.animation_system = PlayerAnimation(self)
 
     def handle_input(self):
         """Handle keyboard input for player movement"""
@@ -163,165 +151,21 @@ class PlayerCharacter(pygame.sprite.Sprite):
         return {}
 
     def update_animation(self):
-        """Update the character's animation frame"""
-        # Handle death animation first
-        if self.is_dead:
-            current_animation_key = f"death_{self.direction}"
+        """Update the character's animation frame using the animation system"""
+        # Use the new animation system to handle all animation logic
+        animation_data = self.animation_system.update_animation()
 
-            # Update death animation timer
-            self.death_animation_timer += self.death_animation_speed
-            if self.death_animation_timer >= 1:
-                self.death_animation_timer = 0
-                self.death_frame += 1
+        # Apply the animation data to the player
+        self.image = animation_data['image']
+        self.current_animation_image = animation_data['image']
 
-                # Check if death animation is complete
-                if current_animation_key in self.sprites and self.death_frame >= len(self.sprites[current_animation_key]):
-                    self.death_frame = len(self.sprites[current_animation_key]) - 1  # Stay on last frame
-                    self.death_animation_complete = True
+        # Handle death animation completion
+        if self.is_dead and animation_data.get('animation_complete', False):
+            # Death animation is complete - could trigger game over or other logic
+            pass
 
-            # Set the current frame to the death frame
-            if current_animation_key in self.sprites and len(self.sprites[current_animation_key]) > 0:
-                frame_index = min(self.death_frame, len(self.sprites[current_animation_key]) - 1)
-                self.image = self.sprites[current_animation_key][frame_index]
-                self.current_animation_image = self.image
-            return
-
-        # For normal animations
-        # Determine the animation key based on state and direction
-        if self.is_knocked_back and self.is_shielded:
-            # Use shielded hit animation when knocked back while shielded
-            current_animation_key = f"shield_hit_{self.direction}"
-        elif self.is_knocked_back:
-            current_animation_key = f"hit_{self.direction}"
-        elif self.is_attacking:
-            current_animation_key = f"attack_{self.direction}"
-        elif self.is_shielded:
-            current_animation_key = f"shield_{self.direction}"
-        else:
-            current_animation_key = f"{self.state}_{self.direction}"
-
-        # Check if the animation exists
-        if current_animation_key not in self.sprites or not self.sprites[current_animation_key]:
-            # If we don't have the specific animation, try to find a fallback
-            if "shield_hit" in current_animation_key:
-                # If shielded hit animation doesn't exist, try regular hit animation
-                hit_key = f"hit_{self.direction}"
-                if hit_key in self.sprites and self.sprites[hit_key]:
-                    current_animation_key = hit_key
-                    print(f"Fallback to regular hit animation: {hit_key}")
-                else:
-                    # If hit animation doesn't exist, use shield animation
-                    shield_key = f"shield_{self.direction}"
-                    if shield_key in self.sprites and self.sprites[shield_key]:
-                        current_animation_key = shield_key
-                        print(f"Fallback to shield animation: {shield_key}")
-                    else:
-                        current_animation_key = "idle_down"  # Default fallback
-            elif "attack" in current_animation_key:
-                # If attack animation doesn't exist, use idle for that direction
-                idle_key = f"idle_{self.direction}"
-                if idle_key in self.sprites and self.sprites[idle_key]:
-                    current_animation_key = idle_key
-                else:
-                    current_animation_key = "idle_down"  # Default fallback
-            elif self.state == "run":
-                # Use run animation for movement
-                run_key = f"run_{self.direction}"
-                if run_key in self.sprites and self.sprites[run_key]:
-                    current_animation_key = run_key
-                else:
-                    # If run animation doesn't exist, fall back to idle
-                    idle_key = f"idle_{self.direction}"
-                    if idle_key in self.sprites and self.sprites[idle_key]:
-                        current_animation_key = idle_key
-                    else:
-                        current_animation_key = "idle_down"  # Default fallback
-            else:
-                # For idle state, use the correct direction if available
-                if f"idle_{self.direction}" in self.sprites and self.sprites[f"idle_{self.direction}"]:
-                    current_animation_key = f"idle_{self.direction}"
-                else:
-                    current_animation_key = "idle_down"  # Default fallback
-
-        # Store the current position before updating the animation
+        # Store the current position before updating the rect
         current_midbottom = self.rect.midbottom
-
-        # Handle hit animation (knockback)
-        if self.is_knocked_back:
-            # Update hit animation timer
-            self.animation_timer += self.hit_animation_speed
-            if self.animation_timer >= 1:
-                self.animation_timer = 0
-                self.hit_frame += 1
-
-                # Check if hit animation is complete
-                if self.hit_frame >= len(self.sprites[current_animation_key]):
-                    # Reset hit frame but keep knockback state
-                    # The knockback state will be reset in the update method
-                    self.hit_frame = len(self.sprites[current_animation_key]) - 1
-
-                # Use hit frame for rendering
-                frame_index = min(self.hit_frame, len(self.sprites[current_animation_key]) - 1)
-                self.image = self.sprites[current_animation_key][frame_index]
-            else:
-                # Use current hit frame for rendering
-                frame_index = min(self.hit_frame, len(self.sprites[current_animation_key]) - 1)
-                self.image = self.sprites[current_animation_key][frame_index]
-
-        # Handle attack animation
-        elif self.is_attacking:
-            # Update attack animation timer (faster than regular animations)
-            self.animation_timer += self.attack_speed
-            if self.animation_timer >= 1:
-                self.animation_timer = 0
-                self.attack_frame += 1
-
-                # Check if attack animation is complete
-                if self.attack_frame >= len(self.sprites[current_animation_key]):
-                    # Reset attack state
-                    self.is_attacking = False
-                    self.attack_frame = 0
-                    self.state = "idle"
-
-                    # Switch to idle animation
-                    idle_key = f"idle_{self.direction}"
-                    if idle_key in self.sprites and self.sprites[idle_key]:
-                        self.image = self.sprites[idle_key][0]
-                    else:
-                        self.image = self.sprites["idle_down"][0]
-                else:
-                    # Use attack frame for rendering
-                    frame_index = min(self.attack_frame, len(self.sprites[current_animation_key]) - 1)
-                    self.image = self.sprites[current_animation_key][frame_index]
-            else:
-                # Use current attack frame for rendering
-                frame_index = min(self.attack_frame, len(self.sprites[current_animation_key]) - 1)
-                self.image = self.sprites[current_animation_key][frame_index]
-        # Handle shield animation (which has only one frame)
-        elif self.is_shielded:
-            # Shield animations have only one frame, so just use the first frame
-            if len(self.sprites[current_animation_key]) > 0:
-                self.image = self.sprites[current_animation_key][0]
-            else:
-                # Fallback to idle if shield animation is missing
-                idle_key = f"idle_{self.direction}"
-                if idle_key in self.sprites and self.sprites[idle_key]:
-                    self.image = self.sprites[idle_key][0]
-                else:
-                    self.image = self.sprites["idle_down"][0]
-        else:
-            # Regular animation handling (idle/walk)
-            # Update animation timer
-            self.animation_timer += self.animation_speed
-            if self.animation_timer >= 1:
-                self.animation_timer = 0
-                self.frame = (self.frame + 1) % len(self.sprites[current_animation_key])
-
-            # Update image
-            self.image = self.sprites[current_animation_key][self.frame]
-
-        # Store the current animation image for drawing
-        self.current_animation_image = self.image
 
         # For collision purposes, maintain a consistent 16x16 rect regardless of animation
         # This prevents the character from being pushed when attack animations change size
@@ -338,9 +182,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
         """Trigger an attack animation"""
         # Only start attack if not already attacking
         if not self.is_attacking:
-            self.is_attacking = True
-            self.attack_frame = 0
-            self.animation_timer = 0
+            self.animation_system.start_attack_animation()
             self.state = "attack"
             return True
         return False
@@ -365,29 +207,13 @@ class PlayerCharacter(pygame.sprite.Sprite):
         # Store the current midbottom position
         current_midbottom = self.rect.midbottom
 
-        # Update the image and rect
-        if self.state == "idle":
-            current_animation_key = f"idle_{self.direction}"
-        elif self.state == "run":
-            current_animation_key = f"run_{self.direction}"
-        elif self.state == "attack":
-            current_animation_key = f"attack_{self.direction}"
-        elif self.state == "shield":
-            current_animation_key = f"shield_{self.direction}"
-        else:
-            current_animation_key = f"idle_{self.direction}"
-
-        # Make sure the animation key exists
-        if current_animation_key not in self.sprites or not self.sprites[current_animation_key]:
-            current_animation_key = "idle_down"
+        # Reset animation state and get the first frame of the current animation
+        self.animation_system.reset_animation_state()
+        animation_data = self.animation_system.update_animation()
 
         # Update the image
-        self.image = self.sprites[current_animation_key][0]
-        self.current_animation_image = self.image
-
-        # Reset animation frame
-        self.frame = 0
-        self.animation_timer = 0
+        self.image = animation_data['image']
+        self.current_animation_image = animation_data['image']
 
         # Update the rect while preserving the midbottom position
         self.rect = self.image.get_rect()
@@ -497,9 +323,6 @@ class PlayerCharacter(pygame.sprite.Sprite):
 
             # Only update position if not shielded
             if not self.is_shielded and (self.velocity[0] != 0 or self.velocity[1] != 0):
-                # Store old position for debugging
-                old_x, old_y = self.rect.midbottom
-
                 # Update precise position with fractional movement
                 self.precise_x += self.velocity[0]
                 self.precise_y += self.velocity[1]
@@ -535,16 +358,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
                 # Update the character's rect position (rounded to integers)
                 self.rect.midbottom = (int(round(midbottom_x)), int(round(midbottom_y)))
 
-                # Debug: Track actual position change
-                new_x, new_y = self.rect.midbottom
-                actual_movement_x = new_x - old_x
-                actual_movement_y = new_y - old_y
-                actual_distance = (actual_movement_x**2 + actual_movement_y**2)**0.5
 
-                # Only print if there's significant movement to avoid spam
-                if actual_distance > 0.1:
-                    print(f"   🚶 Position: ({old_x:.1f},{old_y:.1f}) → ({new_x:.1f},{new_y:.1f}) | Actual movement: ({actual_movement_x:.1f},{actual_movement_y:.1f}) distance={actual_distance:.1f}")
-                    print(f"   🎯 Precise: ({self.precise_x:.2f},{self.precise_y:.2f}) | Velocity: ({self.velocity[0]:.2f},{self.velocity[1]:.2f})")
 
         # Update animation
         self.update_animation()
@@ -577,8 +391,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
                     # Apply normal knockback since shield is broken
                     self.is_knocked_back = True
                     self.knockback_timer = self.knockback_duration
-                    self.hit_frame = 0
-                    self.animation_timer = 0
+                    self.animation_system.start_hit_animation()
 
                     # Calculate knockback velocity
                     distance = ((direction_x ** 2) + (direction_y ** 2)) ** 0.5
@@ -591,8 +404,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
                 # Shield still has durability, play shield hit animation
                 self.is_knocked_back = True
                 self.knockback_timer = self.shield_hit_duration  # Use shield hit animation duration
-                self.hit_frame = 0  # Reset hit animation frame
-                self.animation_timer = 0  # Reset animation timer
+                self.animation_system.start_hit_animation()
 
                 # Set zero knockback velocity (no movement)
                 self.knockback_velocity = [0, 0]
@@ -602,8 +414,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
         if not self.is_knocked_back:
             self.is_knocked_back = True
             self.knockback_timer = self.knockback_duration
-            self.hit_frame = 0  # Reset hit animation frame
-            self.animation_timer = 0  # Reset animation timer
+            self.animation_system.start_hit_animation()
 
             # Set knockback direction if provided
             if direction_x != 0 or direction_y != 0:
@@ -649,9 +460,7 @@ class PlayerCharacter(pygame.sprite.Sprite):
         """Start the death animation and set player as dead"""
         if not self.is_dead:
             self.is_dead = True
-            self.death_frame = 0
-            self.death_animation_timer = 0
-            self.death_animation_complete = False
+            self.animation_system.start_death_animation()
             self.velocity = [0, 0]  # Stop movement
             self.is_knocked_back = False
             self.is_attacking = False
