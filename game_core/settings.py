@@ -11,9 +11,9 @@ WIDTH, HEIGHT = 1280, 720  # Initial dimensions (16:9 aspect ratio)
 ORIGINAL_WIDTH, ORIGINAL_HEIGHT = WIDTH, HEIGHT
 
 # Frame rate settings
-FPS = 60  # Target frame rate (locked to 60 FPS)
+FPS = 60  # Target frame rate (locked to 30 FPS for consistent performance)
 ENABLE_VSYNC = True  # Enable VSync for smoother frame pacing
-FRAME_RATE_STRICT = True  # Enforce strict 60 FPS cap (prevents going higher)
+FRAME_RATE_STRICT = True  # Enforce strict 30 FPS cap (prevents going higher)
 
 # Colors
 BLACK = (0, 0, 0)
