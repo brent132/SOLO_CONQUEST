@@ -101,6 +101,14 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self.speed_multiplier = 1.0  # Current speed multiplier (1.0 = 100% speed)
         self.slow_timer = 0  # Timer for slowing effect
 
+        # Fractional position tracking for smooth movement
+        self.precise_x = float(x)  # Precise X position (with decimals)
+        self.precise_y = float(y)  # Precise Y position (with decimals)
+
+        # Initialize movement system (import here to avoid circular imports)
+        from game_core.playscreen_components.player_system.player_movement import PlayerMovement
+        self.movement_system = PlayerMovement(self)
+
     def handle_input(self):
         """Handle keyboard input for player movement"""
         keys = pygame.key.get_pressed()
@@ -137,25 +145,22 @@ class PlayerCharacter(pygame.sprite.Sprite):
 
         # Only process movement if not shielded
         if not self.is_shielded:
-            # Set velocity based on key presses
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                self.velocity[0] = -self.speed
-                self.direction = "left"
-                self.state = "run"  # Use run animation for walking
-            elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                self.velocity[0] = self.speed
-                self.direction = "right"
-                self.state = "run"  # Use run animation for walking
-            elif keys[pygame.K_UP] or keys[pygame.K_w]:
-                self.velocity[1] = -self.speed
-                self.direction = "up"
-                self.state = "run"  # Use run animation for walking
-            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                self.velocity[1] = self.speed
-                self.direction = "down"
-                self.state = "run"  # Use run animation for walking
-            else:
-                self.state = "idle"
+            # Use the new movement system to handle input
+            movement_data = self.movement_system.handle_movement_input(keys)
+
+            # Apply movement data to player
+            self.velocity = movement_data['velocity']
+            self.direction = movement_data['direction']
+            self.state = movement_data['state']
+
+            # Update speed for compatibility with existing systems
+            self.speed = movement_data['current_speed'] * self.speed_multiplier
+
+    def get_movement_info(self):
+        """Get information about the current movement state"""
+        if hasattr(self, 'movement_system'):
+            return self.movement_system.get_movement_state_info()
+        return {}
 
     def update_animation(self):
         """Update the character's animation frame"""
@@ -388,6 +393,10 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.midbottom = current_midbottom
 
+        # Sync precise position with rect position
+        self.precise_x = float(current_midbottom[0])
+        self.precise_y = float(current_midbottom[1] - self.height // 2)
+
     def activate_shield(self):
         """Activate the shield"""
         self.is_shielded = True
@@ -488,10 +497,17 @@ class PlayerCharacter(pygame.sprite.Sprite):
 
             # Only update position if not shielded
             if not self.is_shielded and (self.velocity[0] != 0 or self.velocity[1] != 0):
-                # Update position using midbottom as reference
-                midbottom_x, midbottom_y = self.rect.midbottom
-                midbottom_x += self.velocity[0]
-                midbottom_y += self.velocity[1]
+                # Store old position for debugging
+                old_x, old_y = self.rect.midbottom
+
+                # Update precise position with fractional movement
+                self.precise_x += self.velocity[0]
+                self.precise_y += self.velocity[1]
+
+                # Calculate midbottom position from precise coordinates
+                # precise_x and precise_y represent the character's center
+                midbottom_x = self.precise_x
+                midbottom_y = self.precise_y + self.height // 2
 
                 # Keep character within map boundaries
                 # Calculate the character's center position
@@ -506,12 +522,29 @@ class PlayerCharacter(pygame.sprite.Sprite):
                 center_x = max(self.min_x + margin_x, min(center_x, self.max_x - margin_x))
                 center_y = max(self.min_y + margin_y, min(center_y, self.max_y - margin_y))
 
+                # Update precise position if boundaries were hit
+                if center_x != midbottom_x:
+                    self.precise_x = center_x
+                if center_y != midbottom_y - self.height // 2:
+                    self.precise_y = center_y
+
                 # Convert back to midbottom coordinates
                 midbottom_x = center_x
                 midbottom_y = center_y + self.height // 2
 
-                # Update the character's position
-                self.rect.midbottom = (midbottom_x, midbottom_y)
+                # Update the character's rect position (rounded to integers)
+                self.rect.midbottom = (int(round(midbottom_x)), int(round(midbottom_y)))
+
+                # Debug: Track actual position change
+                new_x, new_y = self.rect.midbottom
+                actual_movement_x = new_x - old_x
+                actual_movement_y = new_y - old_y
+                actual_distance = (actual_movement_x**2 + actual_movement_y**2)**0.5
+
+                # Only print if there's significant movement to avoid spam
+                if actual_distance > 0.1:
+                    print(f"   🚶 Position: ({old_x:.1f},{old_y:.1f}) → ({new_x:.1f},{new_y:.1f}) | Actual movement: ({actual_movement_x:.1f},{actual_movement_y:.1f}) distance={actual_distance:.1f}")
+                    print(f"   🎯 Precise: ({self.precise_x:.2f},{self.precise_y:.2f}) | Velocity: ({self.velocity[0]:.2f},{self.velocity[1]:.2f})")
 
         # Update animation
         self.update_animation()
