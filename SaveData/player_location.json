@@ -3,10 +3,10 @@
   "worlds": {
     "firstlevel": {
       "map_name": "firstlevel",
-      "x": 160,
-      "y": 144,
-      "direction": "down",
-      "health": 100,
+      "x": 560,
+      "y": 197,
+      "direction": "left",
+      "health": 80,
       "shield_durability": 3
     }
   }

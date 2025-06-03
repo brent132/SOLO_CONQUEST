@@ -576,6 +576,86 @@ class PlayScreen(BaseScreen):
 
         print(f"Total lootchests found and added: {lootchests_found}")
 
+        # Scan for enemies in the layers and spawn them
+        self._scan_and_spawn_enemies()
+
+    def _scan_and_spawn_enemies(self):
+        """Scan the map layers for enemy tiles and spawn enemy entities"""
+        print(f"PlayScreen._scan_and_spawn_enemies called for map: {self.map_name}")
+
+        # Precaution: Check if layers exist and are valid
+        if not hasattr(self, 'layers') or not self.layers:
+            print(f"Warning: No layers found for enemy scanning. Layers: {getattr(self, 'layers', 'Not set')}")
+            return
+
+        # Precaution: Check if enemy manager exists
+        if not hasattr(self, 'enemy_manager') or not self.enemy_manager:
+            print("Warning: No enemy manager found")
+            return
+
+        # Precaution: Check if animated tile manager exists
+        if not hasattr(self, 'animated_tile_manager') or not self.animated_tile_manager:
+            print("Warning: No animated tile manager found")
+            return
+
+        if not hasattr(self.animated_tile_manager, 'animated_tile_ids'):
+            print("Warning: Animated tile manager has no animated_tile_ids")
+            return
+
+        # Map enemy tile IDs to enemy types
+        enemy_tile_mapping = {
+            391: "phantom_right",    # Phantom right
+            392: "phantom_left",     # Phantom left
+            393: "bomberplant",      # Bomberplant
+            394: "spinner",          # Spinner
+            395: "spider",           # Spider
+            396: "pinkslime",        # Pinkslime
+            397: "pinkbat_left",     # Pinkbat left
+            398: "pinkbat_right"     # Pinkbat right
+        }
+
+        print(f"Enemy tile mapping: {enemy_tile_mapping}")
+        print(f"Found {len(self.layers)} layers to scan for enemies")
+
+        enemies_found = 0
+        try:
+            for layer_idx, layer in enumerate(self.layers):
+                if not layer.get("visible", True):
+                    print(f"Skipping invisible layer {layer_idx}")
+                    continue
+
+                layer_data = layer.get("data", [])
+                if not layer_data:
+                    print(f"Layer {layer_idx} has no data")
+                    continue
+
+                print(f"Scanning layer {layer_idx} with {len(layer_data)} rows for enemies")
+
+                for y, row in enumerate(layer_data):
+                    if not isinstance(row, list):
+                        print(f"Warning: Row {y} in layer {layer_idx} is not a list: {type(row)}")
+                        continue
+
+                    for x, tile_id in enumerate(row):
+                        # Check for enemy tiles
+                        if tile_id in enemy_tile_mapping:
+                            enemy_type = enemy_tile_mapping[tile_id]
+                            print(f"Found enemy tile {tile_id} ({enemy_type}) at position ({x}, {y}) in layer {layer_idx}")
+                            try:
+                                enemy = self.enemy_manager.add_enemy(enemy_type, x, y)
+                                if enemy:
+                                    enemies_found += 1
+                                    print(f"Successfully spawned {enemy_type} at ({x}, {y})")
+                                else:
+                                    print(f"Failed to spawn {enemy_type} at ({x}, {y})")
+                            except Exception as e:
+                                print(f"Error spawning enemy {enemy_type} at ({x}, {y}): {e}")
+
+        except Exception as e:
+            print(f"Error during enemy scanning: {e}")
+
+        print(f"Total enemies found and spawned: {enemies_found}")
+
     # OLD ZOOM METHODS REMOVED - NOW HANDLED BY InputSystem
     # zoom_in(), zoom_out(), reset_zoom(), update_zoom() have been replaced by the modularized input system
 
@@ -910,12 +990,18 @@ class PlayScreen(BaseScreen):
 
     def _load_enemies_from_game_state(self, enemies_data):
         """Load enemies from saved game state"""
-        # Clear existing enemies
-        print(f"Clearing {len(self.enemy_manager.enemies)} existing enemies before loading from game state")
-        self.enemy_manager.enemies = []
+        print(f"Loading {len(enemies_data)} enemies from game state")
+
+        # Only clear existing enemies if there are actually enemies to load
+        # This prevents clearing enemies spawned from map tiles when there's no saved enemy data
+        if enemies_data:
+            print(f"Clearing {len(self.enemy_manager.enemies)} existing enemies before loading from game state")
+            self.enemy_manager.enemies = []
+        else:
+            print(f"No enemies in saved game state, keeping {len(self.enemy_manager.enemies)} enemies spawned from map tiles")
+            return  # Exit early if no enemies to load
 
         # Create new enemies from saved data
-        print(f"Loading {len(enemies_data)} enemies from game state")
         for enemy_data in enemies_data:
             # Check which format we're using
             if isinstance(enemy_data, dict):
