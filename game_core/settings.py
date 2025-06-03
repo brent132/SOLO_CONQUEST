@@ -5,12 +5,15 @@ Game settings module - contains all game configuration parameters
    - Font settings
    - The aspect ratio maintenance function
 """
-import pygame
 
 # Screen settings
 WIDTH, HEIGHT = 1280, 720  # Initial dimensions (16:9 aspect ratio)
 ORIGINAL_WIDTH, ORIGINAL_HEIGHT = WIDTH, HEIGHT
-FPS = 60
+
+# Frame rate settings
+FPS = 60  # Target frame rate (locked to 60 FPS)
+ENABLE_VSYNC = True  # Enable VSync for smoother frame pacing
+FRAME_RATE_STRICT = True  # Enforce strict 60 FPS cap (prevents going higher)
 
 # Colors
 BLACK = (0, 0, 0)

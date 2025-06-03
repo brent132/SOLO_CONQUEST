@@ -187,12 +187,37 @@ class EditorApp:
     def __init__(self):
         """Initialize the editor application"""
         pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+
+        # Try to enable VSync for consistent frame rate
+        if ENABLE_VSYNC:
+            try:
+                # Set VSync hint before creating display
+                import os
+                os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
+                self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+                print("VSync enabled for consistent 60 FPS")
+            except:
+                # Fallback without VSync
+                self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+                print("VSync not available, using software frame limiting")
+        else:
+            self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+            print("VSync disabled, using software frame limiting")
+
         pygame.display.set_caption("SOLO CONQUEST - Map Editor")
         self.clock = pygame.time.Clock()
         self.running = True
         self.width = WIDTH
         self.height = HEIGHT
+
+        # Frame rate control
+        self.target_fps = FPS
+        self.frame_time_target = 1.0 / self.target_fps  # Target time per frame (1/60 = 0.0167 seconds)
+
+        # Frame rate monitoring
+        self.fps_counter = 0
+        self.fps_timer = 0
+        self.current_fps = 0
 
         # Game states for editor
         self.game_state = "splash"  # "splash", "edit"
@@ -272,8 +297,12 @@ class EditorApp:
         pygame.display.flip()
 
     def run(self):
-        """Main editor loop"""
+        """Main editor loop with precise 60 FPS limiting"""
+        import time
+
         while self.running:
+            frame_start_time = time.time()
+
             # Start frame timer
             performance_monitor.start_timer("frame")
 
@@ -292,22 +321,61 @@ class EditorApp:
             self.draw()
             performance_monitor.end_timer("draw")
 
-            # Limit frame rate
-            self.clock.tick(FPS)
+            # Precise frame rate limiting
+            self._limit_frame_rate(frame_start_time)
 
             # End frame timer and record frame time
             frame_time = performance_monitor.end_timer("frame")
             if frame_time > 0:
                 performance_monitor.record_frame_time(frame_time)
 
+            # Update FPS monitoring
+            self._update_fps_monitoring()
+
             # Log performance stats every 60 frames
             performance_monitor.increment_counter("frames")
             if performance_monitor.get_counter("frames") % 60 == 0:
                 performance_monitor.log_performance_stats()
+                print(f"Editor FPS: {self.current_fps:.1f}")
 
         # Quit pygame
         pygame.quit()
         sys.exit()
+
+    def _limit_frame_rate(self, frame_start_time):
+        """Implement precise frame rate limiting to ensure consistent 60 FPS"""
+        import time
+
+        # Calculate how long this frame took
+        frame_elapsed = time.time() - frame_start_time
+
+        # Calculate how long we need to wait to maintain target FPS
+        sleep_time = self.frame_time_target - frame_elapsed
+
+        if sleep_time > 0:
+            # Use pygame's clock for the main delay (more accurate for games)
+            self.clock.tick(self.target_fps)
+
+            # Add a small additional sleep if needed for extra precision
+            remaining_time = self.frame_time_target - (time.time() - frame_start_time)
+            if remaining_time > 0.001:  # Only sleep if more than 1ms remaining
+                time.sleep(remaining_time * 0.9)  # Sleep for 90% of remaining time to avoid overshooting
+        else:
+            # Frame took longer than target, just tick the clock
+            self.clock.tick(self.target_fps)
+
+    def _update_fps_monitoring(self):
+        """Update FPS monitoring to track actual frame rate"""
+        import time
+
+        current_time = time.time()
+        self.fps_counter += 1
+
+        # Update FPS every second
+        if current_time - self.fps_timer >= 1.0:
+            self.current_fps = self.fps_counter / (current_time - self.fps_timer)
+            self.fps_counter = 0
+            self.fps_timer = current_time
 
 
 if __name__ == "__main__":
