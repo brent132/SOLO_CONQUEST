@@ -15,6 +15,7 @@ FEATURES:
 """
 import pygame
 from typing import List, Dict, Any, Optional
+from performance_optimizer import performance_optimizer
 
 
 class EffectsRenderer:
@@ -40,6 +41,8 @@ class EffectsRenderer:
     def render_effects(self, surface: pygame.Surface, camera_x: int, camera_y: int,
                       center_offset_x: int, center_offset_y: int):
         """Render all active visual effects"""
+        if not performance_optimizer.get_quality_setting("enable_particles"):
+            return
         # Calculate camera offset
         camera_offset_x = camera_x - center_offset_x
         camera_offset_y = camera_y - center_offset_y
