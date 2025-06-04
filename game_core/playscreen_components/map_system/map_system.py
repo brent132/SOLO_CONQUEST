@@ -333,3 +333,19 @@ class MapSystem:
             "layer_count": self.get_layer_count(),
             "tile_memory": tile_info
         }
+
+    def remove_tile_from_layers(self, grid_x: int, grid_y: int, tile_id: int):
+        """Remove a specific tile ID from all map layers and merged map data"""
+        if not hasattr(self.processor, "layers") or not self.processor.layers:
+            return
+
+        for layer in self.processor.layers:
+            layer_data = layer.get("data", [])
+            if 0 <= grid_y < len(layer_data) and 0 <= grid_x < len(layer_data[grid_y]):
+                if layer_data[grid_y][grid_x] == tile_id:
+                    layer_data[grid_y][grid_x] = -1
+
+        if hasattr(self.processor, "map_data") and self.processor.map_data:
+            if 0 <= grid_y < len(self.processor.map_data) and 0 <= grid_x < len(self.processor.map_data[grid_y]):
+                if self.processor.map_data[grid_y][grid_x] == tile_id:
+                    self.processor.map_data[grid_y][grid_x] = -1

@@ -17,10 +17,14 @@ class InventoryCoordinator:
     def __init__(self):
         self.hud = None
         self.save_callback = None
-        
-    def initialize(self, hud):
-        """Initialize with the HUD system"""
+        self.map_system = None
+        self.animated_tile_manager = None
+
+    def initialize(self, hud, map_system=None, animated_tile_manager=None):
+        """Initialize with the HUD system and optional map references"""
         self.hud = hud
+        self.map_system = map_system
+        self.animated_tile_manager = animated_tile_manager
 
     def set_save_callback(self, callback):
         """Set the callback function to call when inventory changes
@@ -135,18 +139,20 @@ class InventoryCoordinator:
             self._remove_crystal_from_map_layers(item_position[0], item_position[1])
             
     def _remove_key_from_map_layers(self, grid_x: int, grid_y: int):
-        """Remove a key from all map layers"""
-        # This will be implemented to interface with the map system
-        # For now, we'll need to coordinate with PlayScreen to handle this
-        # TODO: Move this logic to map system or create a proper interface
-        pass
-        
+        """Remove a key from all map layers using the map system"""
+        if not self.map_system or not self.animated_tile_manager:
+            return
+        key_id = self._get_key_item_id(self.animated_tile_manager)
+        if key_id is not None:
+            self.map_system.remove_tile_from_layers(grid_x, grid_y, key_id)
+
     def _remove_crystal_from_map_layers(self, grid_x: int, grid_y: int):
-        """Remove a crystal from all map layers"""
-        # This will be implemented to interface with the map system
-        # For now, we'll need to coordinate with PlayScreen to handle this
-        # TODO: Move this logic to map system or create a proper interface
-        pass
+        """Remove a crystal from all map layers using the map system"""
+        if not self.map_system or not self.animated_tile_manager:
+            return
+        crystal_id = self._get_crystal_item_id(self.animated_tile_manager)
+        if crystal_id is not None:
+            self.map_system.remove_tile_from_layers(grid_x, grid_y, crystal_id)
         
     def load_inventory_from_save_data(self, inventory_data: List, animated_tile_manager):
         """Load inventory from save data"""
