@@ -9,7 +9,7 @@ import json
 import pygame
 from typing import Optional
 from debug_utils import debug_manager
-from character_system import PlayerCharacter
+from playscreen_components.player_system import PlayerCharacter
 # CollisionHandler now imported from map_system
 from playscreen_components.animation_system import AnimatedTileManager
 from playscreen_components.item_system import KeyItemManager, CrystalItemManager, LootchestManager
@@ -239,8 +239,10 @@ class PlayScreen(BaseScreen):
 
     def load_map(self, map_name):
         """Load a map from file using the modularized map system"""
-        # Reset the enemy manager to clear all enemies from the previous map
+        # Reset managers so previous map entities/items do not persist
         self.enemy_manager.enemies = []
+        self.key_item_manager.clear_items()
+        self.crystal_item_manager.clear_items()
 
         # Store whether we're teleporting before resetting flags
         was_teleporting = self.is_teleporting
@@ -993,14 +995,13 @@ class PlayScreen(BaseScreen):
         """Load enemies from saved game state"""
         print(f"Loading {len(enemies_data)} enemies from game state")
 
-        # Only clear existing enemies if there are actually enemies to load
-        # This prevents clearing enemies spawned from map tiles when there's no saved enemy data
-        if enemies_data:
-            print(f"Clearing {len(self.enemy_manager.enemies)} existing enemies before loading from game state")
-            self.enemy_manager.enemies = []
-        else:
-            print(f"No enemies in saved game state, keeping {len(self.enemy_manager.enemies)} enemies spawned from map tiles")
-            return  # Exit early if no enemies to load
+        # Clear existing enemies spawned from map tiles before applying saved data
+        print(f"Clearing {len(self.enemy_manager.enemies)} existing enemies before loading from game state")
+        self.enemy_manager.enemies = []
+
+        # If there are no enemies in the saved data, we're done
+        if not enemies_data:
+            return
 
         # Create new enemies from saved data
         for enemy_data in enemies_data:
@@ -1090,6 +1091,10 @@ class PlayScreen(BaseScreen):
 
     def save_game(self, override_map_name: Optional[str] = None):
         """Save the current game state using the centralized save/load manager"""
+        # Remove any dead enemies before saving so they are not persisted
+        if hasattr(self, 'enemy_manager'):
+            self.enemy_manager.remove_dead_enemies()
+
         # Use the centralized save manager
         success, message = self.save_load_manager.save_all(self, override_map_name)
 

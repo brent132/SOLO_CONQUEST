@@ -17,7 +17,7 @@ the individual components (PlayerStateManager, PlayerPositionManager) to provide
 a unified interface for creating, managing, and interacting with the player.
 """
 from typing import Optional, Tuple, Dict, Any
-from character_system import PlayerCharacter
+from playscreen_components.player_system import PlayerCharacter
 from .player_state_manager import PlayerStateManager
 from .player_position_manager import PlayerPositionManager
 
