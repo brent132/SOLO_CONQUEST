@@ -4,8 +4,8 @@ Player Character module - implements the playable character with animations
 import pygame
 import math
 from settings import *
-from character_system.animation_handler import blit_aligned
-from character_system.sprite_loader import load_character_sprites
+from .animation_handler import blit_aligned
+from .sprite_loader import load_character_sprites
 
 class PlayerCharacter(pygame.sprite.Sprite):
     """Player character class with sprite animations"""

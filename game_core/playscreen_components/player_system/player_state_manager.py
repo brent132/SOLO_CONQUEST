@@ -17,7 +17,7 @@ direction, and other status information. It handles loading state from saved
 data and maintaining state consistency throughout the game.
 """
 from typing import Dict, Any, Optional
-from character_system import PlayerCharacter
+from playscreen_components.player_system import PlayerCharacter
 
 
 class PlayerStateManager:

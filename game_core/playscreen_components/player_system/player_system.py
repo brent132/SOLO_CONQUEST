@@ -18,7 +18,7 @@ the individual components to provide a unified interface for creating, managing,
 and interacting with the player character throughout the game.
 """
 from typing import Optional, Tuple, Dict, Any
-from character_system import PlayerCharacter
+from playscreen_components.player_system import PlayerCharacter
 from .player_manager import PlayerManager
 
 

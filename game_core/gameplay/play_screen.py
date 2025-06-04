@@ -9,7 +9,7 @@ import json
 import pygame
 from typing import Optional
 from debug_utils import debug_manager
-from character_system import PlayerCharacter
+from playscreen_components.player_system import PlayerCharacter
 # CollisionHandler now imported from map_system
 from playscreen_components.animation_system import AnimatedTileManager
 from playscreen_components.item_system import KeyItemManager, CrystalItemManager, LootchestManager
