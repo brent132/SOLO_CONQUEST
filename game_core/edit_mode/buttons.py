@@ -4,7 +4,17 @@ import pygame
 
 from game_core.other_components.config import *
 from game_core.other_components.font_loader import font_loader
-from .color_palette import EASY_GREEN, EASY_GREEN_HOVER, BORDER_GRAY
+from .color_palette import (
+    EASY_GREEN,
+    EASY_GREEN_HOVER,
+    BORDER_GRAY,
+    DELETE_RED,
+    DELETE_RED_HOVER,
+    CANCEL_GRAY,
+    CANCEL_GRAY_HOVER,
+    SAVE_BLUE,
+    SAVE_BLUE_HOVER,
+)
 
 
 class Button:
@@ -21,6 +31,7 @@ class Button:
         }
 
         self.text = text_lookup.get(button_type.lower(), button_type.title())
+        normalized_type = button_type.lower()
 
         font_size = int(FONT_SIZE_MEDIUM * scale)
         self.font = font_loader.get_font("medium", font_size)
@@ -31,8 +42,15 @@ class Button:
         self.rect = pygame.Rect(x, y, width, height)
         self.text_rect = self.text_surf.get_rect(center=self.rect.center)
 
-        self.bg_color = EASY_GREEN
-        self.hover_color = EASY_GREEN_HOVER
+        color_map = {
+            "delete": (DELETE_RED, DELETE_RED_HOVER),
+            "cancel": (CANCEL_GRAY, CANCEL_GRAY_HOVER),
+            "save": (SAVE_BLUE, SAVE_BLUE_HOVER),
+        }
+
+        self.bg_color, self.hover_color = color_map.get(
+            normalized_type, (EASY_GREEN, EASY_GREEN_HOVER)
+        )
         self.border_color = BORDER_GRAY
         self.is_hovered = False
         self.image = None
