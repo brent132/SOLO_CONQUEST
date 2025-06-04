@@ -22,8 +22,12 @@ class GameStateSaver:
         enemy_data = []
 
         for enemy in enemies:
-            # Skip enemies that are dead or being removed
-            if enemy.state == "dead" or enemy.state == "removing":
+            # Skip enemies that are already dead or in the process of dying
+            if (
+                enemy.state in ("dead", "removing", "death")
+                or getattr(enemy, "is_dead", False)
+                or getattr(enemy, "is_dying", False)
+            ):
                 continue
 
             # Create enemy data dictionary
