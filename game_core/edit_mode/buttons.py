@@ -4,6 +4,7 @@ import pygame
 
 from game_core.other_components.config import *
 from game_core.other_components.font_loader import font_loader
+from .color_palette import EASY_GREEN, EASY_GREEN_HOVER, BORDER_GRAY
 
 
 class Button:
@@ -30,9 +31,9 @@ class Button:
         self.rect = pygame.Rect(x, y, width, height)
         self.text_rect = self.text_surf.get_rect(center=self.rect.center)
 
-        self.bg_color = (80, 80, 80)
-        self.hover_color = (110, 110, 110)
-        self.border_color = (200, 200, 200)
+        self.bg_color = EASY_GREEN
+        self.hover_color = EASY_GREEN_HOVER
+        self.border_color = BORDER_GRAY
         self.is_hovered = False
         self.image = None
         self.hover_image = None
