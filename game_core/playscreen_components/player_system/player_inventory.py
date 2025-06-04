@@ -7,7 +7,7 @@ to provide a single, coherent inventory system.
 import pygame
 import os
 import json
-from game_core.image_cache import sprite_cache
+from game_core.sprite_cache import sprite_cache
 
 class PlayerInventory:
     """Class to handle the player's full inventory display"""

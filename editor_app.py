@@ -13,12 +13,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.config import *
+from game_core.settings import *
 from game_core.edit_mode import EditScreen
-from game_core.debug_tools import debug_manager
-from game_core.perf_monitor import perf_monitor
-from game_core.menu_system import Button
-from game_core.screen_base import BaseScreen
+from game_core.debug_utils import debug_manager
+from game_core.performance_monitor import performance_monitor
+from game_core.menu import Button
+from game_core.base_screen import BaseScreen
 
 class EditorSplashScreen(BaseScreen):
     """Custom splash screen for editor mode with only relevant buttons"""
@@ -230,7 +230,7 @@ class EditorApp:
         debug_manager.enable_debug(False)  # Disable debug output for production
 
         # Initialize performance monitor
-        perf_monitor.enable(False)  # Set to True to enable performance monitoring
+        performance_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def handle_events(self):
         """Handle pygame events"""
@@ -304,30 +304,30 @@ class EditorApp:
             frame_start_time = time.time()
 
             # Start frame timer
-            perf_monitor.start_timer("frame")
+            performance_monitor.start_timer("frame")
 
             # Process events
-            perf_monitor.start_timer("events")
+            performance_monitor.start_timer("events")
             self.handle_events()
-            perf_monitor.end_timer("events")
+            performance_monitor.end_timer("events")
 
             # Update editor state
-            perf_monitor.start_timer("update")
+            performance_monitor.start_timer("update")
             self.update()
-            perf_monitor.end_timer("update")
+            performance_monitor.end_timer("update")
 
             # Draw the frame
-            perf_monitor.start_timer("draw")
+            performance_monitor.start_timer("draw")
             self.draw()
-            perf_monitor.end_timer("draw")
+            performance_monitor.end_timer("draw")
 
             # Precise frame rate limiting
             self._limit_frame_rate(frame_start_time)
 
             # End frame timer and record frame time
-            frame_time = perf_monitor.end_timer("frame")
+            frame_time = performance_monitor.end_timer("frame")
             if frame_time > 0:
-                perf_monitor.record_frame_time(frame_time)
+                performance_monitor.record_frame_time(frame_time)
 
             # Update FPS monitoring
             self._update_fps_monitoring()

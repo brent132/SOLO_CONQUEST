@@ -175,4 +175,4 @@ class PerformanceOptimizer:
               f"UI cache: {info['ui_cache_size']}")
 
 # Global performance optimizer instance
-perf_optimizer = PerformanceOptimizer()
+performance_optimizer = PerformanceOptimizer()

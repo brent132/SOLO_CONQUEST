@@ -9,14 +9,14 @@ import pygame
 import sys
 import os
 import json
-from config import *
-from menu_system import SplashScreen
+from settings import *
+from menu import SplashScreen
 from gameplay.settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from gameplay.play_screen import PlayScreen
 from playscreen_components.map_system import WorldSelectScreen
-from debug_tools import debug_manager
-from perf_monitor import perf_monitor
+from debug_utils import debug_manager
+from performance_monitor import performance_monitor
 
 class Game:
     def __init__(self):
@@ -47,7 +47,7 @@ class Game:
         debug_manager.enable_category("player", False)
 
         # Initialize performance monitor
-        perf_monitor.enable(False)  # Set to True to enable performance monitoring
+        performance_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def init_game(self):
         """Initialize game objects when starting the game"""
@@ -290,35 +290,35 @@ class Game:
         """Main game loop"""
         while self.running:
             # Start frame timer
-            perf_monitor.start_timer("frame")
+            performance_monitor.start_timer("frame")
 
             # Process events
-            perf_monitor.start_timer("events")
+            performance_monitor.start_timer("events")
             self.handle_events()
-            perf_monitor.end_timer("events")
+            performance_monitor.end_timer("events")
 
             # Update game state
-            perf_monitor.start_timer("update")
+            performance_monitor.start_timer("update")
             self.update()
-            perf_monitor.end_timer("update")
+            performance_monitor.end_timer("update")
 
             # Draw the frame
-            perf_monitor.start_timer("draw")
+            performance_monitor.start_timer("draw")
             self.draw()
-            perf_monitor.end_timer("draw")
+            performance_monitor.end_timer("draw")
 
             # Limit frame rate
             self.clock.tick(FPS)
 
             # End frame timer and record frame time
-            frame_time = perf_monitor.end_timer("frame")
+            frame_time = performance_monitor.end_timer("frame")
             if frame_time > 0:
-                perf_monitor.record_frame_time(frame_time)
+                performance_monitor.record_frame_time(frame_time)
 
             # Log performance stats every 60 frames
-            perf_monitor.increment_counter("frames")
-            if perf_monitor.get_counter("frames") % 60 == 0:
-                perf_monitor.log_performance_stats()
+            performance_monitor.increment_counter("frames")
+            if performance_monitor.get_counter("frames") % 60 == 0:
+                performance_monitor.log_performance_stats()
 
         # Quit pygame
         pygame.quit()

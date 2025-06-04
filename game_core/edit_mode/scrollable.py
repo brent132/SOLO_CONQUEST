@@ -2,8 +2,8 @@
 Scrollable components for the Edit Mode
 """
 import pygame
-from config import *
-from font_loader import font_manager
+from settings import *
+from font_manager import font_manager
 
 
 class ScrollableTextArea:
@@ -14,8 +14,8 @@ class ScrollableTextArea:
         self.content_surface.fill((245, 245, 245))  # Light gray background
         self.scroll_y = 0
         self.max_scroll = 0
-        self.font = font_loader.get_font('light', font_size)
-        self.header_font = font_loader.get_font('regular', font_size + 2)
+        self.font = font_manager.get_font('light', font_size)
+        self.header_font = font_manager.get_font('regular', font_size + 2)
         self.line_height = font_size
         self.scrollbar_width = 12  # Slightly wider scrollbar
         self.scrollbar_color = (180, 180, 180)

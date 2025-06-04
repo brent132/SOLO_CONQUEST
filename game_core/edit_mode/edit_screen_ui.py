@@ -2,8 +2,8 @@
 Edit Screen UI module - handles drawing the UI elements for the edit screen
 """
 import pygame
-from config import *
-from font_loader import font_manager
+from settings import *
+from font_manager import font_manager
 
 class EditScreenUI:
     """Handles drawing the UI elements for the edit screen"""
@@ -21,7 +21,7 @@ class EditScreenUI:
         self.grid_line_width = 1
 
         # Edit screen title
-        self.title_font = font_loader.get_font('semibold', FONT_SIZE_LARGE)
+        self.title_font = font_manager.get_font('semibold', FONT_SIZE_LARGE)
         self.title_text = ""
         self.title_surf = self.title_font.render(self.title_text, True, (50, 50, 50))
         # Position title below the mode buttons
@@ -67,8 +67,8 @@ class EditScreenUI:
         content_y = 120  # Fixed position for content area
 
         # Draw content based on active tab
-        font = font_loader.get_font('regular', FONT_SIZE_MEDIUM)
-        small_font = font_loader.get_font('light', FONT_SIZE_SMALL)
+        font = font_manager.get_font('regular', FONT_SIZE_MEDIUM)
+        small_font = font_manager.get_font('light', FONT_SIZE_SMALL)
 
         # Draw status message if active (always visible)
         map_saver.draw_status(
@@ -239,7 +239,7 @@ class EditScreenUI:
         new_map_button.draw(surface)
 
         # Draw map browser
-        font = font_loader.get_font('regular', FONT_SIZE_MEDIUM)
+        font = font_manager.get_font('regular', FONT_SIZE_MEDIUM)
         map_manager.draw(surface, font)
 
     def draw_map_tiles(self, surface, map_data, layer_manager, grid_cell_size, camera_x, camera_y, map_area_width, map_area_height):
