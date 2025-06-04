@@ -3,6 +3,7 @@ Game State Saver - Handles saving game state to map files
 """
 import os
 import json
+from typing import Optional
 
 class GameStateSaver:
     """Handles saving game state to map files"""
@@ -143,17 +144,19 @@ class GameStateSaver:
 
         return opened_lootchests
 
-    def save_game_state(self, play_screen):
+    def save_game_state(self, play_screen, override_map_name: Optional[str] = None):
         """Save the current game state to the map file"""
+        map_name = override_map_name if override_map_name else play_screen.map_name
+
         # Check if play screen has a player and map name
-        if not play_screen.player or not play_screen.map_name:
+        if not play_screen.player or not map_name:
             return False, "No player or map to save!"
 
         # Determine the correct map path - could be a main map or a related map
         map_path = None
 
         # First check if it's a main map
-        main_map_path = os.path.join("Maps", play_screen.map_name, f"{play_screen.map_name}.json")
+        main_map_path = os.path.join("Maps", map_name, f"{map_name}.json")
         if os.path.exists(main_map_path):
             map_path = main_map_path
             print(f"Found main map file for saving: {map_path}")
@@ -164,7 +167,7 @@ class GameStateSaver:
                 folders = [f for f in os.listdir(maps_dir) if os.path.isdir(os.path.join(maps_dir, f))]
                 for folder_name in folders:
                     folder_path = os.path.join(maps_dir, folder_name)
-                    related_map_path = os.path.join(folder_path, f"{play_screen.map_name}.json")
+                    related_map_path = os.path.join(folder_path, f"{map_name}.json")
                     if os.path.exists(related_map_path):
                         map_path = related_map_path
                         print(f"Found related map file for saving: {map_path}")
@@ -173,7 +176,7 @@ class GameStateSaver:
         try:
             # Check if file exists
             if not map_path or not os.path.exists(map_path):
-                return False, f"Map file not found: {play_screen.map_name}"
+                return False, f"Map file not found: {map_name}"
 
             # Load existing map data
             with open(map_path, 'r') as f:
