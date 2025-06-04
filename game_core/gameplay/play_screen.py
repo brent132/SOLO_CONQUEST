@@ -845,11 +845,11 @@ class PlayScreen(BaseScreen):
             # Check for teleportation using the coordinator and teleportation manager
             relation = self.game_systems_coordinator.handle_teleportation_check(self.player)
             if relation:
-                # Clear all enemies before teleporting
-                self.enemy_manager.enemies = []
-
-                # Handle teleportation using the teleportation manager
-                teleport_success = self.teleportation_manager.handle_teleportation(relation, self.map_name)
+                # Handle teleportation first so the current map state is saved
+                teleport_success = self.teleportation_manager.handle_teleportation(
+                    relation,
+                    self.map_name,
+                )
 
                 if teleport_success and self.player:
                     # Set map boundaries for the player using base grid size (logical coordinates)
