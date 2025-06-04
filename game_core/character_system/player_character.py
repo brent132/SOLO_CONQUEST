@@ -269,6 +269,9 @@ class PlayerCharacter(pygame.sprite.Sprite):
             if self.knockback_timer <= 0:
                 self.is_knocked_back = False
                 self.knockback_velocity = [0, 0]  # Reset knockback velocity
+                # Sync precise position with rect after knockback to prevent jitter
+                self.precise_x = float(self.rect.midbottom[0])
+                self.precise_y = float(self.rect.midbottom[1] - self.height // 2)
             elif not self.is_shielded and (self.knockback_velocity[0] != 0 or self.knockback_velocity[1] != 0):
                 # Only apply knockback movement if not shielded
                 midbottom_x, midbottom_y = self.rect.midbottom
