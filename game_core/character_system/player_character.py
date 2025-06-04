@@ -97,6 +97,20 @@ class PlayerCharacter(pygame.sprite.Sprite):
         from game_core.playscreen_components.player_system.player_animation import PlayerAnimation
         self.animation_system = PlayerAnimation(self)
 
+        # Expose attack_frame for systems that check it directly
+        self._attack_frame_proxy = 0
+
+    # Proxy property to expose animation_system.attack_frame at the player level
+    @property
+    def attack_frame(self):
+        return getattr(self.animation_system, 'attack_frame', self._attack_frame_proxy)
+
+    @attack_frame.setter
+    def attack_frame(self, value):
+        self._attack_frame_proxy = value
+        if hasattr(self, 'animation_system'):
+            self.animation_system.attack_frame = value
+
     def handle_input(self):
         """Handle keyboard input for player movement"""
         keys = pygame.key.get_pressed()
@@ -269,6 +283,9 @@ class PlayerCharacter(pygame.sprite.Sprite):
             if self.knockback_timer <= 0:
                 self.is_knocked_back = False
                 self.knockback_velocity = [0, 0]  # Reset knockback velocity
+                # Sync precise position with rect after knockback to prevent jitter
+                self.precise_x = float(self.rect.midbottom[0])
+                self.precise_y = float(self.rect.midbottom[1] - self.height // 2)
             elif not self.is_shielded and (self.knockback_velocity[0] != 0 or self.knockback_velocity[1] != 0):
                 # Only apply knockback movement if not shielded
                 midbottom_x, midbottom_y = self.rect.midbottom

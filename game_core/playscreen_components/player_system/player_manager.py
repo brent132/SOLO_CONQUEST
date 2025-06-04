@@ -86,6 +86,10 @@ class PlayerManager:
         self.state_manager.initialize_player_state(
             self.player, map_data, map_name, player_location_tracker, is_teleporting
         )
+
+        # Ensure precise position matches the current rect to avoid jitter on first movement
+        self.player.precise_x = float(self.player.rect.midbottom[0])
+        self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
         
         print(f"Player created at position ({player_x}, {player_y}) facing {player_direction}")
         
