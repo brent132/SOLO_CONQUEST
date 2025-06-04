@@ -21,6 +21,11 @@ class KeyItemManager:
         # Load collection animation
         self.load_collection_animation()
 
+    def clear_items(self):
+        """Clear key items and related animations from the previous map"""
+        self.key_items = {}
+        self.collected_items = {}
+
     def load_collection_animation(self):
         """Load the key item collection animation"""
         animation_folder = "character/Props_Items_(animated)/key_item_collected_anim"

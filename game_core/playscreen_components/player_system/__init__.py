@@ -17,6 +17,9 @@ from .player_system import PlayerSystem
 from .player_inventory import PlayerInventory
 from .player_location_tracker import PlayerLocationTracker
 from .character_inventory_saver import CharacterInventorySaver
+from .player_character import PlayerCharacter
+from .animation_handler import blit_aligned
+from .sprite_loader import load_character_sprites
 
 __all__ = [
     'PlayerManager',
@@ -25,5 +28,8 @@ __all__ = [
     'PlayerSystem',
     'PlayerInventory',
     'PlayerLocationTracker',
-    'CharacterInventorySaver'
+    'CharacterInventorySaver',
+    'PlayerCharacter',
+    'blit_aligned',
+    'load_character_sprites'
 ]
