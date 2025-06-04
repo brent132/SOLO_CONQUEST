@@ -188,6 +188,17 @@ class EnemyManager:
                 self.debug_manager.log(f"Player hit enemy! Damage: {damage}, Current health: {enemy.current_health}/{enemy.max_health}", "enemy")
                 self.debug_manager.log(f"Applied knockback: dx={knockback_x}, dy={knockback_y}", "enemy")
 
+    def remove_dead_enemies(self):
+        """Remove all enemies that are marked as dead"""
+        if not self.enemies:
+            return
+
+        before_count = len(self.enemies)
+        self.enemies = [e for e in self.enemies if not getattr(e, 'is_dead', False)]
+        removed = before_count - len(self.enemies)
+        if removed > 0:
+            self.debug_manager.log(f"Removed {removed} dead enemies", "enemy")
+
     def get_player_attack_hitbox(self, player):
         """Calculate the player's attack hitbox based on direction"""
         if not player.is_attacking:
