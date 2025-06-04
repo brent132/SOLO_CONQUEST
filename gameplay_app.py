@@ -14,12 +14,12 @@ import json
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.settings import *
-from game_core.menu import SplashScreen
+from game_core.game_settings import *
+from game_core.menu_views import SplashScreen
 from game_core.gameplay.settings_screen import SettingsScreen
 from game_core.gameplay.play_screen import PlayScreen
 from game_core.playscreen_components.map_system import WorldSelectScreen
-from game_core.debug_utils import debug_manager
+from game_core.debug_manager import debug_manager
 from game_core.performance_monitor import performance_monitor
 from game_core.performance_optimizer import performance_optimizer
 

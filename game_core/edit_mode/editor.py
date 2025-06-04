@@ -4,7 +4,7 @@ Main Editor class - integrates all components of the edit mode
 import pygame
 import os
 import json
-from settings import *
+from game_settings import *
 from edit_mode.ui_components import SaveButton, TextInput, ScrollableTextArea
 from edit_mode.tileset_manager import TilesetManager
 from edit_mode.map_saver import MapSaver

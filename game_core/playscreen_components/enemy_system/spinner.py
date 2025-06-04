@@ -5,8 +5,8 @@ import pygame
 import os
 import heapq
 import math
-from enemy_system.enemy import Enemy
-from debug_utils import debug_manager
+from .enemy import Enemy
+from debug_manager import debug_manager
 
 class Spinner(Enemy):
     """Spinner enemy class - a spinning enemy that attacks players"""
@@ -295,7 +295,7 @@ class Spinner(Enemy):
 
         # Debug output for distance
         if self.debug_mode:
-            from debug_utils import debug_manager
+            from debug_manager import debug_manager
             in_attack_range = "IN ATTACK RANGE" if distance <= self.detection_range else "out of attack range"
             in_movement_range = "IN MOVEMENT RANGE" if distance <= self.movement_range else "out of movement range"
             debug_manager.log(f"Spinner distance to player: {distance:.1f}px ({distance/16:.1f} tiles)", "enemy")

@@ -18,7 +18,10 @@ the individual components to provide a unified interface for creating, managing,
 and interacting with the player character throughout the game.
 """
 from typing import Optional, Tuple, Dict, Any
-from playscreen_components.player_system import PlayerCharacter
+# Use a relative import for PlayerCharacter so that importing PlayerSystem
+# does not cause the package's __init__ to re-import itself and trigger
+# circular import issues.
+from .player_character import PlayerCharacter
 from .player_manager import PlayerManager
 
 

@@ -13,11 +13,11 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.settings import *
+from game_core.game_settings import *
 from game_core.edit_mode import EditScreen
-from game_core.debug_utils import debug_manager
+from game_core.debug_manager import debug_manager
 from game_core.performance_monitor import performance_monitor
-from game_core.menu import Button
+from game_core.menu_views import Button
 from game_core.base_screen import BaseScreen
 
 class EditorSplashScreen(BaseScreen):

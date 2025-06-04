@@ -9,13 +9,13 @@ import pygame
 import sys
 import os
 import json
-from settings import *
-from menu import SplashScreen
+from game_settings import *
+from menu_views import SplashScreen
 from gameplay.settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from gameplay.play_screen import PlayScreen
 from playscreen_components.map_system import WorldSelectScreen
-from debug_utils import debug_manager
+from debug_manager import debug_manager
 from performance_monitor import performance_monitor
 
 class Game:

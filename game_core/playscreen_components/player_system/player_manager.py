@@ -17,7 +17,11 @@ the individual components (PlayerStateManager, PlayerPositionManager) to provide
 a unified interface for creating, managing, and interacting with the player.
 """
 from typing import Optional, Tuple, Dict, Any
-from playscreen_components.player_system import PlayerCharacter
+# Import PlayerCharacter directly to avoid circular imports through
+# the package's __init__ module.  Using a relative import ensures that
+# loading PlayerManager does not trigger re-importing the package while it
+# is still being initialised.
+from .player_character import PlayerCharacter
 from .player_state_manager import PlayerStateManager
 from .player_position_manager import PlayerPositionManager
 

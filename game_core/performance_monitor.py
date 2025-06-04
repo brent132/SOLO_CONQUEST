@@ -3,7 +3,7 @@ Performance monitoring utilities for the game
 Provides tools for measuring and tracking performance metrics
 """
 import time
-from debug_utils import debug_manager
+from debug_manager import debug_manager
 
 class PerformanceMonitor:
     """Monitors performance metrics for the game"""

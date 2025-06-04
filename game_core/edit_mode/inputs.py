@@ -2,7 +2,7 @@
 Input components for the Edit Mode
 """
 import pygame
-from settings import *
+from game_settings import *
 from font_manager import font_manager
 
 

@@ -3,7 +3,7 @@ Button components for the Edit Mode
 """
 import os
 import pygame
-from settings import *
+from game_settings import *
 from font_manager import font_manager
 
 

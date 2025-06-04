@@ -21,7 +21,7 @@ memory usage and performance.
 """
 import pygame
 from typing import Dict, Optional, Set
-from game_core.sprite_cache import sprite_cache
+from game_core.sprite_cache_system import sprite_cache
 
 
 class TileManager:

@@ -32,13 +32,13 @@ class GameSystemsCoordinator:
         # Game state
         self.game_over_triggered = False
         
-    def initialize_systems(self, enemy_manager, key_item_manager, crystal_item_manager, 
+    def initialize_systems(self, enemy_manager, key_item_manager, crystal_item_manager,
                           lootchest_manager, hud, animated_tile_manager, player_system,
-                          relation_handler):
+                          relation_handler, map_system=None):
         """Initialize all game systems with their managers"""
         self.enemy_coordinator.initialize(enemy_manager)
         self.item_coordinator.initialize(key_item_manager, crystal_item_manager, animated_tile_manager)
-        self.inventory_coordinator.initialize(hud)
+        self.inventory_coordinator.initialize(hud, map_system, animated_tile_manager)
         self.interaction_coordinator.initialize(lootchest_manager, player_system, relation_handler)
         
     def scan_and_setup_items(self, layers: List[Dict], key_item_id: Optional[int], 
