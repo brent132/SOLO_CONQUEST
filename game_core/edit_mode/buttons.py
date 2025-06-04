@@ -40,6 +40,8 @@ class Button:
     def update(self, mouse_pos):
         """Update button state based on mouse position"""
         self.is_hovered = self.rect.collidepoint(mouse_pos)
+        # Keep the text centered if the button position changes
+        self.text_rect = self.text_surf.get_rect(center=self.rect.center)
 
     def draw(self, surface):
         """Draw the button on the given surface"""
