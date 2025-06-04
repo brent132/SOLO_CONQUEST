@@ -97,6 +97,20 @@ class PlayerCharacter(pygame.sprite.Sprite):
         from game_core.playscreen_components.player_system.player_animation import PlayerAnimation
         self.animation_system = PlayerAnimation(self)
 
+        # Expose attack_frame for systems that check it directly
+        self._attack_frame_proxy = 0
+
+    # Proxy property to expose animation_system.attack_frame at the player level
+    @property
+    def attack_frame(self):
+        return getattr(self.animation_system, 'attack_frame', self._attack_frame_proxy)
+
+    @attack_frame.setter
+    def attack_frame(self, value):
+        self._attack_frame_proxy = value
+        if hasattr(self, 'animation_system'):
+            self.animation_system.attack_frame = value
+
     def handle_input(self):
         """Handle keyboard input for player movement"""
         keys = pygame.key.get_pressed()
