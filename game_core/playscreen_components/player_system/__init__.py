@@ -18,7 +18,7 @@ from .player_inventory import PlayerInventory
 from .player_location_tracker import PlayerLocationTracker
 from .character_inventory_saver import CharacterInventorySaver
 from .player_character import PlayerCharacter
-from .animation_handler import blit_aligned
+from .player_animation import blit_aligned
 from .sprite_loader import load_character_sprites
 
 __all__ = [
