@@ -1,10 +1,10 @@
 {
-  "current_world": "firstlevel",
+  "current_world": "main",
   "worlds": {
-    "firstlevel": {
-      "map_name": "firstlevel",
-      "x": 160,
-      "y": 144,
+    "main": {
+      "map_name": "main",
+      "x": 256,
+      "y": 160,
       "direction": "down",
       "health": 100,
       "shield_durability": 3

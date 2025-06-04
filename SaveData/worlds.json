@@ -1,9 +1,9 @@
 {
   "worlds": [
     {
-      "folder_name": "firstlevel",
-      "display_name": "Firstlevel",
-      "description": "World located in firstlevel",
+      "folder_name": "main",
+      "display_name": "Main",
+      "description": "World located in main",
       "icon": "",
       "has_main_map": true
     }
