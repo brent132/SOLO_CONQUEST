@@ -1090,6 +1090,10 @@ class PlayScreen(BaseScreen):
 
     def save_game(self, override_map_name: Optional[str] = None):
         """Save the current game state using the centralized save/load manager"""
+        # Remove any dead enemies before saving so they are not persisted
+        if hasattr(self, 'enemy_manager'):
+            self.enemy_manager.remove_dead_enemies()
+
         # Use the centralized save manager
         success, message = self.save_load_manager.save_all(self, override_map_name)
 
