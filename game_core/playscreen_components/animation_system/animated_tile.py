@@ -3,7 +3,7 @@ Animated Tile - handles animated tiles for the game
 """
 import os
 import pygame
-from game_core.sprite_cache import sprite_cache
+from game_core.image_cache import sprite_cache
 
 class AnimatedTile:
     """Class for handling animated tiles"""

@@ -312,7 +312,7 @@ class Bomberplant(Enemy):
 
             # Debug output for new mark
             if self.debug_mode:
-                from debug_utils import debug_manager
+                from debug_tools import debug_manager
                 debug_manager.log(f"New mark placed at: {self.mark_position}", "enemy")
 
     def _update_mark_animation(self):
@@ -342,7 +342,7 @@ class Bomberplant(Enemy):
         if not self.debug_mode:
             return
 
-        from debug_utils import debug_manager
+        from debug_tools import debug_manager
 
         # Show targeting information
         if self.player_detected:
