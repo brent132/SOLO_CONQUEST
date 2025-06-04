@@ -22,7 +22,7 @@ modes for various game states.
 """
 import pygame
 from typing import Dict, List, Optional, Tuple
-from game_core.sprite_cache import sprite_cache
+from game_core.core.image_cache import sprite_cache
 
 
 class MapRenderer:
