@@ -9,12 +9,16 @@ SOLO_TEST/
 ├── gameplay_app.py          # Main gameplay application
 ├── editor_app.py            # Main map editor application
 ├── game_core/               # Core game modules and packages
-│   ├── settings.py          # Game settings and constants
-│   ├── menu.py              # Menu and UI components
-│   ├── base_screen.py       # Base screen class
-│   ├── debug_utils.py       # Debug utilities
-│   ├── performance_monitor.py # Performance monitoring
-│   ├── font_manager.py      # Font management
+│   ├── core/                # Foundational utilities
+│   │   ├── config.py        # Game settings and constants
+│   │   ├── menu_system.py   # Menu and UI components
+│   │   ├── screen_base.py   # Base screen class
+│   │   ├── debug_tools.py   # Debug utilities
+│   │   ├── perf_monitor.py  # Performance monitoring
+│   │   ├── perf_optimizer.py # Performance optimization
+│   │   ├── font_loader.py   # Font management
+│   │   ├── image_cache.py   # Sprite caching
+│   │   └── legacy_game.py   # Legacy game loop
 │   ├── gameplay/            # Gameplay-specific modules
 │   ├── edit_mode/           # Map editor modules
 │   ├── playscreen_components/ # Gameplay components (player, items, enemies, etc.)

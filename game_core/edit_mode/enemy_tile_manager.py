@@ -4,8 +4,8 @@ Enemy Tile Manager for Edit Mode - handles placing enemies as tiles
 import pygame
 import os
 import math
-from font_manager import font_manager
-from settings import FONT_SIZE_SMALL
+from game_core.core.font_loader import font_manager
+from game_core.core.config import FONT_SIZE_SMALL
 
 class EnemyTileManager:
     """Manages enemy tiles in edit mode"""
@@ -30,7 +30,7 @@ class EnemyTileManager:
         self.delete_button = pygame.Rect(0, 0, 0, 0)
 
         # Fonts
-        self.font = font_manager.get_font('regular', FONT_SIZE_SMALL)
+        self.font = font_loader.get_font('regular', FONT_SIZE_SMALL)
 
         # Position UI elements
         self.position_ui_elements()
