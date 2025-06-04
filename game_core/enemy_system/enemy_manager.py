@@ -8,6 +8,8 @@ from enemy_system.spinner import Spinner
 from enemy_system.spider import Spider
 from enemy_system.pinkslime import Pinkslime
 from enemy_system.pinkbat import Pinkbat
+from debug_utils import debug_manager
+from performance_optimizer import performance_optimizer
 
 class EnemyManager:
     """Manages all enemies in the game"""
@@ -26,7 +28,6 @@ class EnemyManager:
         }
 
         # Use the debug manager instead of a local flag
-        from debug_utils import debug_manager
         self.debug_manager = debug_manager
 
     def add_enemy(self, enemy_type, x, y):
@@ -240,5 +241,10 @@ class EnemyManager:
 
     def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw all enemies"""
+        max_visible = performance_optimizer.get_quality_setting("max_visible_entities")
+        drawn = 0
         for enemy in self.enemies:
+            if drawn >= max_visible:
+                break
             enemy.draw(surface, camera_x, camera_y, zoom_factor)
+            drawn += 1
