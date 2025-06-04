@@ -4,6 +4,7 @@ Lootchest Manager - handles lootchest interaction and animation
 import pygame
 import os
 from playscreen_components.animation_system import AnimatedTile
+from debug_utils import debug_manager
 
 class LootchestManager:
     """Manages lootchest interaction and animation"""
@@ -39,10 +40,21 @@ class LootchestManager:
         """
         # If the map is changing, clear the lootchests
         if self.current_map != map_name:
-            print(f"LootchestManager: Changing map from {self.current_map} to {map_name}")
-            print(f"  Previous lootchests count: {len(self.lootchests)}")
-            print(f"  Previous opened chests count: {len(self.opened_chests)}")
-            print(f"  Previous opening chests count: {len(self.opening_chests)}")
+            debug_manager.log(
+                f"LootchestManager: Changing map from {self.current_map} to {map_name}",
+                "item",
+            )
+            debug_manager.log(
+                f"  Previous lootchests count: {len(self.lootchests)}", "item"
+            )
+            debug_manager.log(
+                f"  Previous opened chests count: {len(self.opened_chests)}",
+                "item",
+            )
+            debug_manager.log(
+                f"  Previous opening chests count: {len(self.opening_chests)}",
+                "item",
+            )
 
             self.lootchests = {}
             self.opened_chests = []
@@ -51,41 +63,63 @@ class LootchestManager:
 
         # Set the current map
         self.current_map = map_name
-        print(f"LootchestManager current map set to: {self.current_map}")
-        print(f"  Current lootchests count: {len(self.lootchests)}")
+        debug_manager.log(
+            f"LootchestManager current map set to: {self.current_map}", "item"
+        )
+        debug_manager.log(
+            f"  Current lootchests count: {len(self.lootchests)}", "item"
+        )
 
     def load_animations(self):
         """Load the lootchest opening animation and static open frame"""
         # Load opening animation
         animation_folder = "character/Props_Items_(animated)/lootchest_item_anim_opening"
-        print(f"Attempting to load lootchest opening animation from: {animation_folder}")
+        debug_manager.log(
+            f"Attempting to load lootchest opening animation from: {animation_folder}",
+            "item",
+        )
 
         if os.path.exists(animation_folder):
-            print(f"Animation folder exists")
+            debug_manager.log("Animation folder exists", "item")
             self.opening_animation = AnimatedTile(animation_folder, frame_duration=5)  # Faster animation
 
             # Store all animation frames for direct access
             if self.opening_animation.frames:
                 self.opening_frames = self.opening_animation.frames
-                print(f"Loaded lootchest opening animation with {len(self.opening_frames)} frames")
+                debug_manager.log(
+                    f"Loaded lootchest opening animation with {len(self.opening_frames)} frames",
+                    "item",
+                )
                 for i, frame in enumerate(self.opening_frames):
-                    print(f"  Frame {i}: {frame.get_size()}")
+                    debug_manager.log(f"  Frame {i}: {frame.get_size()}", "item")
             else:
-                print("No frames found in lootchest opening animation")
+                debug_manager.log("No frames found in lootchest opening animation", "item")
 
             # Check if we have a static open frame
             if hasattr(self, 'static_open_frame') and self.static_open_frame:
-                print(f"Static open frame loaded: {self.static_open_frame.get_size()}")
+                debug_manager.log(
+                    f"Static open frame loaded: {self.static_open_frame.get_size()}",
+                    "item",
+                )
             else:
-                print("No static open frame loaded")
+                debug_manager.log("No static open frame loaded", "item")
         else:
-            print(f"Lootchest opening animation folder not found: {animation_folder}")
-            print(f"Current working directory: {os.getcwd()}")
-            print(f"Directory contents: {os.listdir('.')}")
+            debug_manager.log(
+                f"Lootchest opening animation folder not found: {animation_folder}",
+                "item",
+            )
+            debug_manager.log(f"Current working directory: {os.getcwd()}", "item")
+            debug_manager.log(f"Directory contents: {os.listdir('.')}", "item")
             if os.path.exists("character"):
-                print(f"Character directory contents: {os.listdir('character')}")
+                debug_manager.log(
+                    f"Character directory contents: {os.listdir('character')}",
+                    "item",
+                )
                 if os.path.exists("character/Props_Items_(animated)"):
-                    print(f"Props_Items_(animated) directory contents: {os.listdir('character/Props_Items_(animated)')}")
+                    debug_manager.log(
+                        f"Props_Items_(animated) directory contents: {os.listdir('character/Props_Items_(animated)')}",
+                        "item",
+                    )
 
         # Load static open frame - try multiple possible paths
         possible_paths = [
@@ -96,29 +130,49 @@ class LootchestManager:
         # Try each path until we find one that works
         self.static_open_frame = None
         for static_open_path in possible_paths:
-            print(f"Attempting to load static open frame from: {static_open_path}")
+            debug_manager.log(
+                f"Attempting to load static open frame from: {static_open_path}",
+                "item",
+            )
 
             if os.path.exists(static_open_path):
-                print(f"Static open frame file exists at: {static_open_path}")
+                debug_manager.log(
+                    f"Static open frame file exists at: {static_open_path}",
+                    "item",
+                )
                 try:
                     self.static_open_frame = pygame.image.load(static_open_path).convert_alpha()
-                    print(f"Loaded lootchest static open frame: {self.static_open_frame.get_size()}")
+                    debug_manager.log(
+                        f"Loaded lootchest static open frame: {self.static_open_frame.get_size()}",
+                        "item",
+                    )
                     break  # Successfully loaded, exit the loop
                 except Exception as e:
-                    print(f"Error loading lootchest static open frame: {e}")
+                    debug_manager.log(
+                        f"Error loading lootchest static open frame: {e}",
+                        "item",
+                    )
             else:
-                print(f"Static open frame not found at: {static_open_path}")
+                debug_manager.log(
+                    f"Static open frame not found at: {static_open_path}", "item"
+                )
 
         # If we couldn't load from any path, create a placeholder
         if not self.static_open_frame:
-            print("Could not load static open frame from any path, creating placeholder")
+            debug_manager.log(
+                "Could not load static open frame from any path, creating placeholder",
+                "item",
+            )
             try:
                 placeholder = pygame.Surface((16, 16), pygame.SRCALPHA)
                 placeholder.fill((255, 0, 0, 128))  # Semi-transparent red
                 self.static_open_frame = placeholder
-                print(f"Created placeholder static open frame")
+                debug_manager.log("Created placeholder static open frame", "item")
             except Exception as e:
-                print(f"Error creating placeholder static open frame: {e}")
+                debug_manager.log(
+                    f"Error creating placeholder static open frame: {e}",
+                    "item",
+                )
                 self.static_open_frame = None
 
     def add_lootchest(self, grid_x, grid_y, tile_id, layer=0):
@@ -132,19 +186,30 @@ class LootchestManager:
         """
         # Precaution: Validate input parameters
         if not isinstance(grid_x, (int, float)) or not isinstance(grid_y, (int, float)):
-            print(f"Warning: Invalid grid coordinates - x: {grid_x} ({type(grid_x)}), y: {grid_y} ({type(grid_y)})")
+            debug_manager.log(
+                f"Warning: Invalid grid coordinates - x: {grid_x} ({type(grid_x)}), y: {grid_y} ({type(grid_y)})",
+                "item",
+            )
             return
 
         if not isinstance(tile_id, (int, float)):
-            print(f"Warning: Invalid tile_id: {tile_id} ({type(tile_id)})")
+            debug_manager.log(
+                f"Warning: Invalid tile_id: {tile_id} ({type(tile_id)})", "item"
+            )
             return
 
         position = (int(grid_x), int(grid_y))
-        print(f"LootchestManager: Adding lootchest at position {position} with tile_id {tile_id} on layer {layer} for map {self.current_map}")
+        debug_manager.log(
+            f"LootchestManager: Adding lootchest at position {position} with tile_id {tile_id} on layer {layer} for map {self.current_map}",
+            "item",
+        )
 
         # Precaution: Check if lootchest already exists at this position
         if position in self.lootchests:
-            print(f"Warning: Lootchest already exists at position {position}, overwriting")
+            debug_manager.log(
+                f"Warning: Lootchest already exists at position {position}, overwriting",
+                "item",
+            )
 
         try:
             self.lootchests[position] = {
@@ -152,18 +217,28 @@ class LootchestManager:
                 "opened": False,
                 "layer": layer  # Store which layer this lootchest belongs to
             }
-            print(f"Successfully added lootchest. Total lootchests: {len(self.lootchests)}")
+            debug_manager.log(
+                f"Successfully added lootchest. Total lootchests: {len(self.lootchests)}",
+                "item",
+            )
 
             # Initialize empty chest contents if not already set
             if position not in self.chest_contents:
                 # Initialize with an empty inventory
                 self.initialize_chest_contents(position)
-                print(f"Initialized empty chest contents for position {position}")
+                debug_manager.log(
+                    f"Initialized empty chest contents for position {position}",
+                    "item",
+                )
             else:
-                print(f"Chest contents already exist for position {position}")
+                debug_manager.log(
+                    f"Chest contents already exist for position {position}", "item"
+                )
 
         except Exception as e:
-            print(f"Error adding lootchest at position {position}: {e}")
+            debug_manager.log(
+                f"Error adding lootchest at position {position}: {e}", "item"
+            )
             raise
 
     def handle_right_click(self, mouse_pos, camera_x, camera_y, grid_cell_size, player_rect=None):
@@ -179,26 +254,36 @@ class LootchestManager:
         Returns:
             True if a lootchest was clicked, False otherwise
         """
-        print(f"LootchestManager.handle_right_click called for map: {self.current_map}")
-        print(f"  Mouse position: {mouse_pos}")
-        print(f"  Camera position: ({camera_x}, {camera_y})")
-        print(f"  Grid cell size: {grid_cell_size}")
-        print(f"  Player rect: {player_rect}")
-        print(f"  Available lootchests: {len(self.lootchests)}")
+        debug_manager.log(
+            f"LootchestManager.handle_right_click called for map: {self.current_map}",
+            "item",
+        )
+        debug_manager.log(f"  Mouse position: {mouse_pos}", "item")
+        debug_manager.log(f"  Camera position: ({camera_x}, {camera_y})", "item")
+        debug_manager.log(f"  Grid cell size: {grid_cell_size}", "item")
+        debug_manager.log(f"  Player rect: {player_rect}", "item")
+        debug_manager.log(f"  Available lootchests: {len(self.lootchests)}", "item")
         if self.lootchests:
-            print(f"  Lootchest positions: {list(self.lootchests.keys())}")
+            debug_manager.log(
+                f"  Lootchest positions: {list(self.lootchests.keys())}", "item"
+            )
 
         # Precaution: Validate input parameters
         if not mouse_pos or len(mouse_pos) != 2:
-            print(f"Warning: Invalid mouse position: {mouse_pos}")
+            debug_manager.log(f"Warning: Invalid mouse position: {mouse_pos}", "item")
             return False
 
         if not isinstance(camera_x, (int, float)) or not isinstance(camera_y, (int, float)):
-            print(f"Warning: Invalid camera position - x: {camera_x}, y: {camera_y}")
+            debug_manager.log(
+                f"Warning: Invalid camera position - x: {camera_x}, y: {camera_y}",
+                "item",
+            )
             return False
 
         if not isinstance(grid_cell_size, (int, float)) or grid_cell_size <= 0:
-            print(f"Warning: Invalid grid cell size: {grid_cell_size}")
+            debug_manager.log(
+                f"Warning: Invalid grid cell size: {grid_cell_size}", "item"
+            )
             return False
 
         try:
@@ -213,18 +298,26 @@ class LootchestManager:
             tile_offset_y = (world_y % grid_cell_size) / grid_cell_size
 
             position = (grid_x, grid_y)
-            print(f"  World position: ({world_x}, {world_y})")
-            print(f"  Calculated grid position: ({grid_x}, {grid_y})")
-            print(f"  Tile offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
+            debug_manager.log(f"  World position: ({world_x}, {world_y})", "item")
+            debug_manager.log(
+                f"  Calculated grid position: ({grid_x}, {grid_y})", "item"
+            )
+            debug_manager.log(
+                f"  Tile offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})", "item"
+            )
 
         except Exception as e:
-            print(f"Error in coordinate calculation: {e}")
+            debug_manager.log(f"Error in coordinate calculation: {e}", "item")
             return False
 
         # Check if there's a lootchest at this exact position
         if position not in self.lootchests:
-            print(f"  No lootchest found at exact position {position}")
-            print(f"  Available lootchests: {list(self.lootchests.keys())}")
+            debug_manager.log(
+                f"  No lootchest found at exact position {position}", "item"
+            )
+            debug_manager.log(
+                f"  Available lootchests: {list(self.lootchests.keys())}", "item"
+            )
             return False
 
         # Additional precision check: ensure click is within the center area of the tile
@@ -232,24 +325,30 @@ class LootchestManager:
         center_tolerance = 0.2  # Allow clicks within 20% margin from edges
         if (tile_offset_x < center_tolerance or tile_offset_x > (1.0 - center_tolerance) or
             tile_offset_y < center_tolerance or tile_offset_y > (1.0 - center_tolerance)):
-            print(f"  Click too close to tile edge. Offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})")
-            print(f"  Required center area: {center_tolerance:.1f} to {1.0 - center_tolerance:.1f}")
+            debug_manager.log(
+                f"  Click too close to tile edge. Offset: ({tile_offset_x:.3f}, {tile_offset_y:.3f})",
+                "item",
+            )
+            debug_manager.log(
+                f"  Required center area: {center_tolerance:.1f} to {1.0 - center_tolerance:.1f}",
+                "item",
+            )
             return False
 
-        print(f"  Found lootchest at position {position}")
-        print(f"  Lootchest data: {self.lootchests[position]}")
+        debug_manager.log(f"  Found lootchest at position {position}", "item")
+        debug_manager.log(f"  Lootchest data: {self.lootchests[position]}", "item")
 
         # Check if the lootchest is already opening (animation in progress)
         if position in self.opening_chests:
-            print(f"  Lootchest is already in the process of opening")
+            debug_manager.log("  Lootchest is already in the process of opening", "item")
             return False
 
         # If the chest is already opened, show its contents
         if position in self.opened_chests:
-            print(f"  Chest is already opened")
+            debug_manager.log("  Chest is already opened", "item")
             # Check if player is close enough to the chest (within 7 tiles)
             if player_rect:
-                print(f"  Checking if player is close enough to opened chest")
+                debug_manager.log("  Checking if player is close enough to opened chest", "item")
                 # Calculate distance between player and chest centers in grid units
                 player_grid_x = player_rect.centerx // grid_cell_size
                 player_grid_y = player_rect.centery // grid_cell_size
@@ -259,36 +358,46 @@ class LootchestManager:
                 # Calculate Manhattan distance in grid units
                 grid_distance = abs(player_grid_x - chest_grid_x) + abs(player_grid_y - chest_grid_y)
 
-                print(f"  Player grid position: ({player_grid_x}, {player_grid_y})")
-                print(f"  Chest grid position: ({chest_grid_x}, {chest_grid_y})")
-                print(f"  Grid distance: {grid_distance}")
-                print(f"  Max grid distance allowed: 7")
+                debug_manager.log(
+                    f"  Player grid position: ({player_grid_x}, {player_grid_y})",
+                    "item",
+                )
+                debug_manager.log(
+                    f"  Chest grid position: ({chest_grid_x}, {chest_grid_y})",
+                    "item",
+                )
+                debug_manager.log(f"  Grid distance: {grid_distance}", "item")
+                debug_manager.log("  Max grid distance allowed: 7", "item")
 
                 # Check if player is within range (7 tiles)
                 if grid_distance > 7:
-                    print(f"  Player is too far from chest")
+                    debug_manager.log("  Player is too far from chest", "item")
                     return False
                 else:
-                    print(f"  Player is within range of chest")
+                    debug_manager.log("  Player is within range of chest", "item")
 
             # Call the callback to show the chest contents
             if self.on_chest_opened_callback:
-                print(f"  Calling on_chest_opened_callback")
+                debug_manager.log("  Calling on_chest_opened_callback", "item")
                 chest_contents = self.get_chest_contents(position)
-                print(f"  Chest contents: {chest_contents}")
+                debug_manager.log(f"  Chest contents: {chest_contents}", "item")
                 try:
                     self.on_chest_opened_callback(position, chest_contents)
-                    print(f"  Successfully called on_chest_opened_callback")
+                    debug_manager.log(
+                        "  Successfully called on_chest_opened_callback", "item"
+                    )
                 except Exception as e:
-                    print(f"  Error calling on_chest_opened_callback: {e}")
+                    debug_manager.log(
+                        f"  Error calling on_chest_opened_callback: {e}", "item"
+                    )
             else:
-                print(f"  No on_chest_opened_callback set")
+                debug_manager.log("  No on_chest_opened_callback set", "item")
 
             return True
 
         # Check if player is close enough to the chest (within 7 tiles)
         if player_rect:
-            print(f"  Checking if player is close enough to unopened chest")
+            debug_manager.log("  Checking if player is close enough to unopened chest", "item")
             # We'll use grid-based distance calculation
 
             # Calculate distance between player and chest centers in grid units
@@ -300,27 +409,33 @@ class LootchestManager:
             # Calculate Manhattan distance in grid units
             grid_distance = abs(player_grid_x - chest_grid_x) + abs(player_grid_y - chest_grid_y)
 
-            print(f"  Player grid position: ({player_grid_x}, {player_grid_y})")
-            print(f"  Chest grid position: ({chest_grid_x}, {chest_grid_y})")
-            print(f"  Grid distance: {grid_distance}")
-            print(f"  Max grid distance allowed: 7")
+            debug_manager.log(
+                f"  Player grid position: ({player_grid_x}, {player_grid_y})",
+                "item",
+            )
+            debug_manager.log(
+                f"  Chest grid position: ({chest_grid_x}, {chest_grid_y})",
+                "item",
+            )
+            debug_manager.log(f"  Grid distance: {grid_distance}", "item")
+            debug_manager.log("  Max grid distance allowed: 7", "item")
 
             # Check if player is within range (7 tiles)
             if grid_distance > 7:
-                print(f"  Player is too far from chest")
+                debug_manager.log("  Player is too far from chest", "item")
                 return False
             else:
-                print(f"  Player is within range of chest")
+                debug_manager.log("  Player is within range of chest", "item")
 
         # Start opening animation
-        print(f"  Starting chest opening animation")
+        debug_manager.log("  Starting chest opening animation", "item")
         self.opening_chests[position] = {
             "animation_frame": 0,  # Current frame index
             "timer": self.opening_duration,
             "frame_counter": 0,  # Counter for frame timing
             "layer": self.lootchests[position]["layer"]  # Preserve layer information
         }
-        print(f"  Opening chests: {self.opening_chests}")
+        debug_manager.log(f"  Opening chests: {self.opening_chests}", "item")
 
         return True
 
@@ -339,29 +454,42 @@ class LootchestManager:
 
             # Check if animation is complete
             if chest_data["timer"] <= 0:
-                print(f"Chest animation complete for {pos}")
+                debug_manager.log(f"Chest animation complete for {pos}", "item")
                 # Animation complete, remove from opening chests and add to opened chests
                 del self.opening_chests[pos]
                 self.opened_chests.append(pos)
-                print(f"Added {pos} to opened_chests: {self.opened_chests}")
+                debug_manager.log(
+                    f"Added {pos} to opened_chests: {self.opened_chests}", "item"
+                )
 
                 # Mark the chest as opened in the lootchests dictionary
                 if pos in self.lootchests:
                     self.lootchests[pos]["opened"] = True
-                    print(f"Marked chest as opened in lootchests dictionary")
+                    debug_manager.log(
+                        "Marked chest as opened in lootchests dictionary",
+                        "item",
+                    )
 
                 # Call the callback if set
                 if self.on_chest_opened_callback:
-                    print(f"Calling on_chest_opened_callback after animation complete")
+                    debug_manager.log(
+                        "Calling on_chest_opened_callback after animation complete",
+                        "item",
+                    )
                     chest_contents = self.get_chest_contents(pos)
-                    print(f"Chest contents: {chest_contents}")
+                    debug_manager.log(f"Chest contents: {chest_contents}", "item")
                     try:
                         self.on_chest_opened_callback(pos, chest_contents)
-                        print(f"Successfully called on_chest_opened_callback")
+                        debug_manager.log(
+                            "Successfully called on_chest_opened_callback",
+                            "item",
+                        )
                     except Exception as e:
-                        print(f"Error calling on_chest_opened_callback: {e}")
+                        debug_manager.log(
+                            f"Error calling on_chest_opened_callback: {e}", "item"
+                        )
                 else:
-                    print(f"No on_chest_opened_callback set")
+                    debug_manager.log("No on_chest_opened_callback set", "item")
 
                 continue
 
@@ -630,7 +758,7 @@ class LootchestManager:
         contents = [None] * 60
 
         # No default items - chest starts completely empty
-        print(f"Initialized empty chest at position {position}")
+        debug_manager.log(f"Initialized empty chest at position {position}", "item")
 
         # Store the contents
         self.chest_contents[position] = contents
