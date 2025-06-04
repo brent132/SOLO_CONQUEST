@@ -239,8 +239,10 @@ class PlayScreen(BaseScreen):
 
     def load_map(self, map_name):
         """Load a map from file using the modularized map system"""
-        # Reset the enemy manager to clear all enemies from the previous map
+        # Reset managers so previous map entities/items do not persist
         self.enemy_manager.enemies = []
+        self.key_item_manager.clear_items()
+        self.crystal_item_manager.clear_items()
 
         # Store whether we're teleporting before resetting flags
         was_teleporting = self.is_teleporting

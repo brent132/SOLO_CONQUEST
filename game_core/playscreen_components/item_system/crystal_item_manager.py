@@ -21,6 +21,11 @@ class CrystalItemManager:
         # Load collection animation
         self.load_collection_animation()
 
+    def clear_items(self):
+        """Clear crystal items and related animations from the previous map"""
+        self.crystal_items = {}
+        self.collected_items = {}
+
     def load_collection_animation(self):
         """Load the crystal item collection animation"""
         animation_folder = "character/Props_Items_(animated)/crystal_item_anim_collected"
