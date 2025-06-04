@@ -87,7 +87,7 @@ class TeleportationManager:
 
         # Save the current game state before teleporting
         if self.save_callback:
-            self.save_callback()
+            self.save_callback(current_map_name)
 
         # Store the target position before loading the map
         target_position = relation['to_position']

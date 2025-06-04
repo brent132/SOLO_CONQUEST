@@ -7,6 +7,7 @@ It manages map loading, player movement, enemy interactions, inventory managemen
 import os
 import json
 import pygame
+from typing import Optional
 from debug_utils import debug_manager
 from character_system import PlayerCharacter
 # CollisionHandler now imported from map_system
@@ -1087,10 +1088,10 @@ class PlayScreen(BaseScreen):
                         enemy.float_x = enemy_data[6]
                         enemy.float_y = enemy_data[7]
 
-    def save_game(self):
+    def save_game(self, override_map_name: Optional[str] = None):
         """Save the current game state using the centralized save/load manager"""
         # Use the centralized save manager
-        success, message = self.save_load_manager.save_all(self)
+        success, message = self.save_load_manager.save_all(self, override_map_name)
 
         if not success:
             print(f"Error saving game: {message}")

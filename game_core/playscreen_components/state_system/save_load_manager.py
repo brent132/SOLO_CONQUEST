@@ -45,7 +45,7 @@ class SaveLoadManager:
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
                 
-    def save_all(self, play_screen) -> Tuple[bool, str]:
+    def save_all(self, play_screen, override_map_name: Optional[str] = None) -> Tuple[bool, str]:
         """
         Save all game data including state, inventory, location, and progress
         
@@ -57,7 +57,7 @@ class SaveLoadManager:
         """
         try:
             # Save game state to map file
-            state_success, state_message = self.game_state_saver.save_game_state(play_screen)
+            state_success, state_message = self.game_state_saver.save_game_state(play_screen, override_map_name)
             
             # Save character inventory
             inventory_success, inventory_message = self.character_inventory_saver.save_inventory(
@@ -65,9 +65,10 @@ class SaveLoadManager:
             )
             
             # Save player location
-            if play_screen.player and play_screen.map_name:
+            map_name_to_use = override_map_name if override_map_name else play_screen.map_name
+            if play_screen.player and map_name_to_use:
                 self.player_location_tracker.save_location(
-                    play_screen.map_name,
+                    map_name_to_use,
                     play_screen.player.rect.x,
                     play_screen.player.rect.y,
                     play_screen.player.direction,
@@ -131,7 +132,7 @@ class SaveLoadManager:
         except Exception as e:
             return False, f"Load operation failed: {str(e)}"
     
-    def save_quick(self, play_screen) -> Tuple[bool, str]:
+    def save_quick(self, play_screen, override_map_name: Optional[str] = None) -> Tuple[bool, str]:
         """
         Quick save - saves only essential data without backup
         
@@ -143,12 +144,13 @@ class SaveLoadManager:
         """
         try:
             # Save game state
-            state_success, state_message = self.game_state_saver.save_game_state(play_screen)
+            state_success, state_message = self.game_state_saver.save_game_state(play_screen, override_map_name)
             
             # Save player location
-            if play_screen.player and play_screen.map_name:
+            map_name_to_use = override_map_name if override_map_name else play_screen.map_name
+            if play_screen.player and map_name_to_use:
                 self.player_location_tracker.save_location(
-                    play_screen.map_name,
+                    map_name_to_use,
                     play_screen.player.rect.x,
                     play_screen.player.rect.y,
                     play_screen.player.direction,
