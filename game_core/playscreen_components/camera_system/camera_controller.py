@@ -128,7 +128,7 @@ class CameraController:
         )
         
         self.set_camera_position(camera_x, camera_y)
-        print(f"Camera position: ({camera_x}, {camera_y})")
+        pass  # Camera position
         
     def update_camera_following(self):
         """Update camera to follow player with smooth movement"""

@@ -51,7 +51,7 @@ class Enemy(pygame.sprite.Sprite):
 
         # Check if the animation directory exists
         if not os.path.exists(folder_path):
-            print(f"Warning: Animation directory not found: {folder_path}")
+            pass  # Warning: Animation directory not found
             return
 
         # Find all PNG files in the directory
@@ -64,7 +64,7 @@ class Enemy(pygame.sprite.Sprite):
             # Sort the files to ensure correct order
             frame_files.sort()
         except Exception as e:
-            print(f"Error reading directory {folder_path}: {e}")
+            pass  # Error reading directory
             return
 
         # Load each frame
@@ -74,7 +74,7 @@ class Enemy(pygame.sprite.Sprite):
                 img = pygame.image.load(img_path).convert_alpha()
                 self.sprites[anim_key].append(img)
             except Exception as e:
-                print(f"Error loading sprite {img_path}: {e}")
+                pass  # Error loading sprite
 
     def update_animation(self):
         """Update the enemy's animation frame"""

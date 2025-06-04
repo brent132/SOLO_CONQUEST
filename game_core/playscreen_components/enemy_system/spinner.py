@@ -641,7 +641,7 @@ class Spinner(Enemy):
             image = pygame.image.load(full_path).convert_alpha()
             return image
         except pygame.error as e:
-            print(f"Error loading image {path}: {e}")
+            pass  # Error loading image
             # Return a placeholder image (red square)
             placeholder = pygame.Surface((16, 16), pygame.SRCALPHA)
             placeholder.fill((255, 0, 0, 128))

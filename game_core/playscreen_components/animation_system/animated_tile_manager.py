@@ -36,7 +36,7 @@ class AnimatedTileManager:
 
         # Check if directory exists
         if not os.path.exists(animated_tiles_folder):
-            print(f"Animated tiles folder not found: {animated_tiles_folder}")
+            pass  # Animated tiles folder not found
             return
 
         # Get all subdirectories (each subdirectory is an animated tile)
@@ -77,13 +77,13 @@ class AnimatedTileManager:
                         # Assign a unique ID to this animated tile
                         self.animated_tile_ids[self.next_tile_id] = tile_name
                         self.next_tile_id += 1
-                        print(f"Added key item animation with ID: {self.next_tile_id - 1}")
+                        pass  # Added key item animation
                     else:
-                        print("No frames loaded for key item animation")
+                        pass  # No frames loaded for key item animation
                 except Exception as e:
-                    print(f"Error loading key item animation: {e}")
+                    pass  # Error loading key item animation
             else:
-                print(f"Key item animation folder not found: {key_item_folder}")
+                pass  # Key item animation folder not found
 
             # Load crystal item animation
             crystal_item_folder = "character/Props_Items_(animated)/crystal_item_anim"
@@ -101,13 +101,13 @@ class AnimatedTileManager:
                         # Assign a unique ID to this animated tile
                         self.animated_tile_ids[self.next_tile_id] = tile_name
                         self.next_tile_id += 1
-                        print(f"Added crystal item animation with ID: {self.next_tile_id - 1}")
+                        pass  # Added crystal item animation
                     else:
-                        print("No frames loaded for crystal item animation")
+                        pass  # No frames loaded for crystal item animation
                 except Exception as e:
-                    print(f"Error loading crystal item animation: {e}")
+                    pass  # Error loading crystal item animation
             else:
-                print(f"Crystal item animation folder not found: {crystal_item_folder}")
+                pass  # Crystal item animation folder not found
 
             # Load lootchest item with animation for gameplay
             lootchest_preview_path = "character/Props_Items_(animated)/lootchest_item_anim_opening/tile000.png"
@@ -130,21 +130,21 @@ class AnimatedTileManager:
                         # Assign a unique ID to this animated tile
                         self.animated_tile_ids[self.next_tile_id] = tile_name
                         self.next_tile_id += 1
-                        print(f"Added lootchest item animation with ID: {self.next_tile_id - 1}")
+                        pass  # Added lootchest item animation
 
                         # Store the preview frame for editor use
                         self.editor_preview_frames = getattr(self, 'editor_preview_frames', {})
                         self.editor_preview_frames[tile_name] = preview_frame
                     else:
-                        print("No frames loaded for lootchest item animation")
+                        pass  # No frames loaded for lootchest item animation
                 except Exception as e:
-                    print(f"Error loading lootchest item animation: {e}")
+                    pass  # Error loading lootchest item animation
             else:
-                print(f"Lootchest item files not found: {lootchest_preview_path} or {lootchest_anim_folder}")
+                pass  # Lootchest item files not found
 
             # Animated tiles loaded successfully
         except Exception as e:
-            print(f"Error loading animated tiles: {e}")
+            pass  # Error loading animated tiles
 
     def update(self):
         """Update all animated tiles"""

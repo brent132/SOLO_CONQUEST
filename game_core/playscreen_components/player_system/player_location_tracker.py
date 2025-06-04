@@ -202,7 +202,7 @@ class PlayerLocationTracker:
                 json.dump(data, f, indent=2)
             return True
         except Exception as e:
-            print(f"Error saving player location: {e}")
+            pass  # Error saving player location
             return False
 
     def load_location(self):
@@ -247,9 +247,9 @@ class PlayerLocationTracker:
                     # Save in new format
                     self.save_to_file()
 
-                print(f"Loaded player locations for {len(self.world_locations)} worlds")
+                pass  # Loaded player locations for worlds
             else:
-                print("No player location file found, starting with default location")
+                pass  # No player location file found, starting with default location
         except Exception as e:
-            print(f"Error loading player location: {e}")
+            pass  # Error loading player location
             # Keep default values

@@ -58,48 +58,48 @@ class MapLoader:
         """
         # First check if it's a main map
         main_map_path = os.path.join(self.maps_dir, map_name, f"{map_name}.json")
-        print(f"DEBUG: Requested map name: '{map_name}'")
-        print(f"DEBUG: Checking for main map file at: {main_map_path}")
+        pass  # DEBUG: Requested map name
+        pass  # DEBUG: Checking for main map file
         
         if os.path.exists(main_map_path):
-            print(f"DEBUG: Found main map file: {main_map_path}")
+            pass  # DEBUG: Found main map file
             return main_map_path
         
         # It might be a related map, search in all map folders
-        print(f"DEBUG: '{map_name}' is not a main map, searching in folders...")
+        pass  # DEBUG: Not a main map, searching in folders
         
         # Check if Maps directory exists
         if not os.path.exists(self.maps_dir):
-            print(f"Maps directory does not exist: {self.maps_dir}")
+            pass  # Maps directory does not exist
             return None
         
-        print(f"Maps directory exists: {self.maps_dir}")
+        pass  # Maps directory exists
         
         # List all folders in the Maps directory
         try:
             folders = [f for f in os.listdir(self.maps_dir) 
                       if os.path.isdir(os.path.join(self.maps_dir, f))]
-            print(f"Found folders in Maps directory: {folders}")
+            pass  # Found folders in Maps directory
             
             for folder_name in folders:
                 folder_path = os.path.join(self.maps_dir, folder_name)
-                print(f"Checking folder: {folder_path}")
+                pass  # Checking folder
                 
                 # List all files in this folder
                 files = [f for f in os.listdir(folder_path) 
                         if os.path.isfile(os.path.join(folder_path, f))]
-                print(f"Files in folder {folder_name}: {files}")
+                pass  # Files in folder
                 
                 # Check if this folder contains our map
                 related_map_path = os.path.join(folder_path, f"{map_name}.json")
-                print(f"Checking for related map file at: {related_map_path}")
+                pass  # Checking for related map file
                 
                 if os.path.exists(related_map_path):
-                    print(f"Found related map file: {related_map_path}")
+                    pass  # Found related map file
                     return related_map_path
                     
         except Exception as e:
-            print(f"Error searching for map files: {e}")
+            pass  # Error searching for map files
             return None
         
         return None
@@ -120,31 +120,31 @@ class MapLoader:
             if not map_path:
                 return False, None, f"Map file not found: {map_name}"
             
-            print(f"DEBUG: Final map path being loaded: {map_path}")
-            print(f"Loading map data from: {map_path}")
+            pass  # DEBUG: Final map path being loaded
+            pass  # Loading map data
             
             # Load map data
             with open(map_path, 'r') as f:
                 map_data = json.load(f)
             
-            print(f"DEBUG: Loaded map data - map name in file: '{map_data.get('name', 'UNKNOWN')}'")
-            print(f"DEBUG: Map dimensions: {map_data.get('width', 0)}x{map_data.get('height', 0)}")
+            pass  # DEBUG: Loaded map data
+            pass  # DEBUG: Map dimensions
             
             return True, map_data, ""
             
         except FileNotFoundError:
             error_msg = f"Map file not found: {map_name}"
-            print(f"ERROR: {error_msg}")
+            pass  # ERROR: Map file not found
             return False, None, error_msg
             
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in map file {map_name}: {str(e)}"
-            print(f"ERROR: {error_msg}")
+            pass  # ERROR: Invalid JSON
             return False, None, error_msg
             
         except Exception as e:
             error_msg = f"Error loading map {map_name}: {str(e)}"
-            print(f"ERROR: {error_msg}")
+            pass  # ERROR: Error loading map
             return False, None, error_msg
     
     def get_map_info(self, map_data: Dict[Any, Any]) -> Dict[str, Any]:

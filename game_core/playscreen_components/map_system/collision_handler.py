@@ -44,7 +44,7 @@ class CollisionHandler:
                     else:
                         self.collision_data = {}
         except Exception as e:
-            print(f"Error loading global collision data: {e}")
+            pass  # Error loading global collision data
             self.collision_data = {}
 
     def load_collision_data(self, collision_data):
@@ -219,7 +219,7 @@ class CollisionHandler:
 
                 # Check if this position is free of collisions
                 if not self.check_collision(test_rect, tile_mapping, map_data):
-                    print(f"Found directional free space moving {direction_name}: ({test_rect.x}, {test_rect.y})")
+                    pass  # Found directional free space
                     return (test_rect.x, test_rect.y)
 
         # If directional approach failed, return None
@@ -246,7 +246,7 @@ class CollisionHandler:
         if directional_position:
             return directional_position
 
-        print("Directional unstuck failed, falling back to circular search...")
+        pass  # Directional unstuck failed, falling back to circular search
 
         # Calculate map boundaries in pixels
         max_x = map_width * self.grid_cell_size

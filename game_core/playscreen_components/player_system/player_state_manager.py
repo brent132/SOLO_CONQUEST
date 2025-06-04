@@ -70,7 +70,7 @@ class PlayerStateManager:
                 # Load state from world-specific location
                 player.current_health = world_location.get("health", self.default_health)
                 player.shield_durability = world_location.get("shield_durability", self.default_shield_durability)
-                print(f"Loaded player state from world '{folder_name}': Health={player.current_health}, Shield={player.shield_durability}")
+                pass  # Loaded player state from world
                 return True
             
             # Fallback: check if there's a saved location for this specific map
@@ -80,11 +80,11 @@ class PlayerStateManager:
                     # Use saved state, but with default values for cross-world compatibility
                     player.current_health = saved_location.get("health", self.default_health)
                     player.shield_durability = saved_location.get("shield_durability", self.default_shield_durability)
-                    print(f"Loaded player state from map '{map_name}' (fallback): Health={player.current_health}, Shield={player.shield_durability}")
+                    pass  # Loaded player state from map (fallback)
                     return True
                     
         except Exception as e:
-            print(f"Error loading player state from saved location: {e}")
+            pass  # Error loading player state from saved location
         
         return False
     
@@ -96,16 +96,16 @@ class PlayerStateManager:
                 
                 if "health" in player_data:
                     player.current_health = player_data["health"]
-                    print(f"Loaded player health from game state: {player.current_health}")
-                
+                    pass  # Loaded player health from game state
+
                 if "shield_durability" in player_data:
                     player.shield_durability = player_data["shield_durability"]
-                    print(f"Loaded player shield from game state: {player.shield_durability}")
+                    pass  # Loaded player shield from game state
                 
                 return True
                 
         except Exception as e:
-            print(f"Error loading player state from game data: {e}")
+            pass  # Error loading player state from game data
         
         return False
     
@@ -184,7 +184,7 @@ class PlayerStateManager:
             player.death_animation_complete = False
             player.current_health = health if health is not None else self.default_health
             player.shield_durability = self.default_shield_durability
-            print(f"Player revived with {player.current_health} health")
+            pass  # Player revived with health
     
     def reset(self):
         """Reset the state manager"""

@@ -45,8 +45,8 @@ class InteractionCoordinator:
         relation = self.relation_handler.check_player_collision(player.rect)
         if relation:
             # Player touched a relation point, prepare teleportation data
-            print(f"Player touched relation point: {relation['from_point']} -> {relation['to_point']} in map {relation['to_map']}")
-            print(f"Teleporting to position: {relation['to_position']}")
+            pass  # Player touched relation point
+            pass  # Teleporting to position
             
             return relation
             
@@ -81,18 +81,18 @@ class InteractionCoordinator:
         grid_x = int((world_mouse_x + camera_x) // self.base_grid_cell_size)
         grid_y = int((world_mouse_y + camera_y) // self.base_grid_cell_size)
         
-        print(f"Right-click at mouse position: {mouse_pos}")
-        print(f"Camera position: ({camera_x}, {camera_y})")
-        print(f"World mouse position: ({world_mouse_x}, {world_mouse_y})")
-        print(f"Calculated grid position: ({grid_x}, {grid_y})")
+        pass  # Right-click at mouse position
+        pass  # Camera position
+        pass  # World mouse position
+        pass  # Calculated grid position
 
         # Check if there's a lootchest at this position
         position = (grid_x, grid_y)
         if position in self.lootchest_manager.lootchests:
-            print(f"Found lootchest at position {position}")
+            pass  # Found lootchest at position
         else:
-            print(f"No lootchest found at position {position}")
-            print(f"Available lootchests: {list(self.lootchest_manager.lootchests.keys())}")
+            pass  # No lootchest found at position
+            pass  # Available lootchests
 
         # For smaller maps, the center offset represents how much the map is shifted to center it
         # We need to account for this when converting mouse coordinates to world coordinates
@@ -108,8 +108,8 @@ class InteractionCoordinator:
         adjusted_camera_x = camera_x
         adjusted_camera_y = camera_y
 
-        print(f"Adjusted mouse position: {adjusted_mouse_pos}")
-        print(f"Adjusted camera position: ({adjusted_camera_x}, {adjusted_camera_y})")
+        pass  # Adjusted mouse position
+        pass  # Adjusted camera position
 
         result = self.lootchest_manager.handle_right_click(
             adjusted_mouse_pos,
@@ -118,7 +118,7 @@ class InteractionCoordinator:
             self.base_grid_cell_size,
             player_rect
         )
-        print(f"Lootchest interaction result: {result}")
+        pass  # Lootchest interaction result
         
         return result
         
@@ -187,16 +187,16 @@ class InteractionCoordinator:
         Returns:
             Processed chest contents
         """
-        print(f"InteractionCoordinator.handle_chest_opened_callback called with chest_pos={chest_pos}")
+        pass  # InteractionCoordinator.handle_chest_opened_callback called
 
         # Make sure chest_contents is a list
         if not isinstance(chest_contents, list):
-            print(f"Warning: chest_contents is not a list, it's a {type(chest_contents)}")
+            pass  # Warning: chest_contents is not a list
             chest_contents = []
 
         # If chest_contents is empty, initialize with empty slots
         if not chest_contents:
-            print("Chest contents is empty, initializing with empty slots")
+            pass  # Chest contents is empty, initializing with empty slots
             chest_contents = [None] * 60  # 10x6 grid
             
         return chest_contents

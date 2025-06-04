@@ -381,7 +381,7 @@ class Bomberplant(Enemy):
         if (self.bomb_state == "up" and (not self.bomb_up_sprites or len(self.bomb_up_sprites) == 0)) or \
            (self.bomb_state == "down" and (not self.bomb_down_sprites or len(self.bomb_down_sprites) == 0)) or \
            (self.bomb_state == "explosion" and (not self.bomb_explosion_sprites or len(self.bomb_explosion_sprites) == 0)):
-            print(f"Error: Missing bomb sprites for state: {self.bomb_state}")
+            pass  # Error: Missing bomb sprites
             # Reset to a safe state
             self.bomb_state = "none"
             self.bomb_frame = 0
@@ -789,7 +789,7 @@ class Bomberplant(Enemy):
         """Reset all attack-related states"""
         # Debug output before reset
         if self.bomb_state != "none" or self.is_attacking or self.mark_active:
-            print(f"Resetting attack states - previous states: bomb={self.bomb_state}, attacking={self.is_attacking}, mark_active={self.mark_active}")
+            pass  # Resetting attack states
 
         # Reset mark state
         self.mark_active = False
@@ -957,7 +957,7 @@ class Bomberplant(Enemy):
             image = pygame.image.load(full_path).convert_alpha()
             return image
         except pygame.error as e:
-            print(f"Error loading image {path}: {e}")
+            pass  # Error loading image
             # Return a placeholder image (red square)
             placeholder = pygame.Surface((16, 16), pygame.SRCALPHA)
             placeholder.fill((255, 0, 0, 128))
@@ -972,7 +972,7 @@ class Bomberplant(Enemy):
 
             # Check if directory exists
             if not os.path.exists(full_dir):
-                print(f"Animation directory not found: {directory}")
+                pass  # Animation directory not found
                 return frames
 
             # Get all PNG files in the directory
@@ -988,11 +988,11 @@ class Bomberplant(Enemy):
                     image = pygame.image.load(file_path).convert_alpha()
                     frames.append(image)
                 except pygame.error as e:
-                    print(f"Error loading animation frame {file_path}: {e}")
+                    pass  # Error loading animation frame
 
-            print(f"Loaded {len(frames)} animation frames from {directory}")
+            pass  # Loaded animation frames
         except Exception as e:
-            print(f"Error loading animation frames from {directory}: {e}")
+            pass  # Error loading animation frames
 
         return frames
 
@@ -1255,7 +1255,7 @@ class Bomberplant(Enemy):
         if self.bomb_state != "none" and not self.is_dead and not self.is_dying:
             # Validate bomb position is set
             if not self.bomb_position or len(self.bomb_position) != 2:
-                print(f"Error: Invalid bomb position: {self.bomb_position}")
+                pass  # Error: Invalid bomb position
                 self.bomb_state = "none"
                 return
 
@@ -1272,22 +1272,22 @@ class Bomberplant(Enemy):
                 bomb_image = self.bomb_up_sprites[bomb_frame]
                 # Debug output for bomb position
                 if self.debug_mode:
-                    print(f"Drawing UP bomb at position: {self.bomb_position}, progress: {self.bomb_travel_progress:.2f}")
+                    pass  # Drawing UP bomb
             elif self.bomb_state == "down" and self.bomb_down_sprites and len(self.bomb_down_sprites) > 0:
                 bomb_frame = min(self.bomb_frame, len(self.bomb_down_sprites) - 1)
                 bomb_image = self.bomb_down_sprites[bomb_frame]
                 # Debug output for bomb position
                 if self.debug_mode:
-                    print(f"Drawing DOWN bomb at position: {self.bomb_position}, progress: {self.bomb_travel_progress:.2f}")
+                    pass  # Drawing DOWN bomb
             elif self.bomb_state == "explosion" and self.bomb_explosion_sprites and len(self.bomb_explosion_sprites) > 0:
                 bomb_frame = min(self.bomb_frame, len(self.bomb_explosion_sprites) - 1)
                 bomb_image = self.bomb_explosion_sprites[bomb_frame]
                 # Debug output for bomb position
                 if self.debug_mode:
-                    print(f"Drawing EXPLOSION at position: {self.bomb_position}")
+                    pass  # Drawing EXPLOSION
             else:
                 # If we don't have the right sprites for the current state, reset the bomb state
-                print(f"Error: Missing bomb sprites for state: {self.bomb_state}")
+                pass  # Error: Missing bomb sprites
                 self.bomb_state = "none"
                 return
 

@@ -299,7 +299,7 @@ class EditScreen(BaseScreen):
                         # Remove the relation points for this specific ID
                         if deleted_id in self.relation_points:
                             del self.relation_points[deleted_id]
-                            print(f"Removed relation points with ID {deleted_id}")
+                            pass  # Removed relation points
                         return None
 
                     # Handle other events (group selection, etc.)
@@ -317,7 +317,7 @@ class EditScreen(BaseScreen):
 
                     for id_key in ids_to_remove:
                         del self.relation_points[id_key]
-                        print(f"Removed relation points with ID {id_key}")
+                        pass  # Removed relation points
 
                     # No automatic saving when handling relation component events
                     # Changes are only saved when the save button is clicked
@@ -341,7 +341,7 @@ class EditScreen(BaseScreen):
                         for id_key, points in list(self.relation_points.items()):  # Use list() to avoid modification during iteration
                             if 'a' in points and points['a'] == current_pos:
                                 del self.relation_points[id_key]['a']
-                                print(f"Removed relation point A with ID {id_key}")
+                                pass  # Removed relation point A
                                 # If no points left for this ID, remove the ID entry
                                 if not self.relation_points[id_key]:
                                     del self.relation_points[id_key]
@@ -354,7 +354,7 @@ class EditScreen(BaseScreen):
 
                             if 'b' in points and points['b'] == current_pos:
                                 del self.relation_points[id_key]['b']
-                                print(f"Removed relation point B with ID {id_key}")
+                                pass  # Removed relation point B
                                 # If no points left for this ID, remove the ID entry
                                 if not self.relation_points[id_key]:
                                     del self.relation_points[id_key]
@@ -392,7 +392,7 @@ class EditScreen(BaseScreen):
                                 if not self.are_maps_in_same_folder(self.current_main_map, map_name):
                                     self.map_saver.status_message = f"Warning: Map '{map_name}' is not in the same folder as '{self.current_main_map}'!"
                                     self.map_saver.status_timer = 180
-                                    print(f"Warning: Maps {self.current_main_map} and {map_name} are not in the same folder. Relation points will not work.")
+                                    pass  # Warning: Maps not in same folder
                                     # Still allow placement, but warn the user
 
                         # Place the relation point

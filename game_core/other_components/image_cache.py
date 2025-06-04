@@ -119,7 +119,7 @@ class SpriteCache:
             return sprite
             
         except Exception as e:
-            print(f"Error extracting sprite from sheet {sheet_path} at {rect}: {e}")
+            pass  # Error extracting sprite from sheet
             return None
     
     def get_animation_frames(self, folder_path: str, convert_alpha: bool = True) -> List[pygame.Surface]:
@@ -163,7 +163,7 @@ class SpriteCache:
                         self._cache_misses += 1
                     
         except Exception as e:
-            print(f"Error loading animation frames from {folder_path}: {e}")
+            pass  # Error loading animation frames
         
         return frames
 
@@ -215,7 +215,7 @@ class SpriteCache:
             return scaled_sprite
 
         except Exception as e:
-            print(f"Error scaling sprite {path} to {size}: {e}")
+            pass  # Error scaling sprite
             return original_sprite
 
     def _normalize_path(self, path: str) -> str:
@@ -238,7 +238,7 @@ class SpriteCache:
         """
         try:
             if not os.path.exists(path):
-                print(f"Image file not found: {path}")
+                pass  # Image file not found
                 return None
             
             image = pygame.image.load(path)
@@ -250,7 +250,7 @@ class SpriteCache:
             return image
             
         except Exception as e:
-            print(f"Error loading image {path}: {e}")
+            pass  # Error loading image
             return None
     
     def _cleanup_cache(self):
@@ -302,10 +302,8 @@ class SpriteCache:
 
     def print_cache_stats(self):
         """Print cache statistics to console for debugging."""
-        stats = self.get_cache_stats()
-        print(f"Sprite Cache Stats: {stats['cache_size']} sprites, "
-              f"{stats['cache_hits']} hits, {stats['cache_misses']} misses, "
-              f"{stats['hit_ratio']:.1%} hit ratio")
+        # Cache stats printing disabled
+        pass
     
     def create_placeholder(self, size: Tuple[int, int] = (16, 16), 
                          color: Tuple[int, int, int, int] = (255, 0, 0, 128)) -> pygame.Surface:

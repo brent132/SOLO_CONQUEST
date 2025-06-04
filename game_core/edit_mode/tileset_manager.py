@@ -68,27 +68,27 @@ class TilesetManager:
                     # Load each individual tile
                     for tile_file in tile_files:
                         tile_path = os.path.join(folder, tile_file)
-                        try:
+                        # try:
                             # Extract tile index from filename (assuming format like "tile123.png")
-                            tile_index = int(tile_file.replace("tile", "").replace(".png", ""))
+                        tile_index = int(tile_file.replace("tile", "").replace(".png", ""))
 
-                            # Calculate original position in tileset
-                            original_row = tile_index // tiles_per_row
-                            original_col = tile_index % tiles_per_row
+                        # Calculate original position in tileset
+                        original_row = tile_index // tiles_per_row
+                        original_col = tile_index % tiles_per_row
 
-                            # Load the tile image
-                            tile_img = pygame.image.load(tile_path).convert_alpha()
+                        # Load the tile image
+                        tile_img = pygame.image.load(tile_path).convert_alpha()
 
-                            # Create a button for this tile (positions will be set later)
-                            buttons.append({
-                                'image': tile_img,
-                                'source_path': tile_path,
-                                'original_row': original_row,
-                                'original_col': original_col,
-                                'button': None  # Will be created when positioning buttons
-                            })
-                        except Exception as e:
-                            print(f"Error loading tile {tile_path}: {e}")
+                        # Create a button for this tile (positions will be set later)
+                        buttons.append({
+                            'image': tile_img,
+                            'source_path': tile_path,
+                            'original_row': original_row,
+                            'original_col': original_col,
+                            'button': None  # Will be created when positioning buttons
+                        })
+                        # except Exception as e:
+                            # Error loading tile - commented out
 
                 self.tileset_buttons.append(buttons)
                 self.tileset_layouts.append({
@@ -97,7 +97,7 @@ class TilesetManager:
                 })
                 # Loaded tiles successfully
             except Exception as e:
-                print(f"Error loading tileset folder {folder}: {e}")
+                pass  # Error loading tileset folder
 
         # Load animated tiles
         self.load_animated_tiles()
@@ -121,7 +121,7 @@ class TilesetManager:
                 })
                 # Player tile loaded successfully
             except Exception as e:
-                print(f"Error loading player tile: {e}")
+                pass  # Error loading player tile
 
         # Load phantom enemy - right facing
         phantom_right_path = "Enemies_Sprites/Phantom_Sprites/phantom_idle_anim_right/tile000.png"
@@ -139,7 +139,7 @@ class TilesetManager:
                     'enemy_type': "phantom_right"
                 })
             except Exception as e:
-                print(f"Error loading phantom right enemy tile: {e}")
+                pass  # Error loading phantom right enemy tile
 
         # Load phantom enemy - left facing
         phantom_left_path = "Enemies_Sprites/Phantom_Sprites/phantom_idle_anim_left/tile000.png"
@@ -156,7 +156,7 @@ class TilesetManager:
                     'enemy_type': "phantom_left"
                 })
             except Exception as e:
-                print(f"Error loading phantom left enemy tile: {e}")
+                pass  # Error loading phantom left enemy tile
 
         # Load bomberplant enemy
         bomberplant_path = "Enemies_Sprites/Bomberplant_Sprites/bomberplant_idle_anim_all_dir/tile000.png"
@@ -173,7 +173,7 @@ class TilesetManager:
                     'enemy_type': "bomberplant"
                 })
             except Exception as e:
-                print(f"Error loading bomberplant enemy tile: {e}")
+                pass  # Error loading bomberplant enemy tile
 
         # Load spinner enemy
         spinner_path = "Enemies_Sprites/Spinner_Sprites/spinner_idle_anim_all_dir/tile000.png"
@@ -190,7 +190,7 @@ class TilesetManager:
                     'enemy_type': "spinner"
                 })
             except Exception as e:
-                print(f"Error loading spinner enemy tile: {e}")
+                pass  # Error loading spinner enemy tile
 
         # Load spider enemy
         spider_path = "Enemies_Sprites/Spider_Sprites/spider_idle_anim_all_dir/tile000.png"
@@ -207,7 +207,7 @@ class TilesetManager:
                     'enemy_type': "spider"
                 })
             except Exception as e:
-                print(f"Error loading spider enemy tile: {e}")
+                pass  # Error loading spider enemy tile
 
         # Load pinkslime enemy
         pinkslime_path = "Enemies_Sprites/Pinkslime_Sprites/pinkslime_idle_anim_all_dir/tile000.png"
@@ -224,7 +224,7 @@ class TilesetManager:
                     'enemy_type': "pinkslime"
                 })
             except Exception as e:
-                print(f"Error loading pinkslime enemy tile: {e}")
+                pass  # Error loading pinkslime enemy tile
 
         # Load pinkbat enemy - left facing
         pinkbat_left_path = "Enemies_Sprites/Pinkbat_Sprites/pinkbat_idle_left_anim/tile000.png"
@@ -241,7 +241,7 @@ class TilesetManager:
                     'enemy_type': "pinkbat_left"
                 })
             except Exception as e:
-                print(f"Error loading pinkbat left enemy tile: {e}")
+                pass  # Error loading pinkbat left enemy tile
 
         # Load pinkbat enemy - right facing
         pinkbat_right_path = "Enemies_Sprites/Pinkbat_Sprites/pinkbat_idle_right_anim/tile000.png"
@@ -258,7 +258,7 @@ class TilesetManager:
                     'enemy_type': "pinkbat_right"
                 })
             except Exception as e:
-                print(f"Error loading pinkbat right enemy tile: {e}")
+                pass  # Error loading pinkbat right enemy tile
 
     def load_animated_tiles(self):
         """Load animated tiles and add them to the tileset buttons"""

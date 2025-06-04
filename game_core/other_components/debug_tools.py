@@ -45,7 +45,7 @@ class DebugManager:
 
         # Check if the category is enabled or if no category is specified
         if category is None or (category in self.debug_categories and self.debug_categories[category]):
-            print(f"[DEBUG:{category if category else 'GENERAL'}] {message}")
+            pass  # Debug message disabled
 
     def is_category_enabled(self, category):
         """Check if a specific debug category is enabled"""

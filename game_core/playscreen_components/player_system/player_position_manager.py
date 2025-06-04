@@ -77,14 +77,14 @@ class PlayerPositionManager:
                 player_y = world_location["y"]
                 player_direction = world_location["direction"]
                 
-                print(f"DEBUG: Loading map '{map_name}' in world '{folder_name}'")
-                print(f"DEBUG: Saved location was for map '{world_location.get('map_name')}' at ({player_x}, {player_y})")
-                print(f"DEBUG: Using saved position for world '{folder_name}': ({player_x}, {player_y})")
+                pass  # DEBUG: Loading map in world
+                pass  # DEBUG: Saved location was for map
+                pass  # DEBUG: Using saved position for world
                 
                 return (player_x, player_y, player_direction)
                 
         except Exception as e:
-            print(f"Error getting world location: {e}")
+            pass  # Error getting world location
         
         return None
     
@@ -98,12 +98,12 @@ class PlayerPositionManager:
                     player_y = saved_location["y"]
                     player_direction = saved_location["direction"]
                     
-                    print(f"Loaded saved position for map '{map_name}' from any world (fallback): ({player_x}, {player_y})")
+                    pass  # Loaded saved position for map from any world (fallback)
                     
                     return (player_x, player_y, player_direction)
                     
         except Exception as e:
-            print(f"Error getting map location: {e}")
+            pass  # Error getting map location
         
         return None
     
@@ -118,12 +118,12 @@ class PlayerPositionManager:
                 player_y = player_grid_y * grid_cell_size
                 player_direction = map_data["player_start"].get("direction", "down")
                 
-                print(f"Using map's player_start position: ({player_x}, {player_y})")
+                pass  # Using map's player_start position
                 
                 return (player_x, player_y, player_direction)
                 
         except Exception as e:
-            print(f"Error getting map start position: {e}")
+            pass  # Error getting map start position
         
         return None
     
@@ -134,7 +134,7 @@ class PlayerPositionManager:
         player_y = (map_height * grid_cell_size) // 2
         player_direction = "down"
         
-        print(f"Using default center position: ({player_x}, {player_y})")
+        pass  # Using default center position
         
         return (player_x, player_y, player_direction)
     
@@ -144,7 +144,7 @@ class PlayerPositionManager:
             # Determine which folder (world) the current map belongs to
             current_folder_name = player_location_tracker._determine_folder_name(map_name)
             
-            print(f"DEBUG: Saving player location for world {current_folder_name}, map {map_name}")
+            pass  # DEBUG: Saving player location for world
             
             # Save the current player position for the current map and world
             player_location_tracker.save_location(
@@ -161,7 +161,7 @@ class PlayerPositionManager:
             player_location_tracker.save_to_file()
             
         except Exception as e:
-            print(f"Error saving player location: {e}")
+            pass  # Error saving player location
     
     def get_position_info(self, player: PlayerCharacter) -> Dict[str, Any]:
         """Get comprehensive position information"""

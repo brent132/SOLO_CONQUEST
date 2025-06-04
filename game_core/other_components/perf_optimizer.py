@@ -103,7 +103,7 @@ class PerformanceOptimizer:
                 self.current_quality_level = "medium"
             else:
                 self.current_quality_level = "low"
-            print(f"Performance: Reduced quality to {self.current_quality_level} (FPS: {avg_fps:.1f})")
+            pass  # Performance: Reduced quality level
         
         # Upgrade quality if performance is good
         elif avg_fps > self.target_fps * 0.9 and self.current_quality_level != "high":
@@ -111,7 +111,7 @@ class PerformanceOptimizer:
                 self.current_quality_level = "medium"
             else:
                 self.current_quality_level = "high"
-            print(f"Performance: Increased quality to {self.current_quality_level} (FPS: {avg_fps:.1f})")
+            pass  # Performance: Increased quality level
     
     def get_quality_setting(self, setting_name: str):
         """Get a specific quality setting for the current quality level."""
@@ -168,11 +168,8 @@ class PerformanceOptimizer:
     
     def print_performance_stats(self):
         """Print performance statistics to console."""
-        info = self.get_performance_info()
-        print(f"Performance: {info['current_fps']:.1f} FPS (avg: {info['average_fps']:.1f}), "
-              f"Quality: {info['quality_level']}, "
-              f"Dirty rects: {info['dirty_rects_count']}, "
-              f"UI cache: {info['ui_cache_size']}")
+        # Performance stats printing disabled
+        pass
 
 # Global performance optimizer instance
 perf_optimizer = PerformanceOptimizer()

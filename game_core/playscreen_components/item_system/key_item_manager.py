@@ -35,11 +35,11 @@ class KeyItemManager:
             # Store all animation frames for direct access
             if self.collection_animation.frames:
                 self.collection_frames = self.collection_animation.frames
-                print(f"Loaded key item collection animation with {len(self.collection_frames)} frames")
+                pass  # Loaded key item collection animation
             else:
-                print("No frames found in key item collection animation")
+                pass  # No frames found in key item collection animation
         else:
-            print(f"Key item collection animation folder not found: {animation_folder}")
+            pass  # Key item collection animation folder not found
 
     def add_key_item(self, grid_x, grid_y, tile_id, layer=0):
         """Add a key item to the manager

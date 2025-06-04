@@ -42,7 +42,7 @@ class CursorManager:
             hotspot = (cursor_image.get_width() // 4, cursor_image.get_height() // 4)
             self.select_cursor = pygame.cursors.Cursor((hotspot), cursor_image)
         except Exception as e:
-            print(f"Error loading custom cursor: {e}")
+            pass  # Error loading custom cursor
             self.select_cursor = None
             
     def update_cursor_state(self, hud_hovered_slot: int, hovered_lootchest: bool):

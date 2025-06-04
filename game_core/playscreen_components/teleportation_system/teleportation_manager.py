@@ -78,12 +78,12 @@ class TeleportationManager:
         if not player:
             return False
             
-        print(f"Player touched relation point: {relation['from_point']} -> {relation['to_point']} in map {relation['to_map']}")
-        print(f"Teleporting to position: {relation['to_position']}")
+        pass  # Player touched relation point
+        pass  # Teleporting to position
 
         # Save the current player position using the player system
         self.player_system.save_player_location(current_map_name, self.player_location_tracker)
-        print(f"Saved player location for map {current_map_name}: ({player.rect.x}, {player.rect.y}, {player.direction})")
+        pass  # Saved player location for map
 
         # Save the current game state before teleporting
         if self.save_callback:
@@ -92,8 +92,8 @@ class TeleportationManager:
         # Store the target position before loading the map
         target_position = relation['to_position']
         target_map = relation['to_map']
-        print(f"Loading target map: {target_map}")
-        print(f"Target position: {target_position}")
+        pass  # Loading target map
+        pass  # Target position
 
         # Set teleportation state
         self.is_teleporting = True
@@ -109,7 +109,7 @@ class TeleportationManager:
         # Load the target map
         if self.load_map_callback:
             load_success = self.load_map_callback(target_map)
-            print(f"Map load success: {load_success}")
+            pass  # Map load success
             
             if load_success:
                 self._complete_teleportation(target_position, target_map, relation)
@@ -125,8 +125,8 @@ class TeleportationManager:
         # Make sure we have all relation points loaded before switching maps
         self.relation_handler.load_all_relation_points()
 
-        # Print all available relation points for debugging
-        print(f"Available relation points before map load: {self.relation_handler.relation_points}")
+        # print all available relation points for debugging
+        pass  # Available relation points before map load
         
     def _complete_teleportation(self, target_position, target_map, relation):
         """Complete the teleportation process after map load"""
@@ -137,7 +137,7 @@ class TeleportationManager:
         # Make sure the relation handler has the current map set correctly
         if self.relation_handler:
             self.relation_handler.current_map = target_map
-            print(f"Set relation handler current map to: {self.relation_handler.current_map}")
+            pass  # Set relation handler current map
 
             # Set the current teleport point to the destination point
             # This prevents immediate re-teleportation until player steps off and back on
@@ -156,10 +156,10 @@ class TeleportationManager:
                 'position': target_position,
                 'id': point_id
             }
-            print(f"Set current teleport point to: {self.relation_handler.current_teleport_point}")
+            pass  # Set current teleport point
 
-            # Print all available relation points after map load
-            print(f"Available relation points after map load: {self.relation_handler.relation_points}")
+            # Available relation points after map load
+            pass  # Available relation points after map load
 
         # Position the player exactly at the center of the target relation point
         self._position_player_at_teleport_point(target_position, target_map)
@@ -190,14 +190,14 @@ class TeleportationManager:
 
         # Save this position using the player system
         self.player_system.save_player_location(target_map, self.player_location_tracker)
-        print(f"DEBUG: Saved teleport position for map {target_map}: ({player.rect.x}, {player.rect.y}, {player.direction})")
+        pass  # DEBUG: Saved teleport position for map
 
         # Reset movement states
         player.velocity = [0, 0]
         player.is_knocked_back = False
         player.knockback_velocity = [0, 0]
 
-        print(f"Positioned player exactly at center of teleport point: ({point_center_x}, {point_center_y})")
+        pass  # Positioned player exactly at center of teleport point
 
         # Update the player's position in the physics system
         # This ensures animations and collision detection work correctly
@@ -213,7 +213,7 @@ class TeleportationManager:
     def _unstuck_player_after_teleport(self):
         """Check if player is stuck after teleportation and unstuck if needed"""
         if not all([self.player_system, self.collision_handler, self.expanded_mapping, self.map_data]):
-            print("Warning: Cannot perform unstuck check - collision system not initialized")
+            pass  # Warning: Cannot perform unstuck check - collision system not initialized
             return
 
         # Attempt to unstuck the player if they're stuck in a collision
@@ -222,7 +222,7 @@ class TeleportationManager:
         )
 
         if unstuck_success:
-            print("Player was unstuck after teleportation")
+            pass  # Player was unstuck after teleportation
             # Update camera position after unstuck
             if self.camera_controller:
                 self.camera_controller.center_camera_on_player()

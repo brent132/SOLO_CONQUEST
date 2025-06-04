@@ -53,40 +53,40 @@ class MapProcessor:
     
     def process_layered_format(self, map_data: Dict[Any, Any]) -> Dict[str, Any]:
         """Process a map in the layered format"""
-        print(f"MapProcessor: Processing layered format map")
+        pass  # MapProcessor: Processing layered format map
 
         # Process tile mapping
         tile_mapping = map_data["tile_mapping"]
         self.expanded_mapping = self._expand_tile_mapping(tile_mapping)
-        print(f"  Expanded mapping has {len(self.expanded_mapping)} tiles")
+        pass  # Expanded mapping has tiles
 
         # Store all layers separately instead of merging them
         self.layers = []
         width = map_data.get("width", 0)
         height = map_data.get("height", 0)
-        print(f"  Map dimensions: {width}x{height}")
+        pass  # Map dimensions
 
         # Process each layer
         layers_data = map_data.get("layers", [])
-        print(f"  Found {len(layers_data)} layers to process")
+        pass  # Found layers to process
 
         for layer_idx, layer in enumerate(layers_data):
             layer_visible = layer.get("visible", True)
             layer_data = layer.get("data", layer.get("map_data", []))  # Handle both "data" and "map_data"
 
-            print(f"  Processing layer {layer_idx}: visible={layer_visible}, data_type={type(layer_data)}")
+            pass  # Processing layer
             if isinstance(layer_data, list):
-                print(f"    Layer data length: {len(layer_data)}")
+                pass  # Layer data length
                 if layer_data and isinstance(layer_data[0], list):
-                    print(f"    Already 2D array with {len(layer_data)} rows")
+                    pass  # Already 2D array
                 elif layer_data and isinstance(layer_data[0], int):
-                    print(f"    Flat array, will convert to 2D")
+                    pass  # Flat array, will convert to 2D
 
             # Convert flat array to 2D array if needed
             if isinstance(layer_data, list) and len(layer_data) > 0:
                 if isinstance(layer_data[0], int):
                     # Flat array - convert to 2D
-                    print(f"    Converting flat array to 2D ({width}x{height})")
+                    pass  # Converting flat array to 2D
                     layer_2d = []
                     for y in range(height):
                         row = []
@@ -98,7 +98,7 @@ class MapProcessor:
                                 row.append(-1)  # Empty tile
                         layer_2d.append(row)
                     layer_data = layer_2d
-                    print(f"    Converted to 2D array with {len(layer_data)} rows")
+                    pass  # Converted to 2D array
 
             # Store the layer
             processed_layer = {
@@ -107,9 +107,9 @@ class MapProcessor:
                 "name": layer.get("name", f"Layer {layer_idx}")
             }
             self.layers.append(processed_layer)
-            print(f"    Added layer {layer_idx} to processed layers")
+            pass  # Added layer to processed layers
 
-        print(f"  Total processed layers: {len(self.layers)}")
+        pass  # Total processed layers
         
         return {
             "format": "layered",
@@ -169,7 +169,7 @@ class MapProcessor:
                 # Handle direct path format
                 self._expand_direct_path(tileset_id, tileset_info, expanded)
             else:
-                print(f"Unknown tile mapping format for tileset {tileset_id}: {tileset_info}")
+                pass  # Unknown tile mapping format
 
         return expanded
 
@@ -200,7 +200,7 @@ class MapProcessor:
                 }
 
         except Exception as e:
-            print(f"Error expanding loop pattern for tileset {tileset_id}: {e}")
+            pass  # Error expanding loop pattern
 
     def _expand_direct_path(self, tileset_id: str, tileset_info: Dict[str, Any], expanded: Dict[str, Dict[str, Any]]):
         """Expand a direct path tile mapping"""
@@ -244,7 +244,7 @@ class MapProcessor:
                 }
 
         except Exception as e:
-            print(f"Error expanding direct path for tileset {tileset_id}: {e}")
+            pass  # Error expanding direct path
     
     def get_tile_path(self, tile_id: int) -> Optional[str]:
         """

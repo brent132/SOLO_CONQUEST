@@ -163,8 +163,8 @@ class ViewportCalculator:
             # Used area is taller than or equal to the screen, no vertical centering needed
             center_offset_y = 0
 
-        print(f"Used area bounds: ({min_x}, {min_y}) to ({max_x}, {max_y})")
-        print(f"Used area size: {used_width}x{used_height} pixels")
-        print(f"Center offset: ({center_offset_x}, {center_offset_y})")
+        pass  # Used area bounds
+        pass  # Used area size
+        pass  # Center offset
 
         return center_offset_x, center_offset_y

@@ -245,7 +245,7 @@ class InputSystem:
     def _on_unstuck_player(self):
         """Handle unstuck player request"""
         if not all([self.player_system, self.collision_handler, self.expanded_mapping, self.map_data]):
-            print("Warning: Cannot unstuck player - collision system not initialized")
+            pass  # Warning: Cannot unstuck player - collision system not initialized
             return
 
         # Attempt to unstuck the player
@@ -254,7 +254,7 @@ class InputSystem:
         )
 
         if not unstuck_success:
-            print("Player is not stuck or could not be unstuck")
+            pass  # Player is not stuck or could not be unstuck
 
     # Public interface methods
     def get_zoom_controller(self) -> ZoomController:

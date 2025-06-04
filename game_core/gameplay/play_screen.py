@@ -100,9 +100,9 @@ class PlayScreen(BaseScreen):
         self.player_inventory = PlayerInventory(self.width, self.height)
 
         # Set the callback for when a chest is opened
-        print("Setting lootchest_manager callback to self.on_chest_opened")
+        pass  # Setting lootchest_manager callback
         self.lootchest_manager.set_on_chest_opened_callback(self.on_chest_opened)
-        print(f"Callback set: {self.lootchest_manager.on_chest_opened_callback is not None}")
+        pass  # Callback set
 
         # Enemy manager
         self.enemy_manager = EnemyManager()
@@ -360,22 +360,22 @@ class PlayScreen(BaseScreen):
                 self.collision_handler.load_collision_data(map_data["collision_data"])
 
             # First, load all relation points from all maps to ensure we have a complete set
-            print(f"Loading all relation points for teleportation")
+            pass  # Loading all relation points for teleportation
             self.relation_handler.load_all_relation_points()
 
             # Then load relation points for the current map if available
             if "relation_points" in map_data:
-                print(f"Found relation points in map data: {map_data['relation_points']}")
+                pass  # Found relation points in map data
                 self.relation_handler.load_relation_points(map_name, map_data["relation_points"])
             else:
                 # Load relation points from file (will search for other maps with relation points)
-                print(f"No relation points in map data, loading from file")
+                pass  # No relation points in map data, loading from file
                 self.relation_handler.load_relation_points(map_name)
 
             # Make sure the current map is set correctly in relation handler
             self.relation_handler.current_map = map_name
-            print(f"Current map set to: {self.relation_handler.current_map}")
-            print(f"All loaded relation points: {self.relation_handler.relation_points}")
+            pass  # Current map set
+            pass  # All loaded relation points
 
             # Map processing is now handled by the MapSystem during load_map call above
             # No need to process the map format here anymore
@@ -420,7 +420,7 @@ class PlayScreen(BaseScreen):
                 # NOTE: Player inventory is now loaded separately from SaveData/character_inventory.json
                 # Ignore any old "player_inventory" data that might exist in map files
                 if "player_inventory" in game_state:
-                    print("INFO: Ignoring old player_inventory data in map file - now loaded from separate file")
+                    pass  # INFO: Ignoring old player_inventory data
 
                 # Load collected keys data if available
                 if "collected_keys" in game_state:
@@ -453,9 +453,9 @@ class PlayScreen(BaseScreen):
 
             # Calculate center offset for small maps using camera controller
             center_offset_x, center_offset_y = self.camera_controller.calculate_center_offset()
-            print(f"Map dimensions: {self.map_width}x{self.map_height} pixels: {self.map_width * self.grid_cell_size}x{self.map_height * self.grid_cell_size}")
-            print(f"Screen dimensions: {self.width}x{self.height}")
-            print(f"Center offset: ({center_offset_x}, {center_offset_y})")
+            pass  # Map dimensions
+            pass  # Screen dimensions
+            pass  # Center offset
 
             # Restore teleportation flags
             self.is_teleporting = was_teleporting
@@ -485,9 +485,9 @@ class PlayScreen(BaseScreen):
                 self.player_system, self.collision_handler, self.expanded_mapping, collision_map_data, map_width, map_height
             )
 
-            print("✅ Collision system set up for unstuck functionality")
+            pass  # Collision system set up for unstuck functionality
         except Exception as e:
-            print(f"⚠️ Warning: Could not set up collision system for unstuck: {e}")
+            pass  # Warning: Could not set up collision system for unstuck
 
     # OLD MAP PROCESSING METHOD REMOVED - NOW HANDLED BY MapSystem
     # process_layered_format_map() has been replaced by the modularized map system
@@ -500,14 +500,14 @@ class PlayScreen(BaseScreen):
 
     def _scan_for_special_items(self):
         """Scan the map layers for special items (keys, crystals, lootchests)"""
-        print(f"PlayScreen._scan_for_special_items called for map: {self.map_name}")
+        pass  # PlayScreen._scan_for_special_items called
 
         # Precaution: Check if layers exist and are valid
         if not hasattr(self, 'layers') or not self.layers:
-            print(f"Warning: No layers found for map {self.map_name}. Layers: {getattr(self, 'layers', 'Not set')}")
+            pass  # Warning: No layers found
             return
 
-        print(f"Found {len(self.layers)} layers to scan")
+        pass  # Found layers to scan
 
         # Set up item IDs from animated tile manager
         key_item_id = None
@@ -516,11 +516,11 @@ class PlayScreen(BaseScreen):
 
         # Precaution: Check if animated tile manager exists
         if not hasattr(self, 'animated_tile_manager') or not self.animated_tile_manager:
-            print("Warning: No animated tile manager found")
+            pass  # Warning: No animated tile manager found
             return
 
         if not hasattr(self.animated_tile_manager, 'animated_tile_ids'):
-            print("Warning: Animated tile manager has no animated_tile_ids")
+            pass  # Warning: Animated tile manager has no animated_tile_ids
             return
 
         for tile_id, tile_name in self.animated_tile_manager.animated_tile_ids.items():
@@ -534,7 +534,7 @@ class PlayScreen(BaseScreen):
                 lootchest_item_id = tile_id
                 self.lootchest_item_id = tile_id  # Keep for backward compatibility
 
-        print(f"Item IDs found - Key: {key_item_id}, Crystal: {crystal_item_id}, Lootchest: {lootchest_item_id}")
+        pass  # Item IDs found
 
         # Use game systems coordinator to scan and setup items
         try:
@@ -542,67 +542,67 @@ class PlayScreen(BaseScreen):
                 self.layers, key_item_id, crystal_item_id, lootchest_item_id
             )
         except Exception as e:
-            print(f"Error in game_systems_coordinator.scan_and_setup_items: {e}")
+            pass  # Error in game_systems_coordinator.scan_and_setup_items
 
         # Handle lootchest setup separately since it's more complex
         lootchests_found = 0
         try:
             for layer_idx, layer in enumerate(self.layers):
                 if not layer.get("visible", True):
-                    print(f"Skipping invisible layer {layer_idx}")
+                    pass  # Skipping invisible layer
                     continue
 
                 layer_data = layer.get("data", [])
                 if not layer_data:
-                    print(f"Layer {layer_idx} has no data")
+                    pass  # Layer has no data
                     continue
 
-                print(f"Scanning layer {layer_idx} with {len(layer_data)} rows")
+                pass  # Scanning layer
 
                 for y, row in enumerate(layer_data):
                     if not isinstance(row, list):
-                        print(f"Warning: Row {y} in layer {layer_idx} is not a list: {type(row)}")
+                        pass  # Warning: Row is not a list
                         continue
 
                     for x, tile_id in enumerate(row):
                         # Check for lootchest items
                         if lootchest_item_id and tile_id == lootchest_item_id:
-                            print(f"Found lootchest at position ({x}, {y}) in layer {layer_idx}")
+                            pass  # Found lootchest at position
                             try:
                                 self.lootchest_manager.add_lootchest(x, y, tile_id, layer_idx)
                                 lootchests_found += 1
                             except Exception as e:
-                                print(f"Error adding lootchest at ({x}, {y}): {e}")
+                                pass  # Error adding lootchest
 
         except Exception as e:
-            print(f"Error during lootchest scanning: {e}")
+            pass  # Error during lootchest scanning
 
-        print(f"Total lootchests found and added: {lootchests_found}")
+        pass  # Total lootchests found and added
 
         # Scan for enemies in the layers and spawn them
         self._scan_and_spawn_enemies()
 
     def _scan_and_spawn_enemies(self):
         """Scan the map layers for enemy tiles and spawn enemy entities"""
-        print(f"PlayScreen._scan_and_spawn_enemies called for map: {self.map_name}")
+        pass  # PlayScreen._scan_and_spawn_enemies called
 
         # Precaution: Check if layers exist and are valid
         if not hasattr(self, 'layers') or not self.layers:
-            print(f"Warning: No layers found for enemy scanning. Layers: {getattr(self, 'layers', 'Not set')}")
+            pass  # Warning: No layers found for enemy scanning
             return
 
         # Precaution: Check if enemy manager exists
         if not hasattr(self, 'enemy_manager') or not self.enemy_manager:
-            print("Warning: No enemy manager found")
+            pass  # Warning: No enemy manager found
             return
 
         # Precaution: Check if animated tile manager exists
         if not hasattr(self, 'animated_tile_manager') or not self.animated_tile_manager:
-            print("Warning: No animated tile manager found")
+            pass  # Warning: No animated tile manager found
             return
 
         if not hasattr(self.animated_tile_manager, 'animated_tile_ids'):
-            print("Warning: Animated tile manager has no animated_tile_ids")
+            pass  # Warning: Animated tile manager has no animated_tile_ids
             return
 
         # Map enemy tile IDs to enemy types
@@ -617,47 +617,47 @@ class PlayScreen(BaseScreen):
             398: "pinkbat_right"     # Pinkbat right
         }
 
-        print(f"Enemy tile mapping: {enemy_tile_mapping}")
-        print(f"Found {len(self.layers)} layers to scan for enemies")
+        pass  # Enemy tile mapping
+        pass  # Found layers to scan for enemies
 
         enemies_found = 0
         try:
             for layer_idx, layer in enumerate(self.layers):
                 if not layer.get("visible", True):
-                    print(f"Skipping invisible layer {layer_idx}")
+                    pass  # Skipping invisible layer
                     continue
 
                 layer_data = layer.get("data", [])
                 if not layer_data:
-                    print(f"Layer {layer_idx} has no data")
+                    pass  # Layer has no data
                     continue
 
-                print(f"Scanning layer {layer_idx} with {len(layer_data)} rows for enemies")
+                pass  # Scanning layer for enemies
 
                 for y, row in enumerate(layer_data):
                     if not isinstance(row, list):
-                        print(f"Warning: Row {y} in layer {layer_idx} is not a list: {type(row)}")
+                        pass  # Warning: Row is not a list
                         continue
 
                     for x, tile_id in enumerate(row):
                         # Check for enemy tiles
                         if tile_id in enemy_tile_mapping:
                             enemy_type = enemy_tile_mapping[tile_id]
-                            print(f"Found enemy tile {tile_id} ({enemy_type}) at position ({x}, {y}) in layer {layer_idx}")
+                            pass  # Found enemy tile
                             try:
                                 enemy = self.enemy_manager.add_enemy(enemy_type, x, y)
                                 if enemy:
                                     enemies_found += 1
-                                    print(f"Successfully spawned {enemy_type} at ({x}, {y})")
+                                    pass  # Successfully spawned enemy
                                 else:
-                                    print(f"Failed to spawn {enemy_type} at ({x}, {y})")
+                                    pass  # Failed to spawn enemy
                             except Exception as e:
-                                print(f"Error spawning enemy {enemy_type} at ({x}, {y}): {e}")
+                                pass  # Error spawning enemy
 
         except Exception as e:
-            print(f"Error during enemy scanning: {e}")
+            pass  # Error during enemy scanning
 
-        print(f"Total enemies found and spawned: {enemies_found}")
+        pass  # Total enemies found and spawned
 
     # OLD ZOOM METHODS REMOVED - NOW HANDLED BY InputSystem
     # zoom_in(), zoom_out(), reset_zoom(), update_zoom() have been replaced by the modularized input system
@@ -915,9 +915,9 @@ class PlayScreen(BaseScreen):
                 if self.player and not self.player.is_dead and self.map_name:
                     # Make sure relation points are saved
                     if hasattr(self, 'relation_handler'):
-                        print(f"Saving relation points for map: {self.map_name}")
-                        print(f"Current map in relation handler: {self.relation_handler.current_map}")
-                        print(f"All relation points: {self.relation_handler.relation_points}")
+                        pass  # Saving relation points for map
+                        pass  # Current map in relation handler
+                        pass  # All relation points
 
                         # Determine the correct map path - could be a main map or a related map
                         map_path = None
@@ -926,7 +926,7 @@ class PlayScreen(BaseScreen):
                         main_map_path = os.path.join("Maps", self.map_name, f"{self.map_name}.json")
                         if os.path.exists(main_map_path):
                             map_path = main_map_path
-                            print(f"Found main map file for saving: {map_path}")
+                            pass  # Found main map file for saving
                         else:
                             # It might be a related map, search in all map folders
                             maps_dir = os.path.join("Maps")
@@ -937,7 +937,7 @@ class PlayScreen(BaseScreen):
                                     related_map_path = os.path.join(folder_path, f"{self.map_name}.json")
                                     if os.path.exists(related_map_path):
                                         map_path = related_map_path
-                                        print(f"Found related map file for saving: {map_path}")
+                                        pass  # Found related map file for saving
                                         break
 
                         # If we found a map path, save the relation points
@@ -951,31 +951,31 @@ class PlayScreen(BaseScreen):
                                 if self.map_name in self.relation_handler.relation_points:
                                     # Use the map name as the key
                                     relation_points = self.relation_handler.relation_points[self.map_name]
-                                    print(f"Found relation points using map_name: {self.map_name}")
+                                    pass  # Found relation points using map_name
                                 # Then check if the current map in the relation handler is in the relation points
                                 elif self.relation_handler.current_map in self.relation_handler.relation_points:
                                     # Use the current map in the relation handler as the key
                                     relation_points = self.relation_handler.relation_points[self.relation_handler.current_map]
-                                    print(f"Found relation points using current_map: {self.relation_handler.current_map}")
+                                    pass  # Found relation points using current_map
                                 else:
                                     # No relation points found for this map
-                                    print(f"No relation points found for map: {self.map_name}")
+                                    pass  # No relation points found for map
                                     relation_points = {}
 
                                 # Always save relation points, even if empty
                                 # This ensures the relation_points field is always present in the map data
                                 map_data["relation_points"] = relation_points
-                                print(f"Saving relation points: {relation_points}")
+                                pass  # Saving relation points
 
                                 # Save the updated map data, preserving the is_main property
                                 with open(map_path, 'w') as f:
                                     json.dump(map_data, f, indent=2)
 
-                                print(f"Saved relation points for map {self.map_name}")
+                                pass  # Saved relation points for map
                             except Exception as e:
-                                print(f"Error saving relation points: {e}")
+                                pass  # Error saving relation points
                         else:
-                            print(f"Could not find map file for {self.map_name}")
+                            pass  # Could not find map file
 
                     # Save the game state without showing messages
                     self.save_game()
@@ -993,10 +993,10 @@ class PlayScreen(BaseScreen):
 
     def _load_enemies_from_game_state(self, enemies_data):
         """Load enemies from saved game state"""
-        print(f"Loading {len(enemies_data)} enemies from game state")
+        pass  # Loading enemies from game state
 
         # Clear existing enemies spawned from map tiles before applying saved data
-        print(f"Clearing {len(self.enemy_manager.enemies)} existing enemies before loading from game state")
+        pass  # Clearing existing enemies before loading from game state
         self.enemy_manager.enemies = []
 
         # If there are no enemies in the saved data, we're done
@@ -1099,7 +1099,7 @@ class PlayScreen(BaseScreen):
         success, message = self.save_load_manager.save_all(self, override_map_name)
 
         if not success:
-            print(f"Error saving game: {message}")
+            pass  # Error saving game
 
         return success
 
@@ -1124,9 +1124,9 @@ class PlayScreen(BaseScreen):
         try:
             success, message = self.save_load_manager.save_quick(self)
             if not success:
-                print(f"Warning: Failed to save game state on chest exit: {message}")
+                pass  # Warning: Failed to save game state on chest exit
         except Exception as e:
-            print(f"Error during chest exit game state save: {e}")
+            pass  # Error during chest exit game state save
 
     def _sync_hud_to_player_inventory(self):
         """Sync HUD inventory items to the bottom row of player inventory
@@ -1316,22 +1316,22 @@ class PlayScreen(BaseScreen):
             chest_pos: Position of the chest (x, y) tuple
             chest_contents: List of items in the chest
         """
-        print(f"PlayScreen.on_chest_opened called with chest_pos={chest_pos}")
+        pass  # PlayScreen.on_chest_opened called
 
         # Use game systems coordinator to handle chest opening
         chest_contents = self.game_systems_coordinator.handle_chest_opened_callback(
             chest_pos, chest_contents
         )
 
-        print(f"Chest contents has {len(chest_contents)} items")
+        pass  # Chest contents has items
 
         # Show the player inventory
         self.player_inventory.show(self.hud.inventory)
-        print("Player inventory shown")
+        pass  # Player inventory shown
 
         # Show the chest inventory with the chest contents
         self.chest_inventory.show(chest_pos, chest_contents)
-        print("Chest inventory shown")
+        pass  # Chest inventory shown
 
         # Position inventories side by side in the center of the screen
         screen_center_x = self.width // 2
@@ -1371,10 +1371,10 @@ class PlayScreen(BaseScreen):
             y = self.chest_inventory.y + (self.chest_inventory.slot_size + self.chest_inventory.slot_padding) * row
             self.chest_inventory.slot_rects[i] = pygame.Rect(x, y, self.chest_inventory.slot_size, self.chest_inventory.slot_size)
 
-        print(f"Positioned inventories: Player at ({self.player_inventory.x}, {self.player_inventory.y}), Chest at ({self.chest_inventory.x}, {self.chest_inventory.y})")
+        pass  # Positioned inventories
 
-        # Print debug information
-        print(f"Opened chest at position {chest_pos} with {len(chest_contents)} items")
+        # Debug information
+        pass  # Opened chest at position
 
         # Position player inventory on the left side of the screen
         screen_center_x = self.width // 2

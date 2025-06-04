@@ -163,7 +163,7 @@ class GameStateSaver:
         main_map_path = os.path.join("Maps", map_name, f"{map_name}.json")
         if os.path.exists(main_map_path):
             map_path = main_map_path
-            print(f"Found main map file for saving: {map_path}")
+            pass  # Found main map file for saving
         else:
             # It might be a related map, search in all map folders
             maps_dir = os.path.join("Maps")
@@ -174,7 +174,7 @@ class GameStateSaver:
                     related_map_path = os.path.join(folder_path, f"{map_name}.json")
                     if os.path.exists(related_map_path):
                         map_path = related_map_path
-                        print(f"Found related map file for saving: {map_path}")
+                        pass  # Found related map file for saving
                         break
 
         try:

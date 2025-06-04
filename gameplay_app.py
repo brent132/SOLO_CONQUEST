@@ -35,14 +35,14 @@ class GameplayApp:
                 import os
                 os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync enabled for consistent 60 FPS")
+                pass  # VSync enabled
             except:
                 # Fallback without VSync
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync not available, using software frame limiting")
+                pass  # VSync not available
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-            print("VSync disabled, using software frame limiting")
+            pass  # VSync disabled
 
         pygame.display.set_caption("SOLO CONQUEST - Gameplay")
         self.clock = pygame.time.Clock()
@@ -111,7 +111,7 @@ class GameplayApp:
                     folder_name = player_location_data.get("folder_name", "main")
                     map_name = player_location_data.get("map_name", "")
 
-                print(f"Last folder: {folder_name}, Last map: {map_name}")
+                pass  # Last folder and map info
 
                 # Check if we should load the folder's default map or the specific map
                 if folder_name:
@@ -130,7 +130,7 @@ class GameplayApp:
                     if map_name:
                         specific_map_path = os.path.join(folder_path, f"{map_name}.json")
                         if os.path.exists(specific_map_path):
-                            print(f"Loading specific map: {map_name}")
+                            pass  # Loading specific map
                             load_success = self.play_screen.load_map(map_name)
                             if load_success:
                                 self.game_state = "playing"
@@ -138,7 +138,7 @@ class GameplayApp:
 
                     # If no specific map or loading failed, try to load the default map
                     if os.path.exists(default_map_path):
-                        print(f"Loading default map for folder {folder_name}: {folder_default_map}")
+                        pass  # Loading default map for folder
                         load_success = self.play_screen.load_map(folder_default_map)
                         if load_success:
                             # Update player location using the PlayerLocationTracker
@@ -160,7 +160,7 @@ class GameplayApp:
                         for file_name in os.listdir(folder_path):
                             if file_name.endswith(".json"):
                                 map_name = file_name[:-5]  # Remove .json extension
-                                print(f"Loading first available map in folder: {map_name}")
+                                pass  # Loading first available map
                                 load_success = self.play_screen.load_map(map_name)
                                 if load_success:
                                     # Update player location using the PlayerLocationTracker
@@ -180,7 +180,7 @@ class GameplayApp:
 
             return False
         except Exception as e:
-            print(f"Error loading saved player location: {e}")
+            pass  # Error loading saved player location
             return False
 
     def handle_events(self):
@@ -390,6 +390,6 @@ class GameplayApp:
 
 
 if __name__ == "__main__":
-    print("Starting SOLO CONQUEST - Gameplay Mode...")
+    pass  # Starting SOLO CONQUEST - Gameplay Mode
     app = GameplayApp()
     app.run()

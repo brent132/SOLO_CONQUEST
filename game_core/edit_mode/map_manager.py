@@ -363,7 +363,7 @@ class MapManager:
         # Include relation points if available
         if "relation_points" in layered_map_data:
             editor_map_data["relation_points"] = layered_map_data["relation_points"]
-            print(f"Included relation points in editor format: {layered_map_data['relation_points']}")
+            pass  # Included relation points in editor format
 
         # Get the tile mapping
         tile_mapping = layered_map_data["tile_mapping"]
@@ -444,7 +444,7 @@ class MapManager:
         # Include relation points if available
         if "relation_points" in array_map_data:
             editor_map_data["relation_points"] = array_map_data["relation_points"]
-            print(f"Included relation points in editor format: {array_map_data['relation_points']}")
+            pass  # Included relation points in editor format
 
         # Get the tile mapping
         tile_mapping = array_map_data["tile_mapping"]

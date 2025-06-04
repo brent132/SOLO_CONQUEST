@@ -195,14 +195,14 @@ class EditorApp:
                 import os
                 os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync enabled for consistent 60 FPS")
+                pass  # VSync enabled
             except:
                 # Fallback without VSync
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync not available, using software frame limiting")
+                pass  # VSync not available
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-            print("VSync disabled, using software frame limiting")
+            pass  # VSync disabled
 
         pygame.display.set_caption("SOLO CONQUEST - Map Editor")
         self.clock = pygame.time.Clock()
@@ -375,6 +375,6 @@ class EditorApp:
 
 
 if __name__ == "__main__":
-    print("Starting SOLO CONQUEST - Map Editor...")
+    pass  # Starting SOLO CONQUEST - Map Editor
     app = EditorApp()
     app.run()

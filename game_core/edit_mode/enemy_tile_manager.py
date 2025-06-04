@@ -48,7 +48,7 @@ class EnemyTileManager:
                     "source_path": phantom_right_path
                 })
             except Exception as e:
-                print(f"Error loading phantom right enemy tile: {e}")
+                pass  # Error loading phantom right enemy tile
 
         # Phantom enemy - left facing
         phantom_left_path = "Enemies_Sprites/Phantom_Sprites/phantom_idle_anim_left/tile000.png"
@@ -61,7 +61,7 @@ class EnemyTileManager:
                     "source_path": phantom_left_path
                 })
             except Exception as e:
-                print(f"Error loading phantom left enemy tile: {e}")
+                pass  # Error loading phantom left enemy tile
 
         # Spinner enemy - add right after phantoms
         spinner_path = "Enemies_Sprites/Spinner_Sprites/spinner_idle_anim_all_dir/tile000.png"
@@ -74,7 +74,7 @@ class EnemyTileManager:
                     "source_path": spinner_path
                 })
             except Exception as e:
-                print(f"Error loading spinner enemy tile: {e}")
+                pass  # Error loading spinner enemy tile
 
         # Bomberplant enemy
         bomberplant_path = "Enemies_Sprites/Bomberplant_Sprites/bomberplant_idle_anim_all_dir/tile000.png"
@@ -87,7 +87,7 @@ class EnemyTileManager:
                     "source_path": bomberplant_path
                 })
             except Exception as e:
-                print(f"Error loading bomberplant enemy tile: {e}")
+                pass  # Error loading bomberplant enemy tile
 
 
 

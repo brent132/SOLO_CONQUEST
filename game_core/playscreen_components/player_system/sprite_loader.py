@@ -100,7 +100,7 @@ def load_character_sprites():
     for anim_key, anim_path in animation_dirs.items():
         # Check if the animation directory exists
         if not os.path.exists(anim_path):
-            print(f"Warning: Animation directory not found: {anim_path}")
+            pass  # Warning: Animation directory not found
             continue
 
         # Special handling for static shield sprites (but not shield hit animations)
@@ -117,7 +117,7 @@ def load_character_sprites():
                     if img:
                         sprites[anim_key].append(img)
                 else:
-                    print(f"Warning: Shield sprite not found: {img_path}")
+                    pass  # Warning: Shield sprite not found
 
                     # Try to find any shield sprite as a fallback
                     fallback_found = False
@@ -131,9 +131,9 @@ def load_character_sprites():
                                 break
 
                     if not fallback_found:
-                        print(f"No fallback shield sprites found in {anim_path}")
+                        pass  # No fallback shield sprites found
             except Exception as e:
-                print(f"Error loading shield sprite {img_path}: {e}")
+                pass  # Error loading shield sprite
             continue
 
         # Regular animation handling for non-shield sprites
@@ -147,7 +147,7 @@ def load_character_sprites():
             # Sort the files to ensure correct order
             frame_files.sort()
         except Exception as e:
-            print(f"Error reading directory {anim_path}: {e}")
+            pass  # Error reading directory
             continue
 
         # Load each frame
@@ -158,12 +158,12 @@ def load_character_sprites():
                 if img:
                     sprites[anim_key].append(img)
             except Exception as e:
-                print(f"Error loading sprite {img_path}: {e}")
+                pass  # Error loading sprite
 
     # Make sure we have at least one frame for each animation
     for anim_key in sprites:
         if not sprites[anim_key]:
-            print(f"Warning: No frames loaded for animation {anim_key}")
+            pass  # Warning: No frames loaded for animation
             # Use appropriate fallback based on animation type
             if "shield_hit" in anim_key:
                 # For shield hit animations, try to use regular hit animations as fallback

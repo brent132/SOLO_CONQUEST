@@ -45,7 +45,7 @@ class RelationHandler:
             # Make sure the relation points are in the correct format
             validated_points = self._validate_relation_points(relation_points)
             self.relation_points[map_name] = validated_points
-            print(f"Loaded relation points for map {map_name} from provided data: {validated_points}")
+            pass  # Loaded relation points from provided data
             return
 
         # Try to load relation points from map file
@@ -87,18 +87,18 @@ class RelationHandler:
                     # Validate the relation points to ensure they're in the correct format
                     validated_points = self._validate_relation_points(map_data["relation_points"])
                     self.relation_points[map_name] = validated_points
-                    print(f"Loaded relation points for map {map_name} from file: {self.relation_points[map_name]}")
+                    pass  # Loaded relation points from file
                 else:
                     # No relation points in this map
                     self.relation_points[map_name] = {}
-                    print(f"No relation points found for map {map_name}")
+                    pass  # No relation points found
             else:
                 # Map file not found
                 self.relation_points[map_name] = {}
-                print(f"Map file not found for {map_name}, initializing empty relation points")
+                pass  # Map file not found, initializing empty relation points
 
         except Exception as e:
-            print(f"Error loading relation points for map {map_name}: {e}")
+            pass  # Error loading relation points
             self.relation_points[map_name] = {}
 
     def _validate_relation_points(self, relation_points):
@@ -115,14 +115,14 @@ class RelationHandler:
         try:
             # Ensure relation_points is a dictionary
             if not isinstance(relation_points, dict):
-                print(f"Warning: relation_points is not a dictionary: {relation_points}")
+                pass  # Warning: relation_points is not a dictionary
                 return validated
 
             # Process each ID
             for id_key, points in relation_points.items():
                 # Ensure points is a dictionary
                 if not isinstance(points, dict):
-                    print(f"Warning: points for ID {id_key} is not a dictionary: {points}")
+                    pass  # Warning: points is not a dictionary
                     continue
 
                 # Create a new entry for this ID
@@ -132,12 +132,12 @@ class RelationHandler:
                 for point_type, position in points.items():
                     # Ensure point_type is 'a' or 'b'
                     if point_type not in ['a', 'b']:
-                        print(f"Warning: Invalid point type {point_type} for ID {id_key}")
+                        pass  # Warning: Invalid point type
                         continue
 
                     # Ensure position is a list or tuple with 2 elements
                     if not isinstance(position, (list, tuple)) or len(position) != 2:
-                        print(f"Warning: Invalid position {position} for ID {id_key}, point type {point_type}")
+                        pass  # Warning: Invalid position
                         continue
 
                     # Ensure position elements are integers
@@ -146,12 +146,12 @@ class RelationHandler:
                         grid_y = int(position[1])
                         validated[id_key][point_type] = [grid_x, grid_y]
                     except (ValueError, TypeError):
-                        print(f"Warning: Invalid position values {position} for ID {id_key}, point type {point_type}")
+                        pass  # Warning: Invalid position values
                         continue
 
             return validated
         except Exception as e:
-            print(f"Error validating relation points: {e}")
+            pass  # Error validating relation points
             return {}
 
     def load_all_relation_points(self):
@@ -160,7 +160,7 @@ class RelationHandler:
         maps_dir = "Maps"
 
         if not os.path.exists(maps_dir):
-            print(f"Maps directory not found: {maps_dir}")
+            pass  # Maps directory not found
             return
 
         # List all folders in the Maps directory (main maps)
@@ -181,9 +181,9 @@ class RelationHandler:
                         # Validate the relation points to ensure they're in the correct format
                         validated_points = self._validate_relation_points(map_data["relation_points"])
                         self.relation_points[folder_name] = validated_points
-                        print(f"Loaded relation points for main map {folder_name}: {self.relation_points[folder_name]}")
+                        pass  # Loaded relation points for main map
                 except Exception as e:
-                    print(f"Error loading relation points for main map {folder_name}: {e}")
+                    pass  # Error loading relation points for main map
 
             # Load all related map files in this folder
             for file_name in os.listdir(folder_path):
@@ -200,9 +200,9 @@ class RelationHandler:
                             # Validate the relation points to ensure they're in the correct format
                             validated_points = self._validate_relation_points(map_data["relation_points"])
                             self.relation_points[related_map_name] = validated_points
-                            print(f"Loaded relation points for related map {related_map_name}: {self.relation_points[related_map_name]}")
+                            pass  # Loaded relation points for related map
                     except Exception as e:
-                        print(f"Error loading relation points for related map {related_map_name}: {e}")
+                        pass  # Error loading relation points for related map
 
     def get_map_folder(self, map_name):
         """Get the folder that contains a map
@@ -271,18 +271,18 @@ class RelationHandler:
         for id_key, points in current_map_points.items():
             # Skip if points is not a dictionary
             if not isinstance(points, dict):
-                print(f"Warning: points for ID {id_key} is not a dictionary: {points}")
+                pass  # Warning: points is not a dictionary
                 continue
 
             for point_type, position in points.items():
                 # Skip if point_type is not 'a' or 'b'
                 if point_type not in ['a', 'b']:
-                    print(f"Warning: Invalid point type {point_type} for ID {id_key}")
+                    pass  # Warning: Invalid point type
                     continue
 
                 # Skip if position is not a list or tuple with 2 elements
                 if not isinstance(position, (list, tuple)) or len(position) != 2:
-                    print(f"Warning: Invalid position {position} for ID {id_key}, point type {point_type}")
+                    pass  # Warning: Invalid position
                     continue
 
                 try:
@@ -337,7 +337,7 @@ class RelationHandler:
 
                                     # Check if both maps are in the same folder
                                     if not self.are_maps_in_same_folder(self.current_map, map_name):
-                                        print(f"Cannot teleport: Maps {self.current_map} and {map_name} are not in the same folder")
+                                        pass  # Cannot teleport: Maps not in same folder
                                         continue
 
                                     # Found a matching point in the same folder, prepare teleport information
@@ -349,7 +349,7 @@ class RelationHandler:
                                         'to_position': opposite_position
                                     }
                 except Exception as e:
-                    print(f"Error checking collision for point {point_type} with ID {id_key}: {e}")
+                    pass  # Error checking collision for point
                     continue
 
         # Reset current teleport point if player is not colliding with any point

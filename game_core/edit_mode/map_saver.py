@@ -82,7 +82,7 @@ class MapSaver:
                     "tileset": -1,  # Special value for animated tiles
                     "animated": True
                 }
-                print(f"Added animated tile to mapping: {source_path} with ID {animated_tile_id}")
+                pass  # Added animated tile to mapping
 
         # Process each layer
         layers_data = []
@@ -101,17 +101,17 @@ class MapSaver:
             for (grid_x, grid_y), tile_data in layer_tiles.items():
                 # Skip if grid_x or grid_y is out of bounds
                 if grid_x < 0 or grid_x >= width or grid_y < 0 or grid_y >= height:
-                    print(f"Warning: Skipping tile at ({grid_x}, {grid_y}) because it's out of bounds")
+                    pass  # Warning: Skipping tile out of bounds
                     continue
 
                 # Skip if tile_data is not a dictionary
                 if not isinstance(tile_data, dict):
-                    print(f"Warning: Skipping tile at ({grid_x}, {grid_y}) because tile_data is not a dictionary")
+                    pass  # Warning: Skipping tile - not a dictionary
                     continue
 
                 # Skip if source_path is not in tile_data
                 if "source_path" not in tile_data:
-                    print(f"Warning: Skipping tile at ({grid_x}, {grid_y}) because source_path is missing")
+                    pass  # Warning: Skipping tile - source_path missing
                     continue
 
                 source_path = tile_data["source_path"]
@@ -216,7 +216,7 @@ class MapSaver:
         # Save collision data to global file instead
         if collision_manager:
             collision_manager.save_global_collision_data()
-            print(f"Collision data saved to global collision database")
+            pass  # Collision data saved to global database
 
         # We'll set the player position from the placed player tile instead of the player_position_manager
 

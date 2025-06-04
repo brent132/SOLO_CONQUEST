@@ -68,41 +68,41 @@ class MapSystem:
             Tuple[bool, str]: (success, error_message)
         """
         try:
-            print(f"MapSystem: Loading map '{map_name}'")
+            pass  # MapSystem: Loading map
 
             # Step 1: Load map data from file
             success, map_data, error_msg = self.loader.load_map_data(map_name)
             if not success:
-                print(f"  Failed to load map data: {error_msg}")
+                pass  # Failed to load map data
                 return False, error_msg
 
-            print(f"  Successfully loaded map data")
+            pass  # Successfully loaded map data
 
             # Step 2: Get map information
             self.map_info = self.loader.get_map_info(map_data)
             self.map_width = self.map_info['width']
             self.map_height = self.map_info['height']
-            print(f"  Map info: {self.map_width}x{self.map_height}")
+            pass  # Map info
 
             # Step 3: Process map based on format
-            print(f"  Processing map format...")
+            pass  # Processing map format
             processed_info = self.processor.process_map(map_data)
-            print(f"  Map processing complete. Format: {processed_info.get('format', 'unknown')}")
+            pass  # Map processing complete
 
             # Step 4: Add animated tiles to the processor
             if hasattr(animated_tile_manager, 'animated_tile_ids'):
-                print(f"  Adding {len(animated_tile_manager.animated_tile_ids)} animated tiles")
+                pass  # Adding animated tiles
                 for tile_id, tile_name in animated_tile_manager.animated_tile_ids.items():
                     self.processor.add_animated_tile(tile_id, tile_name)
 
             # Step 5: Load tiles from the expanded mapping
             if 'expanded_mapping' in processed_info:
-                print(f"  Loading tiles from expanded mapping...")
+                pass  # Loading tiles from expanded mapping
                 tile_errors = self.tile_manager.load_tiles_from_mapping(
                     processed_info['expanded_mapping']
                 )
                 if tile_errors:
-                    print(f"  Some tiles failed to load: {tile_errors}")
+                    pass  # Some tiles failed to load
 
             # Store current state
             self.current_map_name = map_name
@@ -114,23 +114,23 @@ class MapSystem:
 
             # Debug: Check layers
             layers = self.get_layers()
-            print(f"  Available layers after processing: {len(layers)}")
+            pass  # Available layers after processing
             for i, layer in enumerate(layers):
                 layer_data = layer.get("data", [])
                 visible = layer.get("visible", True)
                 name = layer.get("name", f"Layer {i}")
-                print(f"    Layer {i} ({name}): visible={visible}, data_rows={len(layer_data) if isinstance(layer_data, list) else 'not_list'}")
+                pass  # Layer info
 
-            print(f"Map system successfully loaded map: {map_name}")
-            print(f"Map format: {processed_info.get('format', 'unknown')}")
-            print(f"Map dimensions: {self.map_width}x{self.map_height}")
-            print(f"Loaded tiles: {self.tile_manager.get_tile_count()}")
+            pass  # Map system successfully loaded map
+            pass  # Map format
+            pass  # Map dimensions
+            pass  # Loaded tiles
 
             return True, ""
 
         except Exception as e:
             error_msg = f"Error in map system loading {map_name}: {str(e)}"
-            print(error_msg)
+            pass  # Error in map system loading
             import traceback
             traceback.print_exc()
             return False, error_msg

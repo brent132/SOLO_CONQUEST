@@ -95,7 +95,7 @@ class PlayerManager:
         self.player.precise_x = float(self.player.rect.midbottom[0])
         self.player.precise_y = float(self.player.rect.midbottom[1] - self.player.height // 2)
         
-        print(f"Player created at position ({player_x}, {player_y}) facing {player_direction}")
+        pass  # Player created at position
         
         return self.player
     
@@ -174,7 +174,7 @@ class PlayerManager:
         if not collision_handler.check_collision(self.player.rect, expanded_mapping, map_data):
             return False  # Player is not stuck
 
-        print(f"Player is stuck at position ({self.player.rect.x}, {self.player.rect.y}), attempting to unstuck...")
+        pass  # Player is stuck at position, attempting to unstuck
 
         # Find the nearest free space
         free_position = collision_handler.find_nearest_free_space(
@@ -197,10 +197,10 @@ class PlayerManager:
             self.player.is_knocked_back = False
             self.player.knockback_velocity = [0, 0]
 
-            print(f"Player unstuck: moved from ({old_x}, {old_y}) to ({self.player.rect.x}, {self.player.rect.y})")
+            pass  # Player unstuck: moved from old position to new position
             return True
         else:
-            print("Warning: Could not find free space to unstuck player!")
+            pass  # Warning: Could not find free space to unstuck player
             return False
 
     def get_player(self) -> Optional[PlayerCharacter]:

@@ -45,7 +45,7 @@ class CrystalItemManager:
                         frame = pygame.image.load(frame_path).convert_alpha()
                         loaded_frames.append(frame)
                     except Exception as e:
-                        print(f"Error loading crystal animation frame {frame_path}: {e}")
+                        pass  # Error loading crystal animation frame
 
             # Process frames to ensure consistent size and positioning
             if loaded_frames:
@@ -71,12 +71,12 @@ class CrystalItemManager:
                 # Create a dummy AnimatedTile for timing purposes
                 self.collection_animation = AnimatedTile(animation_folder, frame_duration=6)
 
-                print(f"Loaded crystal item collection animation with {len(self.collection_frames)} frames in custom order")
+                pass  # Loaded crystal item collection animation
             else:
-                print("No frames loaded for crystal item collection animation")
+                pass  # No frames loaded for crystal item collection animation
                 self.collection_animation = None
         else:
-            print(f"Crystal item collection animation folder not found: {animation_folder}")
+            pass  # Crystal item collection animation folder not found
             self.collection_animation = None
 
     def add_crystal_item(self, grid_x, grid_y, tile_id, layer=0):

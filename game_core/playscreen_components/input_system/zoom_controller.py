@@ -187,7 +187,7 @@ class ZoomController:
             try:
                 callback(self.grid_cell_size, self.zoom_factor, self.zoom_factor_inv)
             except Exception as e:
-                print(f"Error in zoom changed callback: {e}")
+                pass  # Error in zoom changed callback
 
     def resize(self, new_width: int, new_height: int):
         """Handle screen resize by updating dimensions and recalculating zoom values"""

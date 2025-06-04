@@ -163,7 +163,7 @@ class CollisionManager:
                 # Create a new global database file if it doesn't exist
                 self.save_global_collision_data()
         except Exception as e:
-            print(f"Error loading global collision data: {e}")
+            pass  # Error loading global collision data
             self.collision_data = {}
 
     def save_global_collision_data(self):
@@ -179,7 +179,7 @@ class CollisionManager:
             with open(self.global_collision_db_path, 'w') as f:
                 json.dump(global_data, f, indent=2)
         except Exception as e:
-            print(f"Error saving global collision data: {e}")
+            pass  # Error saving global collision data
 
     def load_collision_data(self, collision_data):
         """Load collision data from saved format"""

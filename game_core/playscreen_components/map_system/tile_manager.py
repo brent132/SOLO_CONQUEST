@@ -71,7 +71,7 @@ class TileManager:
                         
             except Exception as e:
                 error_msg = f"Error loading tile {path}: {e}"
-                print(error_msg)
+                pass  # Error loading tile
                 errors[tile_id] = error_msg
         
         return errors
@@ -91,19 +91,19 @@ class TileManager:
     def _log_skipped_tile(self, path: str):
         """Log information about skipped tiles"""
         if "Enemies_Sprites/Phantom_Sprites" in path:
-            print(f"Skipping phantom enemy tile: {path}")
+            pass  # Skipping phantom enemy tile
         elif "Enemies_Sprites/Bomberplant_Sprites" in path:
-            print(f"Skipping bomberplant enemy tile: {path}")
+            pass  # Skipping bomberplant enemy tile
         elif "Enemies_Sprites/Spider_Sprites" in path:
-            print(f"Skipping spider enemy tile: {path}")
+            pass  # Skipping spider enemy tile
         elif "Enemies_Sprites/Pinkslime_Sprites" in path:
-            print(f"Skipping pinkslime enemy tile: {path}")
+            pass  # Skipping pinkslime enemy tile
         elif "Enemies_Sprites/Pinkbat_Sprites" in path:
-            print(f"Skipping pinkbat enemy tile: {path}")
+            pass  # Skipping pinkbat enemy tile
         elif "Enemies_Sprites/Spinner_Sprites" in path:
-            print(f"Skipping spinner enemy tile: {path}")
+            pass  # Skipping spinner enemy tile
         elif "character/char_idle_" in path:
-            print(f"Skipping player character tile: {path}")
+            pass  # Skipping player character tile
     
     def get_tile(self, tile_id: int) -> Optional[pygame.Surface]:
         """
@@ -192,7 +192,7 @@ class TileManager:
             if not self.has_tile(tile_id):
                 # This would require access to the expanded mapping
                 # For now, just log that we would preload this tile
-                print(f"Would preload tile ID: {tile_id}")
+                pass  # Would preload tile ID
         
         return errors
     

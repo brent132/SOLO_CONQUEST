@@ -33,9 +33,9 @@ class WorldManager:
                         world["has_main_map"] = os.path.exists(main_map_path)
                         existing_worlds[folder_name] = world
 
-                print(f"Loaded {len(existing_worlds)} worlds from {self.worlds_file}")
+                pass  # Loaded worlds from file
             else:
-                print(f"No worlds file found at {self.worlds_file}")
+                pass  # No worlds file found
 
             # Now scan the Maps directory for any new folders
             maps_dir = "Maps"
@@ -72,7 +72,7 @@ class WorldManager:
                                     "icon": "",
                                     "has_main_map": main_map_exists
                                 }
-                                print(f"Added new world from folder: {folder_name}")
+                                pass  # Added new world from folder
 
             # Clean up worlds that no longer have corresponding map folders
             worlds_to_remove = []
@@ -81,7 +81,7 @@ class WorldManager:
                 if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
                     # Folder doesn't exist anymore, mark for removal
                     worlds_to_remove.append(folder_name)
-                    print(f"Removing world '{folder_name}' - folder no longer exists")
+                    pass  # Removing world - folder no longer exists
                 else:
                     # Check if folder has any map files
                     has_maps = False
@@ -93,7 +93,7 @@ class WorldManager:
                     if not has_maps:
                         # No map files in folder, mark for removal
                         worlds_to_remove.append(folder_name)
-                        print(f"Removing world '{folder_name}' - no map files found")
+                        pass  # Removing world - no map files found
 
             # Remove worlds that no longer exist
             for folder_name in worlds_to_remove:
@@ -114,10 +114,10 @@ class WorldManager:
                 self.save_worlds()
             else:
                 # No worlds found - this is normal when no maps have been created yet
-                print("No worlds found - waiting for user to create maps")
+                pass  # No worlds found
 
         except Exception as e:
-            print(f"Error loading worlds: {e}")
+            pass  # Error loading worlds
             # Don't create default worlds - let the user create maps naturally
 
     def cleanup_save_data_for_deleted_worlds(self, deleted_worlds):
@@ -134,7 +134,7 @@ class WorldManager:
             # Note: character_inventory.json is kept as it may contain items that can be used across worlds
 
         except Exception as e:
-            print(f"Error cleaning up save data: {e}")
+            pass  # Error cleaning up save data
 
     def cleanup_player_location_data(self, deleted_worlds):
         """Remove player location data for deleted worlds
@@ -156,7 +156,7 @@ class WorldManager:
                     for world_name in deleted_worlds:
                         if world_name in worlds_data:
                             del worlds_data[world_name]
-                            print(f"Cleaned up player location data for deleted world: {world_name}")
+                            pass  # Cleaned up player location data for deleted world
 
                     # If current_world was deleted, reset to first available world or None
                     current_world = player_data.get("current_world")
@@ -164,11 +164,11 @@ class WorldManager:
                         if worlds_data:
                             # Set to first available world
                             player_data["current_world"] = list(worlds_data.keys())[0]
-                            print(f"Reset current world from '{current_world}' to '{player_data['current_world']}'")
+                            pass  # Reset current world
                         else:
                             # No worlds left, reset to default
                             player_data["current_world"] = "main"
-                            print(f"Reset current world to 'main' (no worlds available)")
+                            pass  # Reset current world to 'main'
 
                     # Save the cleaned data
                     with open(player_location_file, 'w') as f:
@@ -190,10 +190,10 @@ class WorldManager:
                         }
                         with open(player_location_file, 'w') as f:
                             json.dump(default_location, f, indent=2)
-                        print(f"Reset player location data (old format) for deleted world: {folder_name}")
+                        pass  # Reset player location data (old format)
 
         except Exception as e:
-            print(f"Error cleaning up player location data: {e}")
+            pass  # Error cleaning up player location data
 
     def cleanup_orphaned_player_location_data(self):
         """Clean up player location data for worlds that no longer exist"""
@@ -229,7 +229,7 @@ class WorldManager:
                     for world_name in orphaned_worlds:
                         if world_name in worlds_data:
                             del worlds_data[world_name]
-                            print(f"Cleaned up orphaned player location data for world: {world_name}")
+                            pass  # Cleaned up orphaned player location data
 
                     # If current_world was orphaned, reset to first available world or default
                     current_world = player_data.get("current_world")
@@ -237,11 +237,11 @@ class WorldManager:
                         if worlds_data:
                             # Set to first available world
                             player_data["current_world"] = list(worlds_data.keys())[0]
-                            print(f"Reset current world from orphaned '{current_world}' to '{player_data['current_world']}'")
+                            pass  # Reset current world from orphaned
                         else:
                             # No worlds left, reset to default
                             player_data["current_world"] = "main"
-                            print(f"Reset current world to 'main' (no valid worlds available)")
+                            pass  # Reset current world to 'main'
 
                     # If we removed any orphaned data, save the cleaned file
                     if orphaned_worlds:
@@ -251,10 +251,10 @@ class WorldManager:
                         # If no worlds left, delete the file to start fresh
                         if not worlds_data:
                             os.remove(player_location_file)
-                            print("Removed empty player location file")
+                            pass  # Removed empty player location file
 
         except Exception as e:
-            print(f"Error cleaning up orphaned player location data: {e}")
+            pass  # Error cleaning up orphaned player location data
 
     def create_default_worlds(self):
         """Create default worlds based on folders in Maps directory"""
@@ -274,14 +274,14 @@ class WorldManager:
             main_dir = os.path.join("Maps", "main")
             if not os.path.exists(main_dir):
                 os.makedirs(main_dir, exist_ok=True)
-                print(f"Created default 'main' directory at {main_dir}")
+                pass  # Created default 'main' directory
 
-            print(f"Created default 'main' world")
+            pass  # Created default 'main' world
 
             # Save the default worlds to the worlds.json file in SaveData folder
             self.save_worlds()
         except Exception as e:
-            print(f"Error creating default worlds: {e}")
+            pass  # Error creating default worlds
 
     def save_worlds(self):
         """Save worlds to the worlds.json file in SaveData folder"""
@@ -298,10 +298,10 @@ class WorldManager:
             with open(self.worlds_file, 'w') as f:
                 json.dump(data, f, indent=2)
 
-            print(f"Saved {len(worlds_list)} worlds to {self.worlds_file}")
+            pass  # Saved worlds to file
             return True
         except Exception as e:
-            print(f"Error saving worlds: {e}")
+            pass  # Error saving worlds
             return False
 
     def get_world(self, folder_name):
@@ -339,7 +339,7 @@ class WorldManager:
             try:
                 return pygame.image.load(icon_path).convert_alpha()
             except Exception as e:
-                print(f"Error loading world icon {icon_path}: {e}")
+                pass  # Error loading world icon
 
         # Use default icon if no icon found or error loading
         if self.default_icon is None:

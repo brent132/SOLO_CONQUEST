@@ -58,7 +58,7 @@ class FontManager:
                 self.font_cache[cache_key] = font
                 return font
         except Exception as e:
-            print(f"Error loading font {font_path}: {e}")
+            pass  # Error loading font
 
         # If custom font fails, use system font as fallback
         if self.fallback_font is None:

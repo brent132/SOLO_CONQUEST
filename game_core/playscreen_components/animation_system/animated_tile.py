@@ -31,7 +31,7 @@ class AnimatedTile:
         self.frames = sprite_cache.get_animation_frames(self.folder_path)
 
         if not self.frames:
-            print(f"No animation frames loaded from {self.folder_path}")
+            pass  # No animation frames loaded
 
     def update(self):
         """Update the animation state"""
