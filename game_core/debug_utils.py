@@ -24,7 +24,8 @@ class DebugManager:
             "animation": False,
             "map": False,
             "editor": False,
-            "performance": False
+            "performance": False,
+            "item": False
         }
 
     def enable_debug(self, enable=True):

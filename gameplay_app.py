@@ -21,6 +21,7 @@ from game_core.gameplay.play_screen import PlayScreen
 from game_core.playscreen_components.map_system import WorldSelectScreen
 from game_core.debug_utils import debug_manager
 from game_core.performance_monitor import performance_monitor
+from game_core.performance_optimizer import performance_optimizer
 
 class GameplayApp:
     def __init__(self):
@@ -58,6 +59,7 @@ class GameplayApp:
         self.fps_counter = 0
         self.fps_timer = 0
         self.current_fps = 0
+        self.stats_counter = 0
 
         # Game states for gameplay
         self.game_state = "splash"  # "splash", "playing", "settings", "map_select", "paused"
@@ -308,6 +310,8 @@ class GameplayApp:
         while self.running:
             frame_start_time = time.time()
 
+            performance_optimizer.start_frame()
+
             # Start frame timer
             performance_monitor.start_timer("frame")
 
@@ -328,6 +332,12 @@ class GameplayApp:
 
             # Precise frame rate limiting
             self._limit_frame_rate(frame_start_time)
+
+            performance_optimizer.end_frame()
+
+            self.stats_counter += 1
+            if self.stats_counter % 120 == 0:
+                performance_optimizer.print_performance_stats()
 
             # End frame timer and record frame time
             frame_time = performance_monitor.end_timer("frame")
