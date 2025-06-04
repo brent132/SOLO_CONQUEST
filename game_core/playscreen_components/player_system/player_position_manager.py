@@ -17,7 +17,9 @@ where to place the player when loading a map, handling saved locations,
 and managing the various fallback strategies for player placement.
 """
 from typing import Tuple, Dict, Any, Optional
-from playscreen_components.player_system import PlayerCharacter
+# Import PlayerCharacter using a relative import to avoid circular
+# dependencies with the package's __init__ module during startup.
+from .player_character import PlayerCharacter
 
 
 class PlayerPositionManager:
