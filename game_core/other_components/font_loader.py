@@ -69,4 +69,4 @@ class FontManager:
         return self.font_cache[cache_key]
 
 # Create a global instance of the font manager
-font_manager = FontManager()
+font_loader = FontManager()
