@@ -3,8 +3,8 @@ Button components for the Edit Mode
 """
 import os
 import pygame
-from settings import *
-from font_manager import font_manager
+from game_core.core.config import *
+from game_core.core.font_loader import font_manager
 
 
 class Button:
@@ -61,7 +61,7 @@ class Button:
             # Fallback to a basic button if image not found
             self.rect = pygame.Rect(x, y, 120, 40)
             self.text = button_type
-            self.font = font_manager.get_font('medium', FONT_SIZE_MEDIUM)
+            self.font = font_loader.get_font('medium', FONT_SIZE_MEDIUM)
             self.text_surf = self.font.render(self.text, True, (255, 255, 255))
             self.text_rect = self.text_surf.get_rect(center=self.rect.center)
             self.bg_color = (100, 100, 100)
@@ -108,7 +108,7 @@ class TextButton:
     def __init__(self, x, y, width, height, text, font_size=FONT_SIZE_MEDIUM):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
-        self.font = font_manager.get_font('regular', font_size)
+        self.font = font_loader.get_font('regular', font_size)
         self.text_surf = self.font.render(text, True, (0, 0, 0))
         self.text_rect = self.text_surf.get_rect(center=self.rect.center)
         self.is_hovered = False

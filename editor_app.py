@@ -8,17 +8,20 @@ Editor module - contains the main editor application class
 import pygame
 import sys
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.settings import *
+from game_core.core.config import *
 from game_core.edit_mode import EditScreen
-from game_core.debug_utils import debug_manager
-from game_core.performance_monitor import performance_monitor
-from game_core.menu import Button
-from game_core.base_screen import BaseScreen
+from game_core.core.debug_tools import debug_manager
+from game_core.core.perf_monitor import perf_monitor
+from game_core.core.menu_system import Button
+from game_core.core.screen_base import BaseScreen
 
 class EditorSplashScreen(BaseScreen):
     """Custom splash screen for editor mode with only relevant buttons"""
@@ -195,14 +198,14 @@ class EditorApp:
                 import os
                 os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync enabled for consistent 60 FPS")
+                logger.info("VSync enabled for consistent 60 FPS")
             except:
                 # Fallback without VSync
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync not available, using software frame limiting")
+                logger.info("VSync not available, using software frame limiting")
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-            print("VSync disabled, using software frame limiting")
+            logger.info("VSync disabled, using software frame limiting")
 
         pygame.display.set_caption("SOLO CONQUEST - Map Editor")
         self.clock = pygame.time.Clock()
@@ -230,7 +233,7 @@ class EditorApp:
         debug_manager.enable_debug(False)  # Disable debug output for production
 
         # Initialize performance monitor
-        performance_monitor.enable(False)  # Set to True to enable performance monitoring
+        perf_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def handle_events(self):
         """Handle pygame events"""
@@ -304,30 +307,30 @@ class EditorApp:
             frame_start_time = time.time()
 
             # Start frame timer
-            performance_monitor.start_timer("frame")
+            perf_monitor.start_timer("frame")
 
             # Process events
-            performance_monitor.start_timer("events")
+            perf_monitor.start_timer("events")
             self.handle_events()
-            performance_monitor.end_timer("events")
+            perf_monitor.end_timer("events")
 
             # Update editor state
-            performance_monitor.start_timer("update")
+            perf_monitor.start_timer("update")
             self.update()
-            performance_monitor.end_timer("update")
+            perf_monitor.end_timer("update")
 
             # Draw the frame
-            performance_monitor.start_timer("draw")
+            perf_monitor.start_timer("draw")
             self.draw()
-            performance_monitor.end_timer("draw")
+            perf_monitor.end_timer("draw")
 
             # Precise frame rate limiting
             self._limit_frame_rate(frame_start_time)
 
             # End frame timer and record frame time
-            frame_time = performance_monitor.end_timer("frame")
+            frame_time = perf_monitor.end_timer("frame")
             if frame_time > 0:
-                performance_monitor.record_frame_time(frame_time)
+                perf_monitor.record_frame_time(frame_time)
 
             # Update FPS monitoring
             self._update_fps_monitoring()
@@ -375,6 +378,6 @@ class EditorApp:
 
 
 if __name__ == "__main__":
-    print("Starting SOLO CONQUEST - Map Editor...")
+    logger.info("Starting SOLO CONQUEST - Map Editor...")
     app = EditorApp()
     app.run()

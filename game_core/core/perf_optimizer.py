@@ -4,6 +4,9 @@ Performance Optimizer - Handles performance optimizations for fullscreen and hig
 import pygame
 import time
 from typing import Dict, List, Tuple, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PerformanceOptimizer:
     """
@@ -103,7 +106,9 @@ class PerformanceOptimizer:
                 self.current_quality_level = "medium"
             else:
                 self.current_quality_level = "low"
-            print(f"Performance: Reduced quality to {self.current_quality_level} (FPS: {avg_fps:.1f})")
+            logger.info(
+                f"Performance: Reduced quality to {self.current_quality_level} (FPS: {avg_fps:.1f})"
+            )
         
         # Upgrade quality if performance is good
         elif avg_fps > self.target_fps * 0.9 and self.current_quality_level != "high":
@@ -111,7 +116,9 @@ class PerformanceOptimizer:
                 self.current_quality_level = "medium"
             else:
                 self.current_quality_level = "high"
-            print(f"Performance: Increased quality to {self.current_quality_level} (FPS: {avg_fps:.1f})")
+            logger.info(
+                f"Performance: Increased quality to {self.current_quality_level} (FPS: {avg_fps:.1f})"
+            )
     
     def get_quality_setting(self, setting_name: str):
         """Get a specific quality setting for the current quality level."""
@@ -167,12 +174,16 @@ class PerformanceOptimizer:
         }
     
     def print_performance_stats(self):
-        """Print performance statistics to console."""
+        """Log performance statistics."""
         info = self.get_performance_info()
-        print(f"Performance: {info['current_fps']:.1f} FPS (avg: {info['average_fps']:.1f}), "
-              f"Quality: {info['quality_level']}, "
-              f"Dirty rects: {info['dirty_rects_count']}, "
-              f"UI cache: {info['ui_cache_size']}")
+        logger.debug(
+            "Performance: %.1f FPS (avg: %.1f), Quality: %s, Dirty rects: %d, UI cache: %d",
+            info["current_fps"],
+            info["average_fps"],
+            info["quality_level"],
+            info["dirty_rects_count"],
+            info["ui_cache_size"],
+        )
 
 # Global performance optimizer instance
-performance_optimizer = PerformanceOptimizer()
+perf_optimizer = PerformanceOptimizer()

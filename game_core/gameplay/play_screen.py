@@ -8,7 +8,7 @@ import os
 import json
 import pygame
 from typing import Optional
-from debug_utils import debug_manager
+from game_core.core.debug_tools import debug_manager
 from playscreen_components.player_system import PlayerCharacter
 # CollisionHandler now imported from map_system
 from playscreen_components.animation_system import AnimatedTileManager
@@ -21,7 +21,7 @@ from playscreen_components.input_system import InputSystem
 from playscreen_components.rendering_system import RenderingPipeline
 from playscreen_components.enemy_system import EnemyManager
 # Removed unused imports
-from base_screen import BaseScreen
+from game_core.core.screen_base import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen
 from playscreen_components.state_system import SaveLoadManager
 from playscreen_components.camera_system import CameraController

@@ -9,19 +9,22 @@ import pygame
 import sys
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.settings import *
-from game_core.menu import SplashScreen
+from game_core.core.config import *
+from game_core.core.menu_system import SplashScreen
 from game_core.gameplay.settings_screen import SettingsScreen
 from game_core.gameplay.play_screen import PlayScreen
 from game_core.playscreen_components.map_system import WorldSelectScreen
-from game_core.debug_utils import debug_manager
-from game_core.performance_monitor import performance_monitor
-from game_core.performance_optimizer import performance_optimizer
+from game_core.core.debug_tools import debug_manager
+from game_core.core.perf_monitor import perf_monitor
+from game_core.core.perf_optimizer import perf_optimizer
 
 class GameplayApp:
     def __init__(self):
@@ -35,14 +38,14 @@ class GameplayApp:
                 import os
                 os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync enabled for consistent 60 FPS")
+                logger.info("VSync enabled for consistent 60 FPS")
             except:
                 # Fallback without VSync
                 self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                print("VSync not available, using software frame limiting")
+                logger.info("VSync not available, using software frame limiting")
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-            print("VSync disabled, using software frame limiting")
+            logger.info("VSync disabled, using software frame limiting")
 
         pygame.display.set_caption("SOLO CONQUEST - Gameplay")
         self.clock = pygame.time.Clock()
@@ -78,7 +81,7 @@ class GameplayApp:
         debug_manager.enable_category("player", False)
 
         # Initialize performance monitor
-        performance_monitor.enable(False)  # Set to True to enable performance monitoring
+        perf_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def init_game(self):
         """Initialize game objects when starting the game"""
@@ -111,7 +114,7 @@ class GameplayApp:
                     folder_name = player_location_data.get("folder_name", "main")
                     map_name = player_location_data.get("map_name", "")
 
-                print(f"Last folder: {folder_name}, Last map: {map_name}")
+                logger.debug("Last folder: %s, Last map: %s", folder_name, map_name)
 
                 # Check if we should load the folder's default map or the specific map
                 if folder_name:
@@ -130,7 +133,7 @@ class GameplayApp:
                     if map_name:
                         specific_map_path = os.path.join(folder_path, f"{map_name}.json")
                         if os.path.exists(specific_map_path):
-                            print(f"Loading specific map: {map_name}")
+                            logger.debug("Loading specific map: %s", map_name)
                             load_success = self.play_screen.load_map(map_name)
                             if load_success:
                                 self.game_state = "playing"
@@ -138,7 +141,11 @@ class GameplayApp:
 
                     # If no specific map or loading failed, try to load the default map
                     if os.path.exists(default_map_path):
-                        print(f"Loading default map for folder {folder_name}: {folder_default_map}")
+                        logger.debug(
+                            "Loading default map for folder %s: %s",
+                            folder_name,
+                            folder_default_map,
+                        )
                         load_success = self.play_screen.load_map(folder_default_map)
                         if load_success:
                             # Update player location using the PlayerLocationTracker
@@ -160,7 +167,10 @@ class GameplayApp:
                         for file_name in os.listdir(folder_path):
                             if file_name.endswith(".json"):
                                 map_name = file_name[:-5]  # Remove .json extension
-                                print(f"Loading first available map in folder: {map_name}")
+                                logger.debug(
+                                    "Loading first available map in folder: %s",
+                                    map_name,
+                                )
                                 load_success = self.play_screen.load_map(map_name)
                                 if load_success:
                                     # Update player location using the PlayerLocationTracker
@@ -180,7 +190,7 @@ class GameplayApp:
 
             return False
         except Exception as e:
-            print(f"Error loading saved player location: {e}")
+            logger.warning("Error loading saved player location: %s", e)
             return False
 
     def handle_events(self):
@@ -310,39 +320,39 @@ class GameplayApp:
         while self.running:
             frame_start_time = time.time()
 
-            performance_optimizer.start_frame()
+            perf_optimizer.start_frame()
 
             # Start frame timer
-            performance_monitor.start_timer("frame")
+            perf_monitor.start_timer("frame")
 
             # Process events
-            performance_monitor.start_timer("events")
+            perf_monitor.start_timer("events")
             self.handle_events()
-            performance_monitor.end_timer("events")
+            perf_monitor.end_timer("events")
 
             # Update game state
-            performance_monitor.start_timer("update")
+            perf_monitor.start_timer("update")
             self.update()
-            performance_monitor.end_timer("update")
+            perf_monitor.end_timer("update")
 
             # Draw the frame
-            performance_monitor.start_timer("draw")
+            perf_monitor.start_timer("draw")
             self.draw()
-            performance_monitor.end_timer("draw")
+            perf_monitor.end_timer("draw")
 
             # Precise frame rate limiting
             self._limit_frame_rate(frame_start_time)
 
-            performance_optimizer.end_frame()
+            perf_optimizer.end_frame()
 
             self.stats_counter += 1
             if self.stats_counter % 120 == 0:
-                performance_optimizer.print_performance_stats()
+                perf_optimizer.print_performance_stats()
 
             # End frame timer and record frame time
-            frame_time = performance_monitor.end_timer("frame")
+            frame_time = perf_monitor.end_timer("frame")
             if frame_time > 0:
-                performance_monitor.record_frame_time(frame_time)
+                perf_monitor.record_frame_time(frame_time)
 
             # Update FPS monitoring
             self._update_fps_monitoring()
@@ -390,6 +400,6 @@ class GameplayApp:
 
 
 if __name__ == "__main__":
-    print("Starting SOLO CONQUEST - Gameplay Mode...")
+    logger.info("Starting SOLO CONQUEST - Gameplay Mode...")
     app = GameplayApp()
     app.run()

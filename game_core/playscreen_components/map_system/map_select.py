@@ -4,7 +4,7 @@ World Selection Screen - allows the player to select a world to play
 import os
 import json
 import pygame
-from base_screen import BaseScreen
+from game_core.core.screen_base import BaseScreen
 from .world_manager import WorldManager
 
 class WorldItem:

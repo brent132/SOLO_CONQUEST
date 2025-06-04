@@ -3,7 +3,7 @@ Performance monitoring utilities for the game
 Provides tools for measuring and tracking performance metrics
 """
 import time
-from debug_utils import debug_manager
+from game_core.core.debug_tools import debug_manager
 
 class PerformanceMonitor:
     """Monitors performance metrics for the game"""
@@ -100,4 +100,4 @@ class PerformanceMonitor:
             debug_manager.log(f"Counter '{name}': {value}", "performance")
 
 # Create a global instance for easy access
-performance_monitor = PerformanceMonitor()
+perf_monitor = PerformanceMonitor()

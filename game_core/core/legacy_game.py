@@ -8,15 +8,18 @@ Game module - contains the main game class and logic
 import pygame
 import sys
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 import json
-from settings import *
-from menu import SplashScreen
+from game_core.core.config import *
+from game_core.core.menu_system import SplashScreen
 from gameplay.settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from gameplay.play_screen import PlayScreen
 from playscreen_components.map_system import WorldSelectScreen
-from debug_utils import debug_manager
-from performance_monitor import performance_monitor
+from game_core.core.debug_tools import debug_manager
+from game_core.core.perf_monitor import perf_monitor
 
 class Game:
     def __init__(self):
@@ -47,7 +50,7 @@ class Game:
         debug_manager.enable_category("player", False)
 
         # Initialize performance monitor
-        performance_monitor.enable(False)  # Set to True to enable performance monitoring
+        perf_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def init_game(self):
         """Initialize game objects when starting the game"""
@@ -80,7 +83,7 @@ class Game:
                     folder_name = player_location_data.get("folder_name", "main")
                     map_name = player_location_data.get("map_name", "")
 
-                print(f"Last folder: {folder_name}, Last map: {map_name}")
+                logger.debug("Last folder: %s, Last map: %s", folder_name, map_name)
 
                 # Check if we should load the folder's default map or the specific map
                 if folder_name:
@@ -99,7 +102,7 @@ class Game:
                     if map_name:
                         specific_map_path = os.path.join(folder_path, f"{map_name}.json")
                         if os.path.exists(specific_map_path):
-                            print(f"Loading specific map: {map_name}")
+                            logger.debug("Loading specific map: %s", map_name)
                             load_success = self.play_screen.load_map(map_name)
                             if load_success:
                                 self.game_state = "playing"
@@ -107,7 +110,11 @@ class Game:
 
                     # If no specific map or loading failed, try to load the default map
                     if os.path.exists(default_map_path):
-                        print(f"Loading default map for folder {folder_name}: {folder_default_map}")
+                        logger.debug(
+                            "Loading default map for folder %s: %s",
+                            folder_name,
+                            folder_default_map,
+                        )
                         load_success = self.play_screen.load_map(folder_default_map)
                         if load_success:
                             # Update player location using the PlayerLocationTracker
@@ -129,7 +136,10 @@ class Game:
                         for file_name in os.listdir(folder_path):
                             if file_name.endswith(".json"):
                                 map_name = file_name[:-5]  # Remove .json extension
-                                print(f"Loading first available map in folder: {map_name}")
+                                logger.debug(
+                                    "Loading first available map in folder: %s",
+                                    map_name,
+                                )
                                 load_success = self.play_screen.load_map(map_name)
                                 if load_success:
                                     # Update player location using the PlayerLocationTracker
@@ -149,7 +159,7 @@ class Game:
 
             return False
         except Exception as e:
-            print(f"Error loading saved player location: {e}")
+            logger.warning("Error loading saved player location: %s", e)
             return False
 
     def handle_events(self):
@@ -290,35 +300,35 @@ class Game:
         """Main game loop"""
         while self.running:
             # Start frame timer
-            performance_monitor.start_timer("frame")
+            perf_monitor.start_timer("frame")
 
             # Process events
-            performance_monitor.start_timer("events")
+            perf_monitor.start_timer("events")
             self.handle_events()
-            performance_monitor.end_timer("events")
+            perf_monitor.end_timer("events")
 
             # Update game state
-            performance_monitor.start_timer("update")
+            perf_monitor.start_timer("update")
             self.update()
-            performance_monitor.end_timer("update")
+            perf_monitor.end_timer("update")
 
             # Draw the frame
-            performance_monitor.start_timer("draw")
+            perf_monitor.start_timer("draw")
             self.draw()
-            performance_monitor.end_timer("draw")
+            perf_monitor.end_timer("draw")
 
             # Limit frame rate
             self.clock.tick(FPS)
 
             # End frame timer and record frame time
-            frame_time = performance_monitor.end_timer("frame")
+            frame_time = perf_monitor.end_timer("frame")
             if frame_time > 0:
-                performance_monitor.record_frame_time(frame_time)
+                perf_monitor.record_frame_time(frame_time)
 
             # Log performance stats every 60 frames
-            performance_monitor.increment_counter("frames")
-            if performance_monitor.get_counter("frames") % 60 == 0:
-                performance_monitor.log_performance_stats()
+            perf_monitor.increment_counter("frames")
+            if perf_monitor.get_counter("frames") % 60 == 0:
+                perf_monitor.log_performance_stats()
 
         # Quit pygame
         pygame.quit()
