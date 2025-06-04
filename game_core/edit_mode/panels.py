@@ -2,8 +2,8 @@
 Panel components for the Edit Mode
 """
 import pygame
-from settings import *
-from font_manager import font_manager
+from config import *
+from font_loader import font_manager
 
 
 class LayerItem:
@@ -32,8 +32,8 @@ class LayerItem:
         self.border_color = (40, 40, 40)
 
         # Fonts
-        self.name_font = font_manager.get_font('regular', 14)
-        self.opacity_font = font_manager.get_font('regular', 10)
+        self.name_font = font_loader.get_font('regular', 14)
+        self.opacity_font = font_loader.get_font('regular', 10)
 
         # Dragging state
         self.is_dragging = False
@@ -135,7 +135,7 @@ class LayerPanel:
         self.item_spacing = 2
 
         # Fonts
-        self.header_font = font_manager.get_font('regular', 14)
+        self.header_font = font_loader.get_font('regular', 14)
 
         # Scrolling
         self.scroll_speed = 20
@@ -295,7 +295,7 @@ class LayerPanel:
         # Add button (+)
         pygame.draw.rect(surface, (80, 80, 80), self.add_button)
         pygame.draw.rect(surface, self.border_color, self.add_button, 1)
-        plus_font = font_manager.get_font('regular', 16)
+        plus_font = font_loader.get_font('regular', 16)
         plus_text = plus_font.render("+", True, self.text_color)
         plus_rect = plus_text.get_rect(center=self.add_button.center)
         surface.blit(plus_text, plus_rect)
@@ -386,8 +386,8 @@ class BrushPanel:
         self.preview_rect = None
 
         # Fonts
-        self.header_font = font_manager.get_font('regular', 14)
-        self.button_font = font_manager.get_font('regular', 12)
+        self.header_font = font_loader.get_font('regular', 14)
+        self.button_font = font_loader.get_font('regular', 12)
 
         # Selected tile for preview
         self.selected_tile = None

@@ -4,7 +4,7 @@ Lootchest Manager - handles lootchest interaction and animation
 import pygame
 import os
 from playscreen_components.animation_system import AnimatedTile
-from debug_utils import debug_manager
+from debug_tools import debug_manager
 
 class LootchestManager:
     """Manages lootchest interaction and animation"""

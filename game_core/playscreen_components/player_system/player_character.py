@@ -3,7 +3,7 @@ Player Character module - implements the playable character with animations
 """
 import pygame
 import math
-from settings import *
+from config import *
 from .player_animation import blit_aligned
 from .sprite_loader import load_character_sprites
 
