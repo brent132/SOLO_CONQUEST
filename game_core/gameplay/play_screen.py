@@ -19,7 +19,7 @@ from playscreen_components.player_system import PlayerSystem, PlayerInventory
 from playscreen_components.game_systems_coordinator import GameSystemsCoordinator
 from playscreen_components.input_system import InputSystem
 from playscreen_components.rendering_system import RenderingPipeline
-from enemy_system import EnemyManager
+from playscreen_components.enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen

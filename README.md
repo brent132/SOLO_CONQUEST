@@ -17,8 +17,7 @@ SOLO_TEST/
 │   ├── font_manager.py      # Font management
 │   ├── gameplay/            # Gameplay-specific modules
 │   ├── edit_mode/           # Map editor modules
-│   ├── playscreen_components/ # Gameplay components (player, items, etc.)
-│   └── enemy_system/        # Enemy AI and management
+│   ├── playscreen_components/ # Gameplay components (player, items, enemies, etc.)
 ├── Assets/                  # Game assets and sprites
 ├── character/               # Character sprites and animations
 ├── Enemies_Sprites/         # Enemy sprites and animations
