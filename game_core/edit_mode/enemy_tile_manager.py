@@ -5,7 +5,7 @@ import pygame
 import os
 import math
 from font_manager import font_manager
-from settings import FONT_SIZE_SMALL
+from config import FONT_SIZE_SMALL
 
 class EnemyTileManager:
     """Manages enemy tiles in edit mode"""

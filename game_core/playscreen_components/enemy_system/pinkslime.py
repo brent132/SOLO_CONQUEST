@@ -5,7 +5,7 @@ import pygame
 import os
 import heapq
 import math
-from enemy_system.enemy import Enemy
+from .enemy import Enemy
 
 class Pinkslime(Enemy):
     """Pinkslime enemy class - a pinkslime that uses A* pathfinding to navigate toward the player"""

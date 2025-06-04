@@ -5,7 +5,7 @@ import pygame
 import os
 import heapq
 import math
-from enemy_system.enemy import Enemy
+from .enemy import Enemy
 
 class Spider(Enemy):
     """Spider enemy class - a spider that uses A* pathfinding to navigate toward the player"""

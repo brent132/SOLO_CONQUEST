@@ -3,7 +3,7 @@ Menu module - contains menu-related classes including splash screen
 """
 import pygame
 import math
-from settings import *
+from config import *
 from base_screen import BaseScreen
 
 class Button:
@@ -148,18 +148,18 @@ class SplashScreen(BaseScreen):
         # Check for button clicks
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.buttons['start'].is_clicked(event):
-                from debug_utils import debug_manager
+                from debug_tools import debug_manager
                 debug_manager.log("Start Game clicked", "menu")
                 self.active = False  # Exit splash screen
                 return "start"
 
             elif self.buttons['settings'].is_clicked(event):
-                from debug_utils import debug_manager
+                from debug_tools import debug_manager
                 debug_manager.log("Settings clicked", "menu")
                 return "settings"
 
             elif self.buttons['exit'].is_clicked(event):
-                from debug_utils import debug_manager
+                from debug_tools import debug_manager
                 debug_manager.log("Exit clicked", "menu")
                 return "exit"
 

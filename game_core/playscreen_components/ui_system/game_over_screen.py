@@ -3,8 +3,8 @@ Game Over Screen - displays when the player dies
 """
 import pygame
 from base_screen import BaseScreen
-from menu import Button
-from settings import *
+from menu_screens import Button
+from config import *
 
 class GameOverScreen(BaseScreen):
     """Game over screen with restart and exit buttons"""

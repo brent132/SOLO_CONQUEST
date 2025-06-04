@@ -17,7 +17,10 @@ direction, and other status information. It handles loading state from saved
 data and maintaining state consistency throughout the game.
 """
 from typing import Dict, Any, Optional
-from playscreen_components.player_system import PlayerCharacter
+# Import PlayerCharacter directly from this package to avoid triggering
+# __init__ while it is importing PlayerStateManager, preventing circular
+# import errors.
+from .player_character import PlayerCharacter
 
 
 class PlayerStateManager:

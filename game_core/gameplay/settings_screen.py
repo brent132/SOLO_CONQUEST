@@ -2,7 +2,7 @@
 Settings screen module - contains the settings screen UI and logic
 """
 import pygame
-from settings import *
+from config import *
 from base_screen import BaseScreen
 from edit_mode.ui_components import ScrollableTextArea
 
