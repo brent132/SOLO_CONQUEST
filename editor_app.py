@@ -13,12 +13,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.core.config import *
+from game_core.other_components.config import *
 from game_core.edit_mode import EditScreen
-from game_core.core.debug_tools import debug_manager
-from game_core.core.perf_monitor import perf_monitor
-from game_core.core.menu_system import Button
-from game_core.core.screen_base import BaseScreen
+from game_core.other_components.debug_tools import debug_manager
+from game_core.other_components.perf_monitor import perf_monitor
+from game_core.other_components.menu_system import Button
+from game_core.other_components.screen_base import BaseScreen
 
 class EditorSplashScreen(BaseScreen):
     """Custom splash screen for editor mode with only relevant buttons"""

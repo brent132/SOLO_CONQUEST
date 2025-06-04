@@ -3,7 +3,7 @@ Sprite loader module - handles loading character sprites and animations
 """
 import os
 import pygame
-from game_core.core.image_cache import sprite_cache
+from game_core.other_components.image_cache import sprite_cache
 
 def load_character_sprites():
     """Load all character sprites from the character folder"""

@@ -3,8 +3,8 @@ Button components for the Edit Mode
 """
 import os
 import pygame
-from game_core.core.config import *
-from game_core.core.font_loader import font_manager
+from game_core.other_components.config import *
+from game_core.other_components.font_loader import font_manager
 
 
 class Button:

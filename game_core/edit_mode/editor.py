@@ -4,7 +4,7 @@ Main Editor class - integrates all components of the edit mode
 import pygame
 import os
 import json
-from game_core.core.config import *
+from game_core.other_components.config import *
 from edit_mode.ui_components import SaveButton, TextInput, ScrollableTextArea
 from edit_mode.tileset_manager import TilesetManager
 from edit_mode.map_saver import MapSaver
@@ -15,7 +15,7 @@ from edit_mode.collision_manager import CollisionManager
 from edit_mode.brush_manager import BrushManager
 from edit_mode.edit_screen_ui import EditScreenUI
 
-from game_core.core.screen_base import BaseScreen
+from game_core.other_components.screen_base import BaseScreen
 
 class EditScreen(BaseScreen):
     """Edit mode screen with grid and tileset selection"""

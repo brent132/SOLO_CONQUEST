@@ -9,14 +9,14 @@ import pygame
 import sys
 import os
 import json
-from game_core.core.config import *
-from game_core.core.menu_system import SplashScreen
+from game_core.other_components.config import *
+from game_core.other_components.menu_system import SplashScreen
 from gameplay.settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from gameplay.play_screen import PlayScreen
 from playscreen_components.map_system import WorldSelectScreen
-from game_core.core.debug_tools import debug_manager
-from game_core.core.perf_monitor import perf_monitor
+from game_core.other_components.debug_tools import debug_manager
+from game_core.other_components.perf_monitor import perf_monitor
 
 class Game:
     def __init__(self):

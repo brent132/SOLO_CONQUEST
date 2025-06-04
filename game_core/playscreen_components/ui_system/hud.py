@@ -1,7 +1,7 @@
 import pygame
 import os
 import math
-from game_core.core.image_cache import sprite_cache
+from game_core.other_components.image_cache import sprite_cache
 
 class Inventory:
     """Class to handle the player's inventory"""

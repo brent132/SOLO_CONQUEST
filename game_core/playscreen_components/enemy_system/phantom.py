@@ -6,7 +6,7 @@ import os
 import heapq
 import math
 from .enemy import Enemy
-from game_core.core.debug_tools import debug_manager
+from game_core.other_components.debug_tools import debug_manager
 
 class Phantom(Enemy):
     """Phantom enemy class with cardinal movement"""
@@ -299,7 +299,7 @@ class Phantom(Enemy):
 
             # Debug output
             if self.debug_mode:
-                from game_core.core.debug_tools import debug_manager
+                from game_core.other_components.debug_tools import debug_manager
                 debug_manager.log(f"Applied knockback to player: dx={dx:.2f}, dy={dy:.2f}", "enemy")
 
             return True

@@ -4,8 +4,8 @@ Enemy Tile Manager for Edit Mode - handles placing enemies as tiles
 import pygame
 import os
 import math
-from game_core.core.font_loader import font_manager
-from game_core.core.config import FONT_SIZE_SMALL
+from game_core.other_components.font_loader import font_manager
+from game_core.other_components.config import FONT_SIZE_SMALL
 
 class EnemyTileManager:
     """Manages enemy tiles in edit mode"""

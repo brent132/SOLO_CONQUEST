@@ -132,7 +132,7 @@ class Enemy(pygame.sprite.Sprite):
         """Move the enemy towards the player using cardinal directions"""
         # Use debug manager instead of print statements
         if self.debug_mode:
-            from game_core.core.debug_tools import debug_manager
+            from game_core.other_components.debug_tools import debug_manager
             debug_manager.log(f"Enemy at ({self.rect.x}, {self.rect.y}), Player at ({player_x}, {player_y})", "enemy")
 
         # Calculate direction to player
@@ -193,7 +193,7 @@ class Enemy(pygame.sprite.Sprite):
                     self.animation_timer = 0
 
             if self.debug_mode:
-                from game_core.core.debug_tools import debug_manager
+                from game_core.other_components.debug_tools import debug_manager
                 debug_manager.log(f"Enemy knockback applied: dx={direction_x:.2f}, dy={direction_y:.2f}", "enemy")
 
             return True

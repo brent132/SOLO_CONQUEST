@@ -15,7 +15,7 @@ FEATURES:
 """
 import pygame
 from typing import List, Dict, Any, Optional
-from game_core.core.perf_optimizer import perf_optimizer
+from game_core.other_components.perf_optimizer import perf_optimizer
 
 
 class EffectsRenderer:

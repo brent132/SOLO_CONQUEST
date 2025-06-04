@@ -8,8 +8,8 @@ from .spinner import Spinner
 from .spider import Spider
 from .pinkslime import Pinkslime
 from .pinkbat import Pinkbat
-from game_core.core.debug_tools import debug_manager
-from game_core.core.perf_optimizer import perf_optimizer
+from game_core.other_components.debug_tools import debug_manager
+from game_core.other_components.perf_optimizer import perf_optimizer
 
 class EnemyManager:
     """Manages all enemies in the game"""

@@ -1,4 +1,10 @@
 {
   "version": 1,
-  "inventory": []
+  "inventory": [
+    {
+      "slot": 69,
+      "name": "Crystal",
+      "count": 2
+    }
+  ]
 }

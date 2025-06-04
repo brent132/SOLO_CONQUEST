@@ -3,8 +3,8 @@ Menu module - contains menu-related classes including splash screen
 """
 import pygame
 import math
-from game_core.core.config import *
-from game_core.core.screen_base import BaseScreen
+from game_core.other_components.config import *
+from game_core.other_components.screen_base import BaseScreen
 
 class Button:
     """Interactive button class for menus using custom PNG images"""
@@ -148,18 +148,18 @@ class SplashScreen(BaseScreen):
         # Check for button clicks
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.buttons['start'].is_clicked(event):
-                from game_core.core.debug_tools import debug_manager
+                from game_core.other_components.debug_tools import debug_manager
                 debug_manager.log("Start Game clicked", "menu")
                 self.active = False  # Exit splash screen
                 return "start"
 
             elif self.buttons['settings'].is_clicked(event):
-                from game_core.core.debug_tools import debug_manager
+                from game_core.other_components.debug_tools import debug_manager
                 debug_manager.log("Settings clicked", "menu")
                 return "settings"
 
             elif self.buttons['exit'].is_clicked(event):
-                from game_core.core.debug_tools import debug_manager
+                from game_core.other_components.debug_tools import debug_manager
                 debug_manager.log("Exit clicked", "menu")
                 return "exit"
 

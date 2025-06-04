@@ -3,7 +3,7 @@ Chest Inventory - handles the display and interaction with lootchest contents (T
 """
 import pygame
 import os
-from game_core.core.image_cache import sprite_cache
+from game_core.other_components.image_cache import sprite_cache
 
 class ChestInventory:
     """Class to handle the lootchest inventory display with Terraria-style interactions"""
