@@ -2,7 +2,10 @@
 Font Manager module - handles loading and managing fonts
 """
 import os
+import logging
 import pygame
+
+logger = logging.getLogger(__name__)
 
 class FontManager:
     """Manages loading and caching fonts"""
@@ -58,7 +61,7 @@ class FontManager:
                 self.font_cache[cache_key] = font
                 return font
         except Exception as e:
-            print(f"Error loading font {font_path}: {e}")
+            logger.warning(f"Error loading font {font_path}: {e}")
 
         # If custom font fails, use system font as fallback
         if self.fallback_font is None:

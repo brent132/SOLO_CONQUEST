@@ -8,8 +8,8 @@ from .spinner import Spinner
 from .spider import Spider
 from .pinkslime import Pinkslime
 from .pinkbat import Pinkbat
-from debug_utils import debug_manager
-from performance_optimizer import performance_optimizer
+from game_core.core.debug_tools import debug_manager
+from game_core.core.perf_optimizer import perf_optimizer
 
 class EnemyManager:
     """Manages all enemies in the game"""
@@ -252,7 +252,7 @@ class EnemyManager:
 
     def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw all enemies"""
-        max_visible = performance_optimizer.get_quality_setting("max_visible_entities")
+        max_visible = perf_optimizer.get_quality_setting("max_visible_entities")
         drawn = 0
         for enemy in self.enemies:
             if drawn >= max_visible:

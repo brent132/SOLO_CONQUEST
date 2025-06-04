@@ -2,10 +2,13 @@
 Sprite Cache System - Centralized sprite and image caching to reduce memory usage
 """
 import os
+import logging
 import pygame
 import weakref
 from typing import Dict, Optional, Tuple, List
 import gc
+
+logger = logging.getLogger(__name__)
 
 class SpriteCache:
     """
@@ -119,7 +122,9 @@ class SpriteCache:
             return sprite
             
         except Exception as e:
-            print(f"Error extracting sprite from sheet {sheet_path} at {rect}: {e}")
+            logger.warning(
+                f"Error extracting sprite from sheet {sheet_path} at {rect}: {e}"
+            )
             return None
     
     def get_animation_frames(self, folder_path: str, convert_alpha: bool = True) -> List[pygame.Surface]:
@@ -163,7 +168,9 @@ class SpriteCache:
                         self._cache_misses += 1
                     
         except Exception as e:
-            print(f"Error loading animation frames from {folder_path}: {e}")
+            logger.warning(
+                f"Error loading animation frames from {folder_path}: {e}"
+            )
         
         return frames
 
@@ -215,7 +222,7 @@ class SpriteCache:
             return scaled_sprite
 
         except Exception as e:
-            print(f"Error scaling sprite {path} to {size}: {e}")
+            logger.warning(f"Error scaling sprite {path} to {size}: {e}")
             return original_sprite
 
     def _normalize_path(self, path: str) -> str:
@@ -238,7 +245,7 @@ class SpriteCache:
         """
         try:
             if not os.path.exists(path):
-                print(f"Image file not found: {path}")
+                logger.warning(f"Image file not found: {path}")
                 return None
             
             image = pygame.image.load(path)
@@ -250,7 +257,7 @@ class SpriteCache:
             return image
             
         except Exception as e:
-            print(f"Error loading image {path}: {e}")
+            logger.warning(f"Error loading image {path}: {e}")
             return None
     
     def _cleanup_cache(self):
@@ -301,11 +308,15 @@ class SpriteCache:
         }
 
     def print_cache_stats(self):
-        """Print cache statistics to console for debugging."""
+        """Log cache statistics for debugging."""
         stats = self.get_cache_stats()
-        print(f"Sprite Cache Stats: {stats['cache_size']} sprites, "
-              f"{stats['cache_hits']} hits, {stats['cache_misses']} misses, "
-              f"{stats['hit_ratio']:.1%} hit ratio")
+        logger.debug(
+            "Sprite Cache Stats: %d sprites, %d hits, %d misses, %.1f%% hit ratio",
+            stats["cache_size"],
+            stats["cache_hits"],
+            stats["cache_misses"],
+            stats["hit_ratio"] * 100,
+        )
     
     def create_placeholder(self, size: Tuple[int, int] = (16, 16), 
                          color: Tuple[int, int, int, int] = (255, 0, 0, 128)) -> pygame.Surface:

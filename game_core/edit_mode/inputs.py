@@ -2,8 +2,8 @@
 Input components for the Edit Mode
 """
 import pygame
-from settings import *
-from font_manager import font_manager
+from game_core.core.config import *
+from game_core.core.font_loader import font_manager
 
 
 class TextInput:
@@ -11,7 +11,7 @@ class TextInput:
     def __init__(self, x, y, width, height, font_size=FONT_SIZE_MEDIUM, max_length=20):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = "map1"  # Default text
-        self.font = font_manager.get_font('regular', font_size)
+        self.font = font_loader.get_font('regular', font_size)
         self.text_surf = self.font.render(self.text, True, (0, 0, 0))
         self.text_rect = self.text_surf.get_rect(midleft=(self.rect.x + 5, self.rect.centery))
         self.active = False
@@ -78,7 +78,7 @@ class DropdownMenu:
         self.rect = pygame.Rect(x, y, width, height)
         self.options = options or []
         self.selected_option = None if not self.options else self.options[0]
-        self.font = font_manager.get_font('regular', font_size)
+        self.font = font_loader.get_font('regular', font_size)
         self.is_open = False
         self.is_hovered = False
 
