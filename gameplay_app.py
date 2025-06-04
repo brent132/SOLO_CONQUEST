@@ -14,14 +14,14 @@ import json
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
 # Import from game_core (IDE-friendly)
-from game_core.config import *
-from game_core.menu_system import SplashScreen
+from game_core.settings import *
+from game_core.menu import SplashScreen
 from game_core.gameplay.settings_screen import SettingsScreen
 from game_core.gameplay.play_screen import PlayScreen
 from game_core.playscreen_components.map_system import WorldSelectScreen
-from game_core.debug_tools import debug_manager
-from game_core.perf_monitor import perf_monitor
-from game_core.perf_optimizer import perf_optimizer
+from game_core.debug_utils import debug_manager
+from game_core.performance_monitor import performance_monitor
+from game_core.performance_optimizer import performance_optimizer
 
 class GameplayApp:
     def __init__(self):
@@ -78,7 +78,7 @@ class GameplayApp:
         debug_manager.enable_category("player", False)
 
         # Initialize performance monitor
-        perf_monitor.enable(False)  # Set to True to enable performance monitoring
+        performance_monitor.enable(False)  # Set to True to enable performance monitoring
 
     def init_game(self):
         """Initialize game objects when starting the game"""
@@ -310,39 +310,39 @@ class GameplayApp:
         while self.running:
             frame_start_time = time.time()
 
-            perf_optimizer.start_frame()
+            performance_optimizer.start_frame()
 
             # Start frame timer
-            perf_monitor.start_timer("frame")
+            performance_monitor.start_timer("frame")
 
             # Process events
-            perf_monitor.start_timer("events")
+            performance_monitor.start_timer("events")
             self.handle_events()
-            perf_monitor.end_timer("events")
+            performance_monitor.end_timer("events")
 
             # Update game state
-            perf_monitor.start_timer("update")
+            performance_monitor.start_timer("update")
             self.update()
-            perf_monitor.end_timer("update")
+            performance_monitor.end_timer("update")
 
             # Draw the frame
-            perf_monitor.start_timer("draw")
+            performance_monitor.start_timer("draw")
             self.draw()
-            perf_monitor.end_timer("draw")
+            performance_monitor.end_timer("draw")
 
             # Precise frame rate limiting
             self._limit_frame_rate(frame_start_time)
 
-            perf_optimizer.end_frame()
+            performance_optimizer.end_frame()
 
             self.stats_counter += 1
             if self.stats_counter % 120 == 0:
-                perf_optimizer.print_performance_stats()
+                performance_optimizer.print_performance_stats()
 
             # End frame timer and record frame time
-            frame_time = perf_monitor.end_timer("frame")
+            frame_time = performance_monitor.end_timer("frame")
             if frame_time > 0:
-                perf_monitor.record_frame_time(frame_time)
+                performance_monitor.record_frame_time(frame_time)
 
             # Update FPS monitoring
             self._update_fps_monitoring()
