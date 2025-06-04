@@ -2,7 +2,7 @@
 Edit Screen UI module - handles drawing the UI elements for the edit screen
 """
 import pygame
-from settings import *
+from config import *
 from font_manager import font_manager
 
 class EditScreenUI:

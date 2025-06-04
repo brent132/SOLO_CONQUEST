@@ -2,14 +2,14 @@
 Enemy Manager - Manages all enemies in the game
 """
 import pygame
-from enemy_system.phantom import Phantom
-from enemy_system.bomberplant import Bomberplant
-from enemy_system.spinner import Spinner
-from enemy_system.spider import Spider
-from enemy_system.pinkslime import Pinkslime
-from enemy_system.pinkbat import Pinkbat
-from debug_utils import debug_manager
-from performance_optimizer import performance_optimizer
+from .phantom import Phantom
+from .bomberplant import Bomberplant
+from .spinner import Spinner
+from .spider import Spider
+from .pinkslime import Pinkslime
+from .pinkbat import Pinkbat
+from debug_tools import debug_manager
+from perf_optimizer import perf_optimizer
 
 class EnemyManager:
     """Manages all enemies in the game"""
@@ -252,7 +252,7 @@ class EnemyManager:
 
     def draw(self, surface, camera_x=0, camera_y=0, zoom_factor=1.0):
         """Draw all enemies"""
-        max_visible = performance_optimizer.get_quality_setting("max_visible_entities")
+        max_visible = perf_optimizer.get_quality_setting("max_visible_entities")
         drawn = 0
         for enemy in self.enemies:
             if drawn >= max_visible:

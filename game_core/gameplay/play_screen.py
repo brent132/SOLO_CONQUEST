@@ -8,7 +8,7 @@ import os
 import json
 import pygame
 from typing import Optional
-from debug_utils import debug_manager
+from debug_tools import debug_manager
 from playscreen_components.player_system import PlayerCharacter
 # CollisionHandler now imported from map_system
 from playscreen_components.animation_system import AnimatedTileManager
@@ -19,7 +19,7 @@ from playscreen_components.player_system import PlayerSystem, PlayerInventory
 from playscreen_components.game_systems_coordinator import GameSystemsCoordinator
 from playscreen_components.input_system import InputSystem
 from playscreen_components.rendering_system import RenderingPipeline
-from enemy_system import EnemyManager
+from playscreen_components.enemy_system import EnemyManager
 # Removed unused imports
 from base_screen import BaseScreen
 from playscreen_components.ui_system import HUD, GameOverScreen
@@ -280,7 +280,7 @@ class PlayScreen(BaseScreen):
         self.game_systems_coordinator.initialize_systems(
             self.enemy_manager, self.key_item_manager, self.crystal_item_manager,
             self.lootchest_manager, self.hud, self.animated_tile_manager,
-            self.player_system, self.relation_handler
+            self.player_system, self.relation_handler, self.map_system
         )
 
         # Set up save callback for item collection
@@ -1262,8 +1262,9 @@ class PlayScreen(BaseScreen):
             if position in self.key_item_manager.key_items:
                 self.key_item_manager.key_items[position]["collected"] = True
 
-            # Remove the key from all map layers
-            self._remove_key_from_map_layers(position[0], position[1])
+            # Remove the key from all map layers using the map system
+            if hasattr(self, 'map_system') and hasattr(self, 'key_item_id'):
+                self.map_system.remove_tile_from_layers(position[0], position[1], self.key_item_id)
 
     def _load_collected_crystals_from_game_state(self, collected_crystals_data):
         """Load collected crystals data from saved game state"""
@@ -1282,8 +1283,9 @@ class PlayScreen(BaseScreen):
             if position in self.crystal_item_manager.crystal_items:
                 self.crystal_item_manager.crystal_items[position]["collected"] = True
 
-            # Remove the crystal from all map layers
-            self._remove_crystal_from_map_layers(position[0], position[1])
+            # Remove the crystal from all map layers using the map system
+            if hasattr(self, 'map_system') and hasattr(self, 'crystal_item_id'):
+                self.map_system.remove_tile_from_layers(position[0], position[1], self.crystal_item_id)
 
     def _load_opened_lootchests_from_game_state(self, opened_lootchests_data):
         """Load opened lootchests data from saved game state"""
@@ -1403,43 +1405,6 @@ class PlayScreen(BaseScreen):
 
 
 
-    def _remove_key_from_map_layers(self, grid_x, grid_y):
-        """Remove a key from all map layers at the given position"""
-        # Skip if no layers or no key_item_id
-        if not hasattr(self, 'layers') or not hasattr(self, 'key_item_id'):
-            return
-
-        # Remove the key from all map layers
-        for layer_idx, layer in enumerate(self.layers):
-            layer_data = layer["data"]
-            if 0 <= grid_y < len(layer_data) and 0 <= grid_x < len(layer_data[grid_y]):
-                if layer_data[grid_y][grid_x] == self.key_item_id:
-                    # Remove the key item from this layer
-                    layer_data[grid_y][grid_x] = -1
-
-        # Also update the merged map data
-        if hasattr(self, 'map_data') and self.map_data:
-            if 0 <= grid_y < len(self.map_data) and 0 <= grid_x < len(self.map_data[grid_y]):
-                self.map_data[grid_y][grid_x] = -1
-
-    def _remove_crystal_from_map_layers(self, grid_x, grid_y):
-        """Remove a crystal from all map layers at the given position"""
-        # Skip if no layers or no crystal_item_id
-        if not hasattr(self, 'layers') or not hasattr(self, 'crystal_item_id'):
-            return
-
-        # Remove the crystal from all map layers
-        for layer_idx, layer in enumerate(self.layers):
-            layer_data = layer["data"]
-            if 0 <= grid_y < len(layer_data) and 0 <= grid_x < len(layer_data[grid_y]):
-                if layer_data[grid_y][grid_x] == self.crystal_item_id:
-                    # Remove the crystal item from this layer
-                    layer_data[grid_y][grid_x] = -1
-
-        # Also update the merged map data
-        if hasattr(self, 'map_data') and self.map_data:
-            if 0 <= grid_y < len(self.map_data) and 0 <= grid_x < len(self.map_data[grid_y]):
-                self.map_data[grid_y][grid_x] = -1
 
     # OLD CURSOR AND HOVER METHODS REMOVED - NOW HANDLED BY InputSystem
     # is_hovering_lootchest() has been replaced by the modularized input system
