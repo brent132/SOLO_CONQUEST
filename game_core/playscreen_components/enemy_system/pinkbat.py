@@ -4,7 +4,7 @@ Pinkbat Enemy - A flying pinkbat enemy that moves in a straight line and uses da
 import pygame
 import os
 import math
-from enemy_system.enemy import Enemy
+from .enemy import Enemy
 
 class Pinkbat(Enemy):
     """Pinkbat enemy class - a flying pinkbat that moves in a straight line and uses dashing attacks"""

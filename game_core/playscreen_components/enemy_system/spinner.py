@@ -5,7 +5,7 @@ import pygame
 import os
 import heapq
 import math
-from enemy_system.enemy import Enemy
+from .enemy import Enemy
 from debug_utils import debug_manager
 
 class Spinner(Enemy):

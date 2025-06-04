@@ -2,12 +2,12 @@
 Enemy Manager - Manages all enemies in the game
 """
 import pygame
-from enemy_system.phantom import Phantom
-from enemy_system.bomberplant import Bomberplant
-from enemy_system.spinner import Spinner
-from enemy_system.spider import Spider
-from enemy_system.pinkslime import Pinkslime
-from enemy_system.pinkbat import Pinkbat
+from .phantom import Phantom
+from .bomberplant import Bomberplant
+from .spinner import Spinner
+from .spider import Spider
+from .pinkslime import Pinkslime
+from .pinkbat import Pinkbat
 from debug_utils import debug_manager
 from performance_optimizer import performance_optimizer
 

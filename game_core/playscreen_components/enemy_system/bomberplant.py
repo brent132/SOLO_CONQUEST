@@ -4,7 +4,7 @@ Bomberplant Enemy - A stationary enemy that launches bombs
 import pygame
 import os
 import math
-from enemy_system.enemy import Enemy
+from .enemy import Enemy
 
 class Bomberplant(Enemy):
     """Bomberplant enemy class - a stationary enemy that launches bombs"""
