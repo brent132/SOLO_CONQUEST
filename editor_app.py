@@ -6,7 +6,14 @@ import os
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
-from game_core.gameplay.other_components.config import WIDTH, HEIGHT, FPS
+from game_core.editor.config import (
+    WIDTH,
+    HEIGHT,
+    FPS,
+    BACKGROUND_COLOR,
+    FONT_PATH,
+    FONT_COLOR,
+)
 
 
 class EditorApp:
@@ -22,8 +29,8 @@ class EditorApp:
         self.height = HEIGHT
 
         # Basic font for placeholder text
-        self.font = pygame.font.SysFont(None, 36)
-        self.title_surf = self.font.render("Edit Mode", True, (255, 255, 255))
+        self.font = pygame.font.Font(FONT_PATH, 36)
+        self.title_surf = self.font.render("Edit Mode", True, FONT_COLOR)
         self.title_rect = self.title_surf.get_rect(center=(self.width // 2, self.height // 2))
 
     def handle_events(self):
@@ -39,7 +46,7 @@ class EditorApp:
         pass
 
     def draw(self):
-        self.screen.fill((30, 30, 30))
+        self.screen.fill(BACKGROUND_COLOR)
         self.screen.blit(self.title_surf, self.title_rect)
         pygame.display.flip()
 
