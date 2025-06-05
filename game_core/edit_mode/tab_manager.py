@@ -12,10 +12,10 @@ class TabManager:
         # Tab settings
         self.tab_height = 30
         self.tab_spacing = 5
-        self.active_tab = "Tiles"  # Default active tab
+        self.active_tab = "Collision"  # Default active tab after tileset removal
 
-        # Define tabs (Brush functionality moved to Tiles tab)
-        self.tabs = ["Tiles", "Collision", "Relations", "Save", "Help"]
+        # Define remaining tabs (Tiles tab removed)
+        self.tabs = ["Collision", "Relations", "Save", "Help"]
         self.tab_buttons = {}
 
         # Create tab buttons

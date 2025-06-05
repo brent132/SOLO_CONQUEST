@@ -1235,18 +1235,13 @@ class EditScreen(BaseScreen):
             self.ui_manager.draw_sidebar(
                 surface,
                 self.tab_manager,
-                self.tileset_manager,
-                self.layer_manager,
                 self.map_saver,
                 self.map_name_input,
                 self.save_button,
                 self.edit_mode_button,
                 self.browse_mode_button,
                 self.new_map_button,
-                self.selected_tileset_index,
                 self.collision_manager,
-                None,  # collision_toggle_rect removed
-                self.brush_manager,
                 self  # Pass self as the editor instance
             )
 

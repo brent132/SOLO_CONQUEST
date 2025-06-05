@@ -41,10 +41,9 @@ class EditScreenUI:
             pygame.draw.line(surface, self.grid_color, (0, adjusted_y),
                             (self.map_area_width, adjusted_y), self.grid_line_width)
 
-    def draw_sidebar(self, surface, tab_manager, tileset_manager, layer_manager,
-                    map_saver, map_name_input, save_button, edit_mode_button,
-                    browse_mode_button, new_map_button, selected_tileset_index, collision_manager=None,
-                    collision_toggle_rect=None, brush_manager=None, editor=None):
+    def draw_sidebar(self, surface, tab_manager, map_saver, map_name_input,
+                     save_button, edit_mode_button, browse_mode_button,
+                     new_map_button, collision_manager=None, editor=None):
         """Draw the sidebar with tabs and content based on active tab"""
         # Draw sidebar background
         sidebar_rect = pygame.Rect(self.map_area_width, 0, self.sidebar_width, self.height)
@@ -79,61 +78,9 @@ class EditScreenUI:
         )
 
         # Draw content based on active tab
-        if tab_manager.active_tab == "Tiles":
-            # Draw tileset switching buttons (handled by editor)
-            if editor and hasattr(editor, 'tileset_buttons'):
-                for button in editor.tileset_buttons:
-                    button.draw(surface)
-
-            # Draw tileset buttons
-            tileset_manager.draw_tileset(surface, selected_tileset_index)
-
-            # Draw brush panel (integrated into Tiles tab)
-            if brush_manager:
-                brush_manager.draw(surface, font)
-
-            # Draw a separator line at a fixed position
-            separator_y = 490  # Fixed position for separator line
-
-            # Draw a nicer separator with padding
-            pygame.draw.rect(surface, (220, 220, 220),
-                           pygame.Rect(self.map_area_width + 10, separator_y - 5,
-                                      self.sidebar_width - 20, 10))
-            pygame.draw.line(surface, (180, 180, 180),
-                            (self.map_area_width + 15, separator_y),
-                            (self.map_area_width + self.sidebar_width - 15, separator_y), 2)
-
-            # Draw layer manager UI below the separator
-            layer_manager.draw(surface)
-
-        elif tab_manager.active_tab == "Collision" and collision_manager:
-            # Draw tileset switching buttons (handled by editor)
-            if editor and hasattr(editor, 'tileset_buttons'):
-                for button in editor.tileset_buttons:
-                    button.draw(surface)
-
-            # Draw tileset with collision dots
-            tileset_manager.draw_tileset(surface, selected_tileset_index)
-
-            # Draw collision dots on each regular tile
-            # Note: Collision dots in the sidebar don't need zoom scaling since they're UI elements
-            for button_data in tileset_manager.tileset_buttons[selected_tileset_index]:
-                button = button_data['button']
-                if button:
-                    source_path = button_data.get('source_path', '')
-                    if source_path:
-                        collision_manager.draw_collision_dots(surface, button.rect, source_path, 1.0)
-
-            # Draw collision dots on animated tiles if we're on the last tileset
-            if selected_tileset_index == len(tileset_manager.tileset_buttons) - 1 and tileset_manager.animated_tile_buttons:
-                for button_data in tileset_manager.animated_tile_buttons:
-                    button = button_data['button']
-                    if button:
-                        source_path = button_data.get('source_path', '')
-                        if source_path:
-                            collision_manager.draw_collision_dots(surface, button.rect, source_path, 1.0)
-
-            # Toggle dots visibility button removed
+        if tab_manager.active_tab == "Collision" and collision_manager:
+            # Collision editing UI has been removed with tileset support
+            pass
 
         elif tab_manager.active_tab == "Save":
             # Draw save controls
