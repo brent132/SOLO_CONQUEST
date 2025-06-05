@@ -12,7 +12,7 @@ class TilesetTabManager:
     """Manage numeric tileset tabs (1-6) inside the tiles tab."""
 
     TAB_HEIGHT = 30
-    TAB_WIDTH = 100
+    TAB_WIDTH = 30
     PADDING = 5
 
     def __init__(self, sidebar_rect: pygame.Rect) -> None:
@@ -42,7 +42,7 @@ class TilesetTabManager:
         for _ in self.tilesets:
             rect = pygame.Rect(x, y, self.TAB_WIDTH, self.TAB_HEIGHT)
             rects.append(rect)
-            y += self.TAB_HEIGHT + self.PADDING
+            x += self.TAB_WIDTH + self.PADDING
         return rects
 
     def draw(self, surface: pygame.Surface) -> None:
