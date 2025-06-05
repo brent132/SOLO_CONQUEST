@@ -19,9 +19,9 @@ SOLO_TEST/
 │   │   ├── font_loader.py   # Font management
 │   │   ├── image_cache.py   # Sprite caching
 │   │   └── legacy_game.py   # Legacy game loop
-│   ├── gameplay/            # Gameplay-specific modules
-│   ├── edit_mode/           # Map editor modules
-│   ├── playscreen_components/ # Gameplay components (player, items, enemies, etc.)
+│   └── gameplay/            # Gameplay modules
+│       ├── other_components/      # Shared gameplay utilities
+│       └── playscreen_components/ # Gameplay systems (player, items, enemies, etc.)
 ├── Assets/                  # Game assets and sprites
 ├── character/               # Character sprites and animations
 ├── Enemies_Sprites/         # Enemy sprites and animations

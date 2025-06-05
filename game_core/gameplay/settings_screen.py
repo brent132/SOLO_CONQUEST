@@ -2,8 +2,8 @@
 Settings screen module - contains the settings screen UI and logic
 """
 import pygame
-from game_core.other_components.config import *
-from game_core.other_components.screen_base import BaseScreen
+from game_core.gameplay.other_components.config import *
+from game_core.gameplay.other_components.screen_base import BaseScreen
 # Local fallback implementation of ScrollableTextArea so the gameplay mode
 # does not rely on the editor package.  This keeps gameplay running even if
 # the editor is missing.

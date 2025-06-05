@@ -1,6 +1,6 @@
 """Simple scrollable text area widget for displaying instructions."""
 import pygame
-from game_core.other_components.config import WHITE, GRAY
+from game_core.gameplay.other_components.config import WHITE, GRAY
 
 class ScrollableTextArea:
     """Display scrollable lines of text within a rect."""

@@ -6,7 +6,7 @@ import os
 # Add game_core to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
 
-from game_core.other_components.config import WIDTH, HEIGHT, FPS
+from game_core.gameplay.other_components.config import WIDTH, HEIGHT, FPS
 
 
 class EditorApp:
