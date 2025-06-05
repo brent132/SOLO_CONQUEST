@@ -16,9 +16,9 @@ SOLO_TEST/
 │   │   ├── debug_tools.py   # Debug utilities
 │   │   ├── perf_monitor.py  # Performance monitoring
 │   │   ├── perf_optimizer.py # Performance optimization
-│   │   ├── font_loader.py   # Font management
 │   │   ├── image_cache.py   # Sprite caching
 │   │   └── legacy_game.py   # Legacy game loop
+│   ├── font_loader.py       # Font management
 │   └── gameplay/            # Gameplay modules
 │       ├── other_components/      # Shared gameplay utilities
 │       └── playscreen_components/ # Gameplay systems (player, items, enemies, etc.)
