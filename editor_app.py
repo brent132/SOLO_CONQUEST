@@ -11,8 +11,6 @@ from game_core.editor.config import (
     HEIGHT,
     FPS,
     BACKGROUND_COLOR,
-    FONT_PATH,
-    FONT_COLOR,
     maintain_aspect_ratio,
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
@@ -31,10 +29,7 @@ class EditorApp:
         self.width = WIDTH
         self.height = HEIGHT
 
-        # Basic font for placeholder text
-        self.font = pygame.font.Font(FONT_PATH, 36)
-        self.title_surf = self.font.render("Edit Mode", True, FONT_COLOR)
-        self.title_rect = self.title_surf.get_rect(center=(self.width // 2, self.height // 2))
+
 
         # Editor UI components
         self.sidebar = Sidebar(self.height, self.width - SIDEBAR_WIDTH)
@@ -47,7 +42,6 @@ class EditorApp:
             elif event.type == pygame.VIDEORESIZE:
                 self.width, self.height = maintain_aspect_ratio(*event.size)
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-                self.title_rect = self.title_surf.get_rect(center=(self.width // 2, self.height // 2))
                 self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
                 self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
 
@@ -58,7 +52,6 @@ class EditorApp:
         self.screen.fill(BACKGROUND_COLOR)
         self.canvas.draw(self.screen)
         self.sidebar.draw(self.screen)
-        self.screen.blit(self.title_surf, self.title_rect)
         pygame.display.flip()
 
     def run(self):

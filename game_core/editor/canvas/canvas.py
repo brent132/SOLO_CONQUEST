@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pygame
 
-from ..color_palette import LIGHT_GRAY, DARK_GRAY
+from ..color_palette import LIGHT_GRAY, DARK_GRAY, WHITE
 
 
 class Canvas:
@@ -20,7 +20,7 @@ class Canvas:
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the canvas background and grid."""
-        pygame.draw.rect(surface, DARK_GRAY, self.rect)
+        pygame.draw.rect(surface, WHITE, self.rect)
 
         # Draw vertical grid lines
         for gx in range(self.rect.left, self.rect.right, self.grid_size):
