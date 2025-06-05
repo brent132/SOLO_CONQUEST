@@ -7,6 +7,7 @@ import pygame
 from .color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from .config import FONT_PATH
 from .tileset_tab.tileset_tab_manager import TilesetTabManager
+from .tileset_tab.tilesets.overworld_tileset import OverworldTileset
 
 
 class TabManager:
@@ -24,6 +25,11 @@ class TabManager:
 
         # Manager for the numeric tileset tabs
         self.tileset_manager = TilesetTabManager(sidebar_rect)
+
+        # Panels corresponding to each tileset index
+        self.tileset_panels: dict[int, object] = {
+            0: OverworldTileset(),
+        }
 
     @property
     def active_tileset(self) -> int:
@@ -71,5 +77,8 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             self.tileset_manager.draw(surface)
+            panel = self.tileset_panels.get(self.tileset_manager.active)
+            if panel:
+                panel.draw(surface, self.sidebar_rect)
 
 
