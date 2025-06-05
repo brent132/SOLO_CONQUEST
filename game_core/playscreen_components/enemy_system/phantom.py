@@ -100,6 +100,9 @@ class Phantom(Enemy):
         self.current_path_index = 0
         self.grid_size = 16  # Size of each grid cell
 
+        # Phantom is intangible - it should ignore world collisions
+        self.intangible = True
+
         # Load health bar assets
         self.health_bar_bg = self.load_image("Enemies_Sprites/Hud_Ui/health_hud.png")      # Background (doesn't change size)
         self.health_indicator = self.load_image("Enemies_Sprites/Hud_Ui/health_bar_hud.png")  # Indicator (changes size with health)
@@ -127,6 +130,10 @@ class Phantom(Enemy):
 
     def check_collision(self, collision_handler, tile_mapping, map_data):
         """Check if the phantom would collide with any solid tile corners"""
+        # Intangible phantoms ignore collisions entirely
+        if self.intangible:
+            return False
+
         # If no collision data is available, assume no collision
         if not collision_handler or not tile_mapping or not map_data:
             return False
@@ -222,8 +229,9 @@ class Phantom(Enemy):
                 if norm_dx != 0:
                     self.direction = "right" if norm_dx > 0 else "left"
 
-        # Check for collisions with the new velocity
-        if collision_handler and tile_mapping and map_data:
+        # Check for collisions with the new velocity if phantom is tangible
+        if (not self.intangible and
+                collision_handler and tile_mapping and map_data):
             # If we would collide, stop moving
             if self.check_collision(collision_handler, tile_mapping, map_data):
                 # Try to find an alternative direction
@@ -537,6 +545,10 @@ class Phantom(Enemy):
 
     def find_path_to_player(self, player_x, player_y, collision_handler, tile_mapping, map_data):
         """Find a path to the player using A* algorithm"""
+        # Intangible phantoms don't need pathfinding
+        if self.intangible:
+            self.path = []
+            return
         # Convert positions to grid coordinates
         start_x = self.rect.centerx // self.grid_size
         start_y = self.rect.centery // self.grid_size
@@ -608,7 +620,8 @@ class Phantom(Enemy):
                     self.grid_size // 2
                 )
 
-                if collision_handler.check_collision(test_rect, tile_mapping, map_data):
+                if (not self.intangible and
+                        collision_handler.check_collision(test_rect, tile_mapping, map_data)):
                     # Collision detected, not walkable
                     continue
 
@@ -683,8 +696,8 @@ class Phantom(Enemy):
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
 
-        # Check for collisions
-        if collision_handler and tile_mapping and map_data:
+        # Check for collisions unless the phantom is intangible
+        if (not self.intangible and collision_handler and tile_mapping and map_data):
             if collision_handler.check_collision(self.rect, tile_mapping, map_data):
                 # Collision detected, revert to original position
                 self.rect.x = original_x
@@ -740,7 +753,8 @@ class Phantom(Enemy):
             self.float_y = float(self.rect.y)
 
             # Check for collisions after knockback
-            if collision_handler and tile_mapping and map_data:
+            if (not self.intangible and
+                    collision_handler and tile_mapping and map_data):
                 # If we collided with a wall during knockback, stop the knockback and move back to a valid position
                 if collision_handler.check_collision(self.rect, tile_mapping, map_data):
                     # Store original position
@@ -754,7 +768,8 @@ class Phantom(Enemy):
                         self.rect.x -= int(self.knockback_velocity[0] * 2)
 
                         # Check if we're still colliding
-                        if collision_handler.check_collision(self.rect, tile_mapping, map_data):
+                        if (not self.intangible and
+                                collision_handler.check_collision(self.rect, tile_mapping, map_data)):
                             # Restore original X position
                             self.rect.x = original_x
 
@@ -763,7 +778,8 @@ class Phantom(Enemy):
                                 self.rect.y -= int(self.knockback_velocity[1] * 2)
 
                                 # If still colliding, restore original position
-                                if collision_handler.check_collision(self.rect, tile_mapping, map_data):
+                                if (not self.intangible and
+                                        collision_handler.check_collision(self.rect, tile_mapping, map_data)):
                                     self.rect.y = original_y
 
                     # If we didn't try X direction or it didn't work, try Y direction
@@ -772,7 +788,8 @@ class Phantom(Enemy):
                         self.rect.y -= int(self.knockback_velocity[1] * 2)
 
                         # Check if we're still colliding
-                        if collision_handler.check_collision(self.rect, tile_mapping, map_data):
+                        if (not self.intangible and
+                                collision_handler.check_collision(self.rect, tile_mapping, map_data)):
                             # Restore original Y position
                             self.rect.y = original_y
 
@@ -794,7 +811,8 @@ class Phantom(Enemy):
             # Only move if player is within detection range
             if distance_to_player <= self.detection_range:
                 # Update pathfinding
-                if collision_handler and tile_mapping and map_data:
+                if (not self.intangible and
+                        collision_handler and tile_mapping and map_data):
                     # Update path periodically
                     self.path_update_timer += 1
                     if self.path_update_timer >= self.path_update_interval or not self.path:
