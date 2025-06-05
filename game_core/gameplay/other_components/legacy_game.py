@@ -1,72 +1,41 @@
 """
-Gameplay module - contains the main gameplay application class
+Game module - contains the main game class and logic
    - Initializes pygame and the game window
    - Handles events including window resizing
-   - Contains the main game loop for gameplay features
-   - Manages updates and drawing for gameplay screens
+   - Contains the main game loop
+   - Manages updates and drawing
 """
 import pygame
 import sys
 import os
 import json
-
-# Add game_core to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'game_core'))
-
-# Import from game_core (IDE-friendly)
 from game_core.gameplay.other_components.config import *
 from game_core.gameplay.other_components.menu_system import SplashScreen
-from game_core.gameplay.settings_screen import SettingsScreen
-from game_core.gameplay.play_screen import PlayScreen
-from game_core.gameplay.playscreen_components.map_system import WorldSelectScreen
+from ..settings_screen import SettingsScreen
+from edit_mode import EditScreen
+from ..play_screen import PlayScreen
+from ..playscreen_components.map_system import WorldSelectScreen
 from game_core.gameplay.other_components.debug_tools import debug_manager
 from game_core.gameplay.other_components.perf_monitor import perf_monitor
-from game_core.gameplay.other_components.perf_optimizer import perf_optimizer
 
-class GameplayApp:
+class Game:
     def __init__(self):
-        """Initialize the gameplay application"""
+        """Initialize the game"""
         pygame.init()
-
-        # Try to enable VSync for consistent frame rate
-        if ENABLE_VSYNC:
-            try:
-                # Set VSync hint before creating display
-                import os
-                os.environ['SDL_HINT_RENDER_VSYNC'] = '1'
-                self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                pass  # VSync enabled
-            except:
-                # Fallback without VSync
-                self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-                pass  # VSync not available
-        else:
-            self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-            pass  # VSync disabled
-
-        pygame.display.set_caption("SOLO CONQUEST - Gameplay")
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+        pygame.display.set_caption("SOLO CONQUEST")
         self.clock = pygame.time.Clock()
         self.running = True
         self.width = WIDTH
         self.height = HEIGHT
 
-        # Frame rate control
-        self.target_fps = FPS
-        self.frame_time_target = 1.0 / self.target_fps  # Target time per frame (1/60 = 0.0167 seconds)
-        self.last_frame_time = 0
+        # Game states
+        self.game_state = "splash"  # "splash", "playing", "settings", "edit", "paused"
 
-        # Frame rate monitoring
-        self.fps_counter = 0
-        self.fps_timer = 0
-        self.current_fps = 0
-        self.stats_counter = 0
-
-        # Game states for gameplay
-        self.game_state = "splash"  # "splash", "playing", "settings", "map_select", "paused"
-
-        # Initialize gameplay screens
+        # Initialize screens
         self.splash_screen = SplashScreen(self.width, self.height)
         self.settings_screen = SettingsScreen(self.width, self.height)
+        self.edit_screen = EditScreen(self.width, self.height)
         self.map_select_screen = WorldSelectScreen(self.width, self.height)
         self.play_screen = PlayScreen(self.width, self.height)
 
@@ -206,6 +175,8 @@ class GameplayApp:
                     self.splash_screen.resize(self.width, self.height)
                 elif self.game_state == "settings":
                     self.settings_screen.resize(self.width, self.height)
+                elif self.game_state == "edit":
+                    self.edit_screen.resize(self.width, self.height)
                 elif self.game_state == "map_select":
                     self.map_select_screen.resize(self.width, self.height)
                 elif self.game_state == "playing":
@@ -216,6 +187,8 @@ class GameplayApp:
                     self.splash_screen.resize(self.width, self.height)
                 if self.game_state != "settings":
                     self.settings_screen.resize(self.width, self.height)
+                if self.game_state != "edit":
+                    self.edit_screen.resize(self.width, self.height)
                 if self.game_state != "map_select":
                     self.map_select_screen.resize(self.width, self.height)
                 if self.game_state != "playing":
@@ -226,16 +199,21 @@ class GameplayApp:
                 action = self.splash_screen.handle_event(event)
                 if action == "start":
                     # Always go to world selection screen when Start is clicked
-                    # Refresh the world list to detect any deleted maps
-                    self.map_select_screen.refresh_world_list()
                     self.game_state = "map_select"
                 elif action == "settings":
                     self.game_state = "settings"
+                elif action == "edit":
+                    self.game_state = "edit"
                 elif action == "exit":
                     self.running = False
 
             elif self.game_state == "settings":
                 action = self.settings_screen.handle_event(event)
+                if action == "back":
+                    self.game_state = "splash"
+
+            elif self.game_state == "edit":
+                action = self.edit_screen.handle_event(event)
                 if action == "back":
                     self.game_state = "splash"
 
@@ -247,7 +225,7 @@ class GameplayApp:
                     # Reset teleportation flags before loading the map
                     self.play_screen.is_teleporting = False
                     self.play_screen.teleport_info = None
-                    if hasattr(self.play_screen, 'relation_handler') and self.play_screen.relation_handler:
+                    if hasattr(self.play_screen, 'relation_handler'):
                         self.play_screen.relation_handler.current_teleport_point = None
 
                     # Load the selected map
@@ -261,8 +239,6 @@ class GameplayApp:
                 if action == "back":
                     # Reset the play screen to clear any game over state
                     self.play_screen = PlayScreen(self.width, self.height)
-                    # Refresh the world list to detect any deleted maps
-                    self.map_select_screen.refresh_world_list()
                     self.game_state = "map_select"
 
     def update(self):
@@ -272,6 +248,9 @@ class GameplayApp:
 
         elif self.game_state == "settings":
             self.settings_screen.update()
+
+        elif self.game_state == "edit":
+            self.edit_screen.update()
 
         elif self.game_state == "map_select":
             self.map_select_screen.update()
@@ -292,6 +271,10 @@ class GameplayApp:
             # Draw settings screen
             self.settings_screen.draw(self.screen)
 
+        elif self.game_state == "edit":
+            # Draw edit mode screen
+            self.edit_screen.draw(self.screen)
+
         elif self.game_state == "map_select":
             # Draw map selection screen
             self.map_select_screen.draw(self.screen)
@@ -304,14 +287,8 @@ class GameplayApp:
         pygame.display.flip()
 
     def run(self):
-        """Main game loop with precise 60 FPS limiting"""
-        import time
-
+        """Main game loop"""
         while self.running:
-            frame_start_time = time.time()
-
-            perf_optimizer.start_frame()
-
             # Start frame timer
             perf_monitor.start_timer("frame")
 
@@ -330,66 +307,19 @@ class GameplayApp:
             self.draw()
             perf_monitor.end_timer("draw")
 
-            # Precise frame rate limiting
-            self._limit_frame_rate(frame_start_time)
-
-            perf_optimizer.end_frame()
-
-            self.stats_counter += 1
-            if self.stats_counter % 120 == 0:
-                perf_optimizer.print_performance_stats()
+            # Limit frame rate
+            self.clock.tick(FPS)
 
             # End frame timer and record frame time
             frame_time = perf_monitor.end_timer("frame")
             if frame_time > 0:
                 perf_monitor.record_frame_time(frame_time)
 
-            # Update FPS monitoring
-            self._update_fps_monitoring()
-
             # Log performance stats every 60 frames
+            perf_monitor.increment_counter("frames")
+            if perf_monitor.get_counter("frames") % 60 == 0:
+                perf_monitor.log_performance_stats()
 
         # Quit pygame
         pygame.quit()
         sys.exit()
-
-    def _limit_frame_rate(self, frame_start_time):
-        """Implement precise frame rate limiting to ensure consistent 60 FPS"""
-        import time
-
-        # Calculate how long this frame took
-        frame_elapsed = time.time() - frame_start_time
-
-        # Calculate how long we need to wait to maintain target FPS
-        sleep_time = self.frame_time_target - frame_elapsed
-
-        if sleep_time > 0:
-            # Use pygame's clock for the main delay (more accurate for games)
-            self.clock.tick(self.target_fps)
-
-            # Add a small additional sleep if needed for extra precision
-            remaining_time = self.frame_time_target - (time.time() - frame_start_time)
-            if remaining_time > 0.001:  # Only sleep if more than 1ms remaining
-                time.sleep(remaining_time * 0.9)  # Sleep for 90% of remaining time to avoid overshooting
-        else:
-            # Frame took longer than target, just tick the clock
-            self.clock.tick(self.target_fps)
-
-    def _update_fps_monitoring(self):
-        """Update FPS monitoring to track actual frame rate"""
-        import time
-
-        current_time = time.time()
-        self.fps_counter += 1
-
-        # Update FPS every second
-        if current_time - self.fps_timer >= 1.0:
-            self.current_fps = self.fps_counter / (current_time - self.fps_timer)
-            self.fps_counter = 0
-            self.fps_timer = current_time
-
-
-if __name__ == "__main__":
-    pass  # Starting SOLO CONQUEST - Gameplay Mode
-    app = GameplayApp()
-    app.run()
