@@ -9,24 +9,28 @@ import json
 import pygame
 from typing import Optional
 from game_core.gameplay.other_components.debug_tools import debug_manager
-from .playscreen_components.player_system import PlayerCharacter
+from .gameplay_components.player_system import PlayerCharacter
 # CollisionHandler now imported from map_system
-from .playscreen_components.animation_system import AnimatedTileManager
-from .playscreen_components.item_system import KeyItemManager, CrystalItemManager, LootchestManager
-from .playscreen_components.inventory_system import ChestInventory
-from .playscreen_components.map_system import MapSystem
-from .playscreen_components.player_system import PlayerSystem, PlayerInventory
-from .playscreen_components.game_systems_coordinator import GameSystemsCoordinator
-from .playscreen_components.input_system import InputSystem
-from .playscreen_components.rendering_system import RenderingPipeline
-from .playscreen_components.enemy_system import EnemyManager
+from .gameplay_components.animation_system import AnimatedTileManager
+from .gameplay_components.item_system import (
+    KeyItemManager,
+    CrystalItemManager,
+    LootchestManager,
+)
+from .gameplay_components.inventory_system import ChestInventory
+from .gameplay_components.map_system import MapSystem
+from .gameplay_components.player_system import PlayerSystem, PlayerInventory
+from .gameplay_components.game_systems_coordinator import GameSystemsCoordinator
+from .gameplay_components.input_system import InputSystem
+from .gameplay_components.rendering_system import RenderingPipeline
+from .gameplay_components.enemy_system import EnemyManager
 # Removed unused imports
-from game_core.gameplay.other_components.screen_base import BaseScreen
-from .playscreen_components.ui_system import HUD, GameOverScreen
-from .playscreen_components.state_system import SaveLoadManager
-from .playscreen_components.camera_system import CameraController
-from .playscreen_components.ui_management import UIManager
-from .playscreen_components.teleportation_system import TeleportationManager
+from .screen_base import BaseScreen
+from .gameplay_components.ui_system import HUD, GameOverScreen
+from .gameplay_components.state_system import SaveLoadManager
+from .gameplay_components.camera_system import CameraController
+from .gameplay_components.ui_management import UIManager
+from .gameplay_components.teleportation_system import TeleportationManager
 # RelationHandler now imported from map_system
 
 
