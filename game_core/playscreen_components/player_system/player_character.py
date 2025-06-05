@@ -99,6 +99,8 @@ class PlayerCharacter(pygame.sprite.Sprite):
 
         # Expose attack_frame for systems that check it directly
         self._attack_frame_proxy = 0
+        # Track death animation completion status for external systems
+        self._death_animation_complete_proxy = False
 
     # Proxy property to expose animation_system.attack_frame at the player level
     @property
@@ -110,6 +112,17 @@ class PlayerCharacter(pygame.sprite.Sprite):
         self._attack_frame_proxy = value
         if hasattr(self, 'animation_system'):
             self.animation_system.attack_frame = value
+
+    # Proxy property to expose animation_system.death_animation_complete
+    @property
+    def death_animation_complete(self):
+        return getattr(self.animation_system, 'death_animation_complete', self._death_animation_complete_proxy)
+
+    @death_animation_complete.setter
+    def death_animation_complete(self, value):
+        self._death_animation_complete_proxy = value
+        if hasattr(self, 'animation_system'):
+            self.animation_system.death_animation_complete = value
 
     def handle_input(self):
         """Handle keyboard input for player movement"""
