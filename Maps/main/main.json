@@ -338,9 +338,11 @@
     ],
     "inventory": [],
     "collected_keys": [],
-    "collected_crystals": [],
+    "collected_crystals": [
+      [11, 11],[11, 10],[9, 10],[8, 10],[8, 11]
+    ],
     "opened_lootchests": [
-      [15, 10],[13, 10]
+      [15, 10],[13, 10],[14, 10]
     ],
     "chest_contents": {
       "15,10": {
@@ -351,6 +353,12 @@
         "1": {
           "name": "Key",
           "count": 9
+        }
+      },
+      "14,10": {
+        "0": {
+          "name": "Crystal",
+          "count": 7
         }
       }
     }
