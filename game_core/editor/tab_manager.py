@@ -21,6 +21,10 @@ class TabManager:
         self.sidebar_rect = sidebar_rect
         self.font = pygame.font.Font(FONT_PATH, 16)
 
+        # Tileset related attributes
+        self.tilesets = [str(i) for i in range(1, 7)]
+        self.active_tileset = 0
+
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update the sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
@@ -33,6 +37,12 @@ class TabManager:
                 if rect.collidepoint(mx, my):
                     self.active = index
                     break
+            # Handle tileset buttons when the tiles tab is active
+            if self.tabs[self.active] == "tiles":
+                for index, rect in enumerate(self._tileset_rects()):
+                    if rect.collidepoint(mx, my):
+                        self.active_tileset = index
+                        break
 
     def _tab_rects(self) -> list[pygame.Rect]:
         rects = []
@@ -44,16 +54,36 @@ class TabManager:
             x += self.TAB_WIDTH + self.PADDING
         return rects
 
+    def _tileset_rects(self) -> list[pygame.Rect]:
+        """Return rectangles for the tileset buttons."""
+        rects = []
+        x = self.sidebar_rect.left + self.PADDING
+        y = self.sidebar_rect.top + self.PADDING * 2 + self.TAB_HEIGHT
+        for _ in self.tilesets:
+            rect = pygame.Rect(x, y, self.TAB_WIDTH, self.TAB_HEIGHT)
+            rects.append(rect)
+            y += self.TAB_HEIGHT + self.PADDING
+        return rects
+
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the tab bar onto the surface."""
         for index, rect in enumerate(self._tab_rects()):
-            if index == self.active:
-                color = LIGHT_GRAY
-            else:
-                color = DARK_GRAY
+            color = LIGHT_GRAY if index == self.active else DARK_GRAY
             pygame.draw.rect(surface, color, rect)
             pygame.draw.rect(surface, SIDEBAR_BORDER, rect, 1)
 
             label = self.font.render(self.tabs[index].title(), True, WHITE)
             label_rect = label.get_rect(center=rect.center)
             surface.blit(label, label_rect)
+
+        if self.tabs[self.active] == "tiles":
+            for index, rect in enumerate(self._tileset_rects()):
+                color = LIGHT_GRAY if index == self.active_tileset else DARK_GRAY
+                pygame.draw.rect(surface, color, rect)
+                pygame.draw.rect(surface, SIDEBAR_BORDER, rect, 1)
+
+                label = self.font.render(self.tilesets[index], True, WHITE)
+                label_rect = label.get_rect(center=rect.center)
+                surface.blit(label, label_rect)
+
+
