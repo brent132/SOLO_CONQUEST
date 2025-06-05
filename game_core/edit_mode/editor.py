@@ -6,13 +6,13 @@ import os
 import json
 from game_core.other_components.config import *
 from edit_mode.ui_components import SaveButton, TextInput, ScrollableTextArea
-from edit_mode.tileset_manager import TilesetManager
+from edit_mode.tilesets_tab.tileset_manager import TilesetManager
 from edit_mode.map_saver import MapSaver
 from edit_mode.map_manager import MapManager
-from edit_mode.layer_manager import LayerManager
+from edit_mode.tilesets_tab.layer_manager import LayerManager
 from edit_mode.tab_manager import TabManager
 from edit_mode.collision_manager import CollisionManager
-from edit_mode.brush_manager import BrushManager
+from edit_mode.tilesets_tab.brush_manager import BrushManager
 from edit_mode.edit_screen_ui import EditScreenUI
 
 from game_core.other_components.screen_base import BaseScreen
