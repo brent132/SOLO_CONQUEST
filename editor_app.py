@@ -15,6 +15,7 @@ from game_core.editor.config import (
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
 from game_core.editor.canvas import Canvas
+from game_core.editor.tab_manager import TabManager
 
 
 class EditorApp:
@@ -28,12 +29,28 @@ class EditorApp:
         self.running = True
         self.width = WIDTH
         self.height = HEIGHT
+        self.fullscreen = False
 
 
 
         # Editor UI components
         self.sidebar = Sidebar(self.height, self.width - SIDEBAR_WIDTH)
         self.canvas = Canvas(self.width - SIDEBAR_WIDTH, self.height)
+        self.tab_manager = TabManager(["tiles", "browse", "save"], self.sidebar.rect)
+
+    def toggle_fullscreen(self) -> None:
+        """Toggle fullscreen mode."""
+        self.fullscreen = not self.fullscreen
+        if self.fullscreen:
+            info = pygame.display.Info()
+            self.width, self.height = info.current_w, info.current_h
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN)
+        else:
+            self.width, self.height = WIDTH, HEIGHT
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
+        self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
+        self.tab_manager.resize(self.sidebar.rect)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -44,6 +61,10 @@ class EditorApp:
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
                 self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
                 self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
+                self.tab_manager.resize(self.sidebar.rect)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                self.toggle_fullscreen()
+            self.tab_manager.handle_event(event)
 
     def update(self):
         pass
@@ -52,6 +73,7 @@ class EditorApp:
         self.screen.fill(BACKGROUND_COLOR)
         self.canvas.draw(self.screen)
         self.sidebar.draw(self.screen)
+        self.tab_manager.draw(self.screen)
         pygame.display.flip()
 
     def run(self):
