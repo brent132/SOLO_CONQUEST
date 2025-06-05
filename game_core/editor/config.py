@@ -7,7 +7,7 @@ WIDTH, HEIGHT = 1280, 720  # Default window size
 FPS = 60  # Target frames per second
 
 # Colors used by the editor
-BACKGROUND_COLOR = (30, 30, 30)
+BACKGROUND_COLOR = (20, 40, 20)  # dark green background
 FONT_COLOR = (255, 255, 255)
 
 # Path to default font
