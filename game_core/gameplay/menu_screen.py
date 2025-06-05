@@ -4,7 +4,7 @@ Menu module - contains menu-related classes including splash screen
 import pygame
 import math
 from game_core.gameplay.other_components.config import *
-from game_core.gameplay.other_components.screen_base import BaseScreen
+from .screen_base import BaseScreen
 
 class Button:
     """Interactive button class for menus using custom PNG images"""

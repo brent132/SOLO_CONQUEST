@@ -10,11 +10,11 @@ import sys
 import os
 import json
 from game_core.gameplay.other_components.config import *
-from game_core.gameplay.other_components.menu_system import SplashScreen
+from game_core.gameplay.menu_screen import SplashScreen
 from ..settings_screen import SettingsScreen
 from edit_mode import EditScreen
 from ..play_screen import PlayScreen
-from ..playscreen_components.map_system import WorldSelectScreen
+from ..gameplay_components.map_system import WorldSelectScreen
 from game_core.gameplay.other_components.debug_tools import debug_manager
 from game_core.gameplay.other_components.perf_monitor import perf_monitor
 
