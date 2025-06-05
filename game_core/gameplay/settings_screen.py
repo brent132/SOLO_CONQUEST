@@ -7,7 +7,7 @@ from game_core.gameplay.other_components.screen_base import BaseScreen
 # Local fallback implementation of ScrollableTextArea so the gameplay mode
 # does not rely on the editor package.  This keeps gameplay running even if
 # the editor is missing.
-from game_core.gameplay.scrollable_text_area import ScrollableTextArea
+from game_core.gameplay.other_components.scrollable_text_area import ScrollableTextArea
 
 class SettingsScreen(BaseScreen):
     """Settings screen with back button"""
