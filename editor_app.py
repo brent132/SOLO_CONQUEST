@@ -15,7 +15,7 @@ from game_core.editor.config import (
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
 from game_core.editor.canvas import Canvas
-from game_core.editor.tab_manager import TabManager
+from game_core.editor.sidebar_tab_manager import TabManager
 
 
 class EditorApp:
