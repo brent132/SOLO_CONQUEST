@@ -88,7 +88,8 @@ class TabManager:
             surface.blit(label, label_rect)
 
         if self.tabs[self.active] == "tiles":
-            self.tileset_palettes.draw(surface)
+            bottom = self.tileset_palettes.draw(surface)
+            self.tileset_brush.set_top(bottom + self.tileset_brush.PADDING)
             self.tileset_brush.draw(surface)
 
 

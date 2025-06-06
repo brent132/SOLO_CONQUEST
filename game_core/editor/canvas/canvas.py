@@ -88,8 +88,8 @@ class Canvas:
         elif event.type == pygame.MOUSEBUTTONUP:
             pass
 
-    def draw(self, surface: pygame.Surface) -> None:
-        """Draw the canvas background and grid."""
+    def draw(self, surface: pygame.Surface, tab_manager: TabManager) -> None:
+        """Draw the canvas background, grid and tile preview."""
         pygame.draw.rect(surface, WHITE, self.rect)
 
         start_x = -self.offset[0] % self.grid_size
@@ -101,3 +101,27 @@ class Canvas:
             pygame.draw.line(surface, LIGHT_GRAY, (self.rect.left, gy), (self.rect.right, gy))
 
         self.placement_manager.draw(surface, tuple(self.offset))
+
+        # --------------------------------------------------------------
+        # Draw preview of the currently selected tile under the cursor
+        # --------------------------------------------------------------
+        mx, my = pygame.mouse.get_pos()
+        if self.rect.collidepoint(mx, my):
+            grid_x = (mx - self.rect.left + self.offset[0]) // self.grid_size
+            grid_y = (my - self.rect.top + self.offset[1]) // self.grid_size
+
+            tile_index = tab_manager.selected_tile
+            tileset_index = tab_manager.active_tileset
+            brush = tab_manager.brush_size
+
+            if tile_index is not None:
+                tile = self.tilesets.get_tile(tileset_index, tile_index)
+                if tile is not None:
+                    if tile.get_width() != self.grid_size:
+                        tile = pygame.transform.scale(tile, (self.grid_size, self.grid_size))
+                    preview = tile.copy()
+                    preview.set_alpha(150)
+                    for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                        px = bx * self.grid_size - self.offset[0] + self.rect.left
+                        py = by * self.grid_size - self.offset[1] + self.rect.top
+                        surface.blit(preview, (px, py))
