@@ -17,7 +17,6 @@ class Canvas:
         self.grid_size = grid_size
         self.rect = pygame.Rect(x, y, width, height)
         self.offset = [0, 0]
-        self.last_grid_pos: tuple[int, int] | None = None
         self.placement_manager = TilePlacementManager(grid_size)
         self.tilesets = TilesetRepository()
 
@@ -49,38 +48,16 @@ class Canvas:
                         self.placement_manager.add_tile(
                             tile, grid_x, grid_y, self.grid_size, self.grid_size
                         )
-                        self.last_grid_pos = (grid_x, grid_y)
             elif event.button == 3:
                 self.placement_manager.remove_tile_at(grid_x, grid_y)
-                self.last_grid_pos = (grid_x, grid_y)
 
         elif event.type == pygame.MOUSEMOTION and self.rect.collidepoint(event.pos):
-            if event.buttons[0]:
-                grid_x, grid_y = _grid_pos(event.pos)
-                if self.last_grid_pos != (grid_x, grid_y):
-                    tile_index = tab_manager.selected_tile
-                    tileset_index = tab_manager.active_tileset
-                    if tile_index is not None:
-                        tile = self.tilesets.get_tile(tileset_index, tile_index)
-                        if tile is not None:
-                            # Scale the tile for the current zoom level
-                            if tile.get_width() != self.grid_size:
-                                tile = pygame.transform.scale(
-                                    tile, (self.grid_size, self.grid_size)
-                                )
-                            self.placement_manager.add_tile(
-                                tile, grid_x, grid_y, self.grid_size, self.grid_size
-                            )
-                            self.last_grid_pos = (grid_x, grid_y)
-            elif event.buttons[2]:
-                grid_x, grid_y = _grid_pos(event.pos)
-                if self.last_grid_pos != (grid_x, grid_y):
-                    self.placement_manager.remove_tile_at(grid_x, grid_y)
-                    self.last_grid_pos = (grid_x, grid_y)
+            # Intentionally ignore drag events so tiles are only placed or
+            # removed on explicit clicks.
+            pass
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button in (1, 3):
-                self.last_grid_pos = None
+            pass
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the canvas background and grid."""
