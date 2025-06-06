@@ -10,6 +10,7 @@ from .show_dungeon_tileset import draw_tileset as draw_dungeon_tileset
 from .show_dungeon_anim_tileset import draw_tileset as draw_dungeon_anim_tileset
 from .show_player_spawnpoint import draw_tileset as draw_player_spawnpoint
 from .show_enemy_spawnpoint import draw_tileset as draw_enemy_spawnpoint
+from .tile_selection_manager import TileSelectionManager
 
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
@@ -22,9 +23,11 @@ class TilesetTabManager:
     TAB_WIDTH = 30
     PADDING = 5
 
-    def __init__(self, sidebar_rect: pygame.Rect) -> None:
+    def __init__(self, sidebar_rect: pygame.Rect,
+                 selection_manager: TileSelectionManager | None = None) -> None:
         self.sidebar_rect = sidebar_rect
         self.font = pygame.font.Font(FONT_PATH, 16)
+        self.selection_manager = selection_manager or TileSelectionManager()
 
         self.tilesets = [str(i) for i in range(1, 7)]
         self.active = 0
@@ -48,7 +51,9 @@ class TilesetTabManager:
             for index, rect in enumerate(self._tileset_rects()):
                 if rect.collidepoint(mx, my):
                     self.active = index
-                    break
+                    return
+            # If click wasn't on tabs, delegate to selection manager
+            self.selection_manager.handle_event(event, self.active)
 
     def _tileset_rects(self) -> list[pygame.Rect]:
         rects = []
@@ -73,4 +78,6 @@ class TilesetTabManager:
 
         if self.active < len(self._drawers):
             drawer = self._drawers[self.active]
-            drawer(surface, self.sidebar_rect)
+            rects = drawer(surface, self.sidebar_rect)
+            self.selection_manager.set_tile_rects(self.active, rects)
+            self.selection_manager.draw_selection(surface, self.active)

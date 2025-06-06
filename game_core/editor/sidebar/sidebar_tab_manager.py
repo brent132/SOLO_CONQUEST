@@ -7,6 +7,7 @@ import pygame
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
 from ..tileset_tab.tileset_tab_manager import TilesetTabManager
+from ..tileset_tab.tile_selection_manager import TileSelectionManager
 
 
 class TabManager:
@@ -22,13 +23,20 @@ class TabManager:
         self.sidebar_rect = sidebar_rect
         self.font = pygame.font.Font(FONT_PATH, 16)
 
+        # Tile selection manager used by the tileset manager
+        self.selection_manager = TileSelectionManager()
         # Manager for the numeric tileset tabs
-        self.tileset_manager = TilesetTabManager(sidebar_rect)
+        self.tileset_manager = TilesetTabManager(sidebar_rect, self.selection_manager)
 
     @property
     def active_tileset(self) -> int:
         """Index of the currently selected tileset."""
         return self.tileset_manager.active
+
+    @property
+    def selected_tile(self) -> int | None:
+        """Currently selected tile index for the active tileset."""
+        return self.selection_manager.get_selected(self.tileset_manager.active)
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update the sidebar reference when resized."""

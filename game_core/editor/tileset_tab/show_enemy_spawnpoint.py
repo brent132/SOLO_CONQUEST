@@ -18,8 +18,8 @@ def _get_enemy_tileset() -> EnemySpawnpointTileset:
     return _enemy_tileset
 
 
-def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
-    """Draw the enemy spawn point tiles in the sidebar."""
+def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
+    """Draw the enemy spawn point tiles in the sidebar and return tile rectangles."""
     from .tileset_tab_manager import TilesetTabManager
 
     tileset = _get_enemy_tileset()
@@ -39,7 +39,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
             max_height = tile.get_height()
 
     if max_height == 0:
-        return
+        return []
 
     offset_y = TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
 
@@ -74,6 +74,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
     start_x = sidebar_rect.left + max((available_width - grid_width) // 2, 0)
     start_y = sidebar_rect.top + offset_y
 
+    rects: list[pygame.Rect] = []
     for row in range(rows):
         row_start = row * tiles_per_row
         row_end = row_start + tiles_per_row
@@ -88,4 +89,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
             dest_y = dest_y_base + scaled_max_height - scaled_h
             scaled = pygame.transform.scale(tile, (scaled_w, scaled_h))
             surface.blit(scaled, (dest_x, dest_y))
+            rects.append(pygame.Rect(dest_x, dest_y, scaled_w, scaled_h))
             dest_x += scaled_w + spacing
+
+    return rects
