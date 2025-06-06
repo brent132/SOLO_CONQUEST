@@ -50,7 +50,8 @@ def draw_tileset(surface: pygame.Surface, index: int, sidebar_rect: pygame.Rect)
     scaled_size = int(tile_size * scale)
 
     # Arrange tiles in the original grid layout
-    start_x = sidebar_rect.left + spacing
+    grid_width = tiles_per_row * scaled_size + spacing * (tiles_per_row - 1)
+    start_x = sidebar_rect.left + max((available_width - grid_width) // 2, 0)
     start_y = sidebar_rect.top + offset_y
 
     for i in range(tileset.tile_count()):
