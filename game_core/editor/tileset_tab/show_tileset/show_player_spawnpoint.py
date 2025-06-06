@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Optional
 import pygame
 
-from .tileset_components import PlayerSpawnpointTileset
+from ..tileset_components import PlayerSpawnpointTileset
 
 _player_tileset: Optional[PlayerSpawnpointTileset] = None
 
@@ -20,7 +20,7 @@ def _get_player_tileset() -> PlayerSpawnpointTileset:
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
     """Draw the player spawn point tile in the sidebar and return tile rectangles."""
-    from .tileset_tab_manager import TilesetTabManager
+    from ..tileset_tab_manager import TilesetTabManager
 
     tileset = _get_player_tileset()
 
