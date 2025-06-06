@@ -32,34 +32,38 @@ class AnimatedTileManager:
 
     def load_animated_tiles(self):
         """Load all animated tiles from the animated tiles folder"""
-        animated_tiles_folder = "Tilesets/Overworld_ani_tiles"
+        animated_tiles_folders = [
+            "Tilesets/Overworld_ani_tiles",
+            "Tilesets/Dungeon_ani_tiles",
+        ]
 
-        # Check if directory exists
-        if not os.path.exists(animated_tiles_folder):
-            pass  # Animated tiles folder not found
-            return
-
-        # Get all subdirectories (each subdirectory is an animated tile)
         try:
-            tile_folders = [f for f in os.listdir(animated_tiles_folder)
-                           if os.path.isdir(os.path.join(animated_tiles_folder, f))]
-
-            for folder in tile_folders:
-                folder_path = os.path.join(animated_tiles_folder, folder)
-
-                # Create an animated tile for this folder
-                animated_tile = AnimatedTile(folder_path)
-
-                # Skip if no frames were loaded
-                if not animated_tile.frames:
+            for animated_tiles_folder in animated_tiles_folders:
+                if not os.path.exists(animated_tiles_folder):
                     continue
 
-                # Store the animated tile
-                self.animated_tiles[folder] = animated_tile
+                tile_folders = [
+                    f
+                    for f in os.listdir(animated_tiles_folder)
+                    if os.path.isdir(os.path.join(animated_tiles_folder, f))
+                ]
 
-                # Assign a unique ID to this animated tile
-                self.animated_tile_ids[self.next_tile_id] = folder
-                self.next_tile_id += 1
+                for folder in tile_folders:
+                    folder_path = os.path.join(animated_tiles_folder, folder)
+
+                    # Create an animated tile for this folder
+                    animated_tile = AnimatedTile(folder_path)
+
+                    # Skip if no frames were loaded
+                    if not animated_tile.frames:
+                        continue
+
+                    # Store the animated tile
+                    self.animated_tiles[folder] = animated_tile
+
+                    # Assign a unique ID to this animated tile
+                    self.animated_tile_ids[self.next_tile_id] = folder
+                    self.next_tile_id += 1
 
             # Load key item animation
             key_item_folder = "character/Props_Items_(animated)/key_item_anim"
