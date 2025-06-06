@@ -28,17 +28,30 @@ def draw_tileset(surface: pygame.Surface, index: int, sidebar_rect: pygame.Rect)
 
     tileset = _get_overworld_tileset()
 
-    # Draw tiles at their original 16x16 resolution so the entire tileset
-    # (288x208) fits within the sidebar without scrolling.
-    scale = 1
-    spacing = 0
+    # Scale tiles so the full tileset fits inside the sidebar.
+    spacing = 2
     tile_size = tileset.TILE_SIZE
-    scaled_size = tile_size * scale
+
+    tiles_per_row = tileset.tiles_per_row()
+    rows = (tileset.tile_count() + tiles_per_row - 1) // tiles_per_row
+
+    offset_y = TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
+
+    available_width = sidebar_rect.width
+    available_height = sidebar_rect.height - offset_y
+
+    scale_w = (available_width - spacing * tiles_per_row) / (tile_size * tiles_per_row)
+    scale_h = (available_height - spacing * (rows - 1)) / (tile_size * rows)
+
+    scale = min(scale_w, scale_h)
+    if scale <= 0:
+        scale = 1
+
+    scaled_size = int(tile_size * scale)
 
     # Arrange tiles in the original grid layout
-    tiles_per_row = tileset.tiles_per_row()
     start_x = sidebar_rect.left + spacing
-    start_y = sidebar_rect.top + TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
+    start_y = sidebar_rect.top + offset_y
 
     for i in range(tileset.tile_count()):
         tile = tileset.get_tile(i)

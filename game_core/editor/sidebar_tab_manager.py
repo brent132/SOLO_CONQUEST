@@ -7,7 +7,7 @@ import pygame
 from .color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from .config import FONT_PATH
 from .tileset_tab.tileset_tab_manager import TilesetTabManager
-from .tileset_tab.show_tileset import draw_tileset
+from .tileset_tab.show_overworld_tileset import draw_tileset
 
 
 class TabManager:
