@@ -52,9 +52,22 @@ class Canvas:
                 self.placement_manager.remove_tile_at(grid_x, grid_y)
 
         elif event.type == pygame.MOUSEMOTION and self.rect.collidepoint(event.pos):
-            # Intentionally ignore drag events so tiles are only placed or
-            # removed on explicit clicks.
-            pass
+            grid_x, grid_y = _grid_pos(event.pos)
+            if event.buttons[0]:  # Left button drag places tiles
+                tile_index = tab_manager.selected_tile
+                tileset_index = tab_manager.active_tileset
+                if tile_index is not None:
+                    tile = self.tilesets.get_tile(tileset_index, tile_index)
+                    if tile is not None and not self.placement_manager.has_tile_at(grid_x, grid_y):
+                        if tile.get_width() != self.grid_size:
+                            tile = pygame.transform.scale(
+                                tile, (self.grid_size, self.grid_size)
+                            )
+                        self.placement_manager.add_tile(
+                            tile, grid_x, grid_y, self.grid_size, self.grid_size
+                        )
+            elif event.buttons[2]:  # Right button drag removes tiles
+                self.placement_manager.remove_tile_at(grid_x, grid_y)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             pass

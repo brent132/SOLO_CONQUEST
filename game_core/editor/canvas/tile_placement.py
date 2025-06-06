@@ -59,6 +59,11 @@ class TilePlacementManager:
                 self.tiles.remove(tile)
                 break
 
+    def has_tile_at(self, grid_x: int, grid_y: int) -> bool:
+        """Return True if a tile occupies the given grid position."""
+        px, py = self._grid_to_pixels(grid_x, grid_y)
+        return any(tile.rect.collidepoint(px, py) for tile in self.tiles)
+
     def draw(self, surface: pygame.Surface, offset: tuple[int, int] = (0, 0)) -> None:
         """Draw all placed tiles onto the provided surface."""
         for tile in self.tiles:
