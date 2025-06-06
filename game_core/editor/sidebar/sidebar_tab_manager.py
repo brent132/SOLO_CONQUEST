@@ -46,6 +46,11 @@ class TabManager:
         """Current brush size selected in the tiles tab."""
         return self.tileset_brush.selected
 
+    @property
+    def brush_shape(self) -> str:
+        """Current brush shape selected in the tiles tab."""
+        return self.tileset_brush.shape
+
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update the sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
