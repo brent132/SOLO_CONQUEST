@@ -1,31 +1,31 @@
-"""Utilities for displaying the animated overworld tileset."""
+"""Utilities for displaying the dungeon tileset."""
 
 from __future__ import annotations
 
 from typing import Optional
 import pygame
 
-from .tileset_components import OverworldAnimTileset
+from .tileset_components import DungeonTileset
 
-# Lazy loaded tileset instances
-_overworld_anim_tileset: Optional[OverworldAnimTileset] = None
+# Lazy loaded tileset instance
+_dungeon_tileset: Optional[DungeonTileset] = None
 
 
-def _get_overworld_anim_tileset() -> OverworldAnimTileset:
-    """Return the singleton animated overworld tileset, loading it if needed."""
-    global _overworld_anim_tileset
-    if _overworld_anim_tileset is None:
-        _overworld_anim_tileset = OverworldAnimTileset()
-    return _overworld_anim_tileset
+def _get_dungeon_tileset() -> DungeonTileset:
+    """Return the singleton dungeon tileset, loading it if needed."""
+    global _dungeon_tileset
+    if _dungeon_tileset is None:
+        _dungeon_tileset = DungeonTileset()
+    return _dungeon_tileset
 
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
-    """Draw the animated overworld tileset in the sidebar."""
+    """Draw the dungeon tileset inside the sidebar."""
 
     # Import here to avoid circular dependency during module initialization
     from .tileset_tab_manager import TilesetTabManager
 
-    tileset = _get_overworld_anim_tileset()
+    tileset = _get_dungeon_tileset()
 
     # Scale tiles so the full tileset fits inside the sidebar.
     spacing = 2

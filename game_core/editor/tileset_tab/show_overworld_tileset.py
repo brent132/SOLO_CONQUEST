@@ -42,7 +42,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
     scale_w = (available_width - spacing * tiles_per_row) / (tile_size * tiles_per_row)
     scale_h = (available_height - spacing * (rows - 1)) / (tile_size * rows)
 
-    scale = min(scale_w, scale_h)
+    scale = min(scale_w, scale_h, 2)
     if scale <= 0:
         scale = 1
 
