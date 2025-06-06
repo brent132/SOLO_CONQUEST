@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pygame
 
+from .show_overworld_tileset import draw_tileset as draw_overworld_tileset
+from .show_overworld_anim_tileset import draw_tileset as draw_overworld_anim_tileset
+
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
 
@@ -21,6 +24,7 @@ class TilesetTabManager:
 
         self.tilesets = [str(i) for i in range(1, 7)]
         self.active = 0
+        self._drawers = [draw_overworld_tileset, draw_overworld_anim_tileset]
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update position and size when the sidebar changes."""
@@ -55,3 +59,7 @@ class TilesetTabManager:
             label = self.font.render(self.tilesets[index], True, WHITE)
             label_rect = label.get_rect(center=rect.center)
             surface.blit(label, label_rect)
+
+        if self.active < len(self._drawers):
+            drawer = self._drawers[self.active]
+            drawer(surface, self.sidebar_rect)
