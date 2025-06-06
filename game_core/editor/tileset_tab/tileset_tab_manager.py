@@ -8,6 +8,8 @@ from .show_overworld_tileset import draw_tileset as draw_overworld_tileset
 from .show_overworld_anim_tileset import draw_tileset as draw_overworld_anim_tileset
 from .show_dungeon_tileset import draw_tileset as draw_dungeon_tileset
 from .show_dungeon_anim_tileset import draw_tileset as draw_dungeon_anim_tileset
+from .show_player_spawnpoint import draw_tileset as draw_player_spawnpoint
+from .show_enemy_spawnpoint import draw_tileset as draw_enemy_spawnpoint
 
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
@@ -31,6 +33,8 @@ class TilesetTabManager:
             draw_overworld_anim_tileset,
             draw_dungeon_tileset,
             draw_dungeon_anim_tileset,
+            draw_player_spawnpoint,
+            draw_enemy_spawnpoint,
         ]
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
