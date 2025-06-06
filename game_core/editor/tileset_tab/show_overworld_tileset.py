@@ -19,8 +19,8 @@ def _get_overworld_tileset() -> OverworldTileset:
     return _overworld_tileset
 
 
-def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
-    """Draw the overworld tileset inside the sidebar."""
+def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
+    """Draw the overworld tileset inside the sidebar and return tile rectangles."""
 
     # Import here to avoid circular dependency during module initialization
     from .tileset_tab_manager import TilesetTabManager
@@ -53,6 +53,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
     start_x = sidebar_rect.left + max((available_width - grid_width) // 2, 0)
     start_y = sidebar_rect.top + offset_y
 
+    rects: list[pygame.Rect] = []
     for i in range(tileset.tile_count()):
         tile = tileset.get_tile(i)
         if tile is None:
@@ -61,3 +62,6 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
         dest_y = start_y + (i // tiles_per_row) * (scaled_size + spacing)
         scaled = pygame.transform.scale(tile, (scaled_size, scaled_size))
         surface.blit(scaled, (dest_x, dest_y))
+        rects.append(pygame.Rect(dest_x, dest_y, scaled_size, scaled_size))
+
+    return rects
