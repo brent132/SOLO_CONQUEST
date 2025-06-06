@@ -45,27 +45,29 @@ class CanvasControls:
     def _zoom(self, numerator: int, denominator: int) -> None:
         """Zoom the canvas by a fraction defined by numerator/denominator."""
 
-        old_size = self.canvas.grid_size
-        new_size = old_size * numerator // denominator
+        old_grid = self.canvas.grid_size
+        new_grid = old_grid * numerator // denominator
 
         # Enforce zoom limits of 100% to 300%
-        new_size = min(max(new_size, self._min_grid), self._max_grid)
+        new_grid = min(max(new_grid, self._min_grid), self._max_grid)
 
-        if new_size == old_size:
+        if new_grid == old_grid:
             return
 
-        scale_num = new_size
-        scale_den = old_size
-        self.canvas.grid_size = new_size
+        scale = new_grid / old_grid
+        self.canvas.grid_size = new_grid
+        # Keep the placement manager in sync so new tiles use the
+        # current zoom level for pixel calculations
+        self.canvas.placement_manager.grid_size = new_grid
 
-        self.canvas.offset[0] = self.canvas.offset[0] * scale_num // scale_den
-        self.canvas.offset[1] = self.canvas.offset[1] * scale_num // scale_den
+        self.canvas.offset[0] = int(self.canvas.offset[0] * scale)
+        self.canvas.offset[1] = int(self.canvas.offset[1] * scale)
 
         for tile in self.canvas.placement_manager.tiles:
-            tile.rect.x = tile.rect.x * scale_num // scale_den
-            tile.rect.y = tile.rect.y * scale_num // scale_den
-            tile.rect.width = tile.rect.width * scale_num // scale_den
-            tile.rect.height = tile.rect.height * scale_num // scale_den
+            tile.rect.x = int(tile.rect.x * scale)
+            tile.rect.y = int(tile.rect.y * scale)
+            tile.rect.width = int(tile.rect.width * scale)
+            tile.rect.height = int(tile.rect.height * scale)
             tile.image = pygame.transform.scale(tile.image, tile.rect.size)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
