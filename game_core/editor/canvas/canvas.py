@@ -41,7 +41,14 @@ class Canvas:
                 if tile_index is not None:
                     tile = self.tilesets.get_tile(tileset_index, tile_index)
                     if tile is not None:
-                        self.placement_manager.add_tile(tile, grid_x, grid_y)
+                        # Scale the tile to match the current zoom level
+                        if tile.get_width() != self.grid_size:
+                            tile = pygame.transform.scale(
+                                tile, (self.grid_size, self.grid_size)
+                            )
+                        self.placement_manager.add_tile(
+                            tile, grid_x, grid_y, self.grid_size, self.grid_size
+                        )
                         self.last_grid_pos = (grid_x, grid_y)
             elif event.button == 3:
                 self.placement_manager.remove_tile_at(grid_x, grid_y)
@@ -56,7 +63,14 @@ class Canvas:
                     if tile_index is not None:
                         tile = self.tilesets.get_tile(tileset_index, tile_index)
                         if tile is not None:
-                            self.placement_manager.add_tile(tile, grid_x, grid_y)
+                            # Scale the tile for the current zoom level
+                            if tile.get_width() != self.grid_size:
+                                tile = pygame.transform.scale(
+                                    tile, (self.grid_size, self.grid_size)
+                                )
+                            self.placement_manager.add_tile(
+                                tile, grid_x, grid_y, self.grid_size, self.grid_size
+                            )
                             self.last_grid_pos = (grid_x, grid_y)
             elif event.buttons[2]:
                 grid_x, grid_y = _grid_pos(event.pos)
