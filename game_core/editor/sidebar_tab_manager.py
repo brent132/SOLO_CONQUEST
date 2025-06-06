@@ -7,6 +7,7 @@ import pygame
 from .color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from .config import FONT_PATH
 from .tileset_tab.tileset_tab_manager import TilesetTabManager
+from .tileset_tab.show_tileset import draw_tileset
 
 
 class TabManager:
@@ -71,5 +72,6 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             self.tileset_manager.draw(surface)
+            draw_tileset(surface, self.tileset_manager.active, self.sidebar_rect)
 
 
