@@ -1,38 +1,34 @@
-"""Utilities for displaying the animated dungeon tileset."""
+"""Utilities for displaying enemy spawn point tiles."""
 
 from __future__ import annotations
 
 from typing import Optional
 import pygame
 
-from .tileset_components import DungeonAnimTileset
+from ..tileset_components import EnemySpawnpointTileset
 
-# Lazy loaded tileset instance
-_dungeon_anim_tileset: Optional[DungeonAnimTileset] = None
+_enemy_tileset: Optional[EnemySpawnpointTileset] = None
 
 
-def _get_dungeon_anim_tileset() -> DungeonAnimTileset:
-    """Return the singleton animated dungeon tileset, loading it if needed."""
-    global _dungeon_anim_tileset
-    if _dungeon_anim_tileset is None:
-        _dungeon_anim_tileset = DungeonAnimTileset()
-    return _dungeon_anim_tileset
+def _get_enemy_tileset() -> EnemySpawnpointTileset:
+    """Return the singleton enemy spawn point tileset, loading it if needed."""
+    global _enemy_tileset
+    if _enemy_tileset is None:
+        _enemy_tileset = EnemySpawnpointTileset()
+    return _enemy_tileset
 
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
-    """Draw the animated dungeon tileset in the sidebar and return tile rectangles."""
+    """Draw the enemy spawn point tiles in the sidebar and return tile rectangles."""
+    from ..tileset_tab_manager import TilesetTabManager
 
-    # Import here to avoid circular dependency during module initialization
-    from .tileset_tab_manager import TilesetTabManager
-
-    tileset = _get_dungeon_anim_tileset()
+    tileset = _get_enemy_tileset()
 
     base_spacing = 2
 
     tiles_per_row = tileset.tiles_per_row()
     rows = (tileset.tile_count() + tiles_per_row - 1) // tiles_per_row
 
-    # Capture actual dimensions of each tile
     tile_sizes: list[tuple[int, int]] = []
     max_height = 0
     for tile in tileset.tiles:
@@ -50,7 +46,6 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     available_width = sidebar_rect.width
     available_height = sidebar_rect.height - offset_y
 
-    # Determine the widest row in pixel units
     row_widths: list[int] = []
     for r in range(rows):
         start = r * tiles_per_row
@@ -70,8 +65,10 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     spacing = int(base_spacing * scale)
     scaled_max_height = int(max_height * scale)
 
-    scaled_row_widths = [int(w * scale) + spacing * (min(tiles_per_row, tileset.tile_count() - r * tiles_per_row) - 1)
-                         for r, w in enumerate(row_widths)]
+    scaled_row_widths = [
+        int(w * scale) + spacing * (min(tiles_per_row, tileset.tile_count() - r * tiles_per_row) - 1)
+        for r, w in enumerate(row_widths)
+    ]
     grid_width = max(scaled_row_widths)
 
     start_x = sidebar_rect.left + max((available_width - grid_width) // 2, 0)

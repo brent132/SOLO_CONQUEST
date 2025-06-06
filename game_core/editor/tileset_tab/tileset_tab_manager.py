@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pygame
 
-from .show_overworld_tileset import draw_tileset as draw_overworld_tileset
-from .show_overworld_anim_tileset import draw_tileset as draw_overworld_anim_tileset
-from .show_dungeon_tileset import draw_tileset as draw_dungeon_tileset
-from .show_dungeon_anim_tileset import draw_tileset as draw_dungeon_anim_tileset
-from .show_player_spawnpoint import draw_tileset as draw_player_spawnpoint
-from .show_enemy_spawnpoint import draw_tileset as draw_enemy_spawnpoint
+from .show_tileset.show_overworld_tileset import draw_tileset as draw_overworld_tileset
+from .show_tileset.show_overworld_anim_tileset import draw_tileset as draw_overworld_anim_tileset
+from .show_tileset.show_dungeon_tileset import draw_tileset as draw_dungeon_tileset
+from .show_tileset.show_dungeon_anim_tileset import draw_tileset as draw_dungeon_anim_tileset
+from .show_tileset.show_player_spawnpoint import draw_tileset as draw_player_spawnpoint
+from .show_tileset.show_enemy_spawnpoint import draw_tileset as draw_enemy_spawnpoint
 from .tile_selection_manager import TileSelectionManager
 
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE

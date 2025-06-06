@@ -1,31 +1,31 @@
-"""Utilities for displaying tilesets in the editor."""
+"""Utilities for displaying the animated overworld tileset."""
 
 from __future__ import annotations
 
 from typing import Optional
 import pygame
 
-from .tileset_components import OverworldTileset
+from ..tileset_components import OverworldAnimTileset
 
 # Lazy loaded tileset instances
-_overworld_tileset: Optional[OverworldTileset] = None
+_overworld_anim_tileset: Optional[OverworldAnimTileset] = None
 
 
-def _get_overworld_tileset() -> OverworldTileset:
-    """Return the singleton overworld tileset, loading it if needed."""
-    global _overworld_tileset
-    if _overworld_tileset is None:
-        _overworld_tileset = OverworldTileset()
-    return _overworld_tileset
+def _get_overworld_anim_tileset() -> OverworldAnimTileset:
+    """Return the singleton animated overworld tileset, loading it if needed."""
+    global _overworld_anim_tileset
+    if _overworld_anim_tileset is None:
+        _overworld_anim_tileset = OverworldAnimTileset()
+    return _overworld_anim_tileset
 
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
-    """Draw the overworld tileset inside the sidebar and return tile rectangles."""
+    """Draw the animated overworld tileset in the sidebar and return tile rectangles."""
 
     # Import here to avoid circular dependency during module initialization
-    from .tileset_tab_manager import TilesetTabManager
+    from ..tileset_tab_manager import TilesetTabManager
 
-    tileset = _get_overworld_tileset()
+    tileset = _get_overworld_anim_tileset()
 
     # Scale tiles so the full tileset fits inside the sidebar.
     spacing = 2

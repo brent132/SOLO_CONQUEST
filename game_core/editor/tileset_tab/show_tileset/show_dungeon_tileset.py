@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Optional
 import pygame
 
-from .tileset_components import DungeonTileset
+from ..tileset_components import DungeonTileset
 
 # Lazy loaded tileset instance
 _dungeon_tileset: Optional[DungeonTileset] = None
@@ -23,7 +23,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     """Draw the dungeon tileset inside the sidebar and return tile rectangles."""
 
     # Import here to avoid circular dependency during module initialization
-    from .tileset_tab_manager import TilesetTabManager
+    from ..tileset_tab_manager import TilesetTabManager
 
     tileset = _get_dungeon_tileset()
 
