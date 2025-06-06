@@ -67,6 +67,7 @@ class CanvasControls:
             return
         scale = new_size / old_size
         self.canvas.grid_size = new_size
+        self.canvas.placement_manager.grid_size = new_size
 
         for tile in self.canvas.placement_manager.tiles:
             rel_x = tile.rect.x - self.canvas.rect.left
