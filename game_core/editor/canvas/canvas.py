@@ -58,7 +58,7 @@ class Canvas:
                 tileset_index = tab_manager.active_tileset
                 if tile_index is not None:
                     tile = self.tilesets.get_tile(tileset_index, tile_index)
-                    if tile is not None and not self.placement_manager.has_tile_at(grid_x, grid_y):
+                    if tile is not None:
                         if tile.get_width() != self.grid_size:
                             tile = pygame.transform.scale(
                                 tile, (self.grid_size, self.grid_size)

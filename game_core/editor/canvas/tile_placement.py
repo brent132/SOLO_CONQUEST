@@ -45,6 +45,11 @@ class TilePlacementManager:
         to span multiple grid cells (e.g. a 48x32 door).
         """
         px, py = self._grid_to_pixels(grid_x, grid_y)
+        # If another tile already occupies this grid position remove it so
+        # the new tile replaces the old one. This allows simple overwriting
+        # behaviour both for single clicks and for click-and-drag placement.
+        self.remove_tile_at(grid_x, grid_y)
+
         width = width or image.get_width()
         height = height or image.get_height()
         rect = pygame.Rect(px, py, width, height)
