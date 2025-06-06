@@ -75,7 +75,8 @@ class EditorApp:
                 self.canvas.handle_event(event, self.tab_manager)
 
     def update(self):
-        pass
+        # Allow long-press navigation on the canvas
+        self.canvas_controls.update()
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)

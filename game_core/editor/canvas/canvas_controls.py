@@ -18,6 +18,11 @@ class CanvasControls:
         self.dragging: PlacedTile | None = None
         self.drag_offset = (0, 0)
 
+        # Zoom limits based on the initial grid size
+        self._base_grid = canvas.grid_size
+        self._min_grid = self._base_grid  # 100%
+        self._max_grid = self._base_grid * 3  # 300%
+
     # ------------------------------------------------------------------
     # Dragging tiles
     # ------------------------------------------------------------------
@@ -66,26 +71,45 @@ class CanvasControls:
         self.canvas.offset[0] += dx
         self.canvas.offset[1] += dy
 
+    def update(self) -> None:
+        """Handle continuous panning when navigation keys are held."""
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
+            self._pan(0, -self.PAN_SPEED)
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+            self._pan(0, self.PAN_SPEED)
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+            self._pan(-self.PAN_SPEED, 0)
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            self._pan(self.PAN_SPEED, 0)
+
     # ------------------------------------------------------------------
     # Zoom handling
     # ------------------------------------------------------------------
-    def _zoom(self, factor: float) -> None:
+    def _zoom(self, numerator: int, denominator: int) -> None:
+        """Zoom the canvas by a fraction defined by numerator/denominator."""
+
         old_size = self.canvas.grid_size
-        new_size = max(1, int(old_size * factor))
+        new_size = old_size * numerator // denominator
+
+        # Enforce zoom limits of 100% to 300%
+        new_size = min(max(new_size, self._min_grid), self._max_grid)
+
         if new_size == old_size:
             return
-        scale = new_size / old_size
+
+        scale_num = new_size
+        scale_den = old_size
         self.canvas.grid_size = new_size
 
-        self.canvas.offset[0] = int(self.canvas.offset[0] * scale)
-        self.canvas.offset[1] = int(self.canvas.offset[1] * scale)
+        self.canvas.offset[0] = self.canvas.offset[0] * scale_num // scale_den
+        self.canvas.offset[1] = self.canvas.offset[1] * scale_num // scale_den
+
         for tile in self.canvas.placement_manager.tiles:
-            rel_x = tile.rect.x
-            rel_y = tile.rect.y
-            tile.rect.x = int(rel_x * scale)
-            tile.rect.y = int(rel_y * scale)
-            tile.rect.width = int(tile.rect.width * scale)
-            tile.rect.height = int(tile.rect.height * scale)
+            tile.rect.x = tile.rect.x * scale_num // scale_den
+            tile.rect.y = tile.rect.y * scale_num // scale_den
+            tile.rect.width = tile.rect.width * scale_num // scale_den
+            tile.rect.height = tile.rect.height * scale_num // scale_den
             tile.image = pygame.transform.scale(tile.image, tile.rect.size)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
@@ -106,22 +130,22 @@ class CanvasControls:
                 self._end_drag()
                 return True
         elif event.type == pygame.KEYDOWN:
-            # WASD panning
-            if event.key == pygame.K_w:
+            # WASD/Arrow panning
+            if event.key in (pygame.K_w, pygame.K_UP):
                 self._pan(0, -self.PAN_SPEED)
-            elif event.key == pygame.K_s:
+            elif event.key in (pygame.K_s, pygame.K_DOWN):
                 self._pan(0, self.PAN_SPEED)
-            elif event.key == pygame.K_a:
+            elif event.key in (pygame.K_a, pygame.K_LEFT):
                 self._pan(-self.PAN_SPEED, 0)
-            elif event.key == pygame.K_d:
+            elif event.key in (pygame.K_d, pygame.K_RIGHT):
                 self._pan(self.PAN_SPEED, 0)
 
             # Ctrl + / - zooming
             if event.mod & pygame.KMOD_CTRL:
                 if event.key in (pygame.K_EQUALS, pygame.K_KP_PLUS):
-                    self._zoom(2.0)
+                    self._zoom(2, 1)
                     return True
                 elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
-                    self._zoom(0.5)
+                    self._zoom(1, 2)
                     return True
             return True
