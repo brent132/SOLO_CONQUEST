@@ -15,7 +15,7 @@ class PlayerSpawnpointTileset:
     TILESET_WIDTH = TILE_SIZE
     TILESET_HEIGHT = TILE_SIZE
 
-    def __init__(self, tile_path: str = "character/char_idle_up/tile000.png") -> None:
+    def __init__(self, tile_path: str = "character/char_idle_down/tile000.png") -> None:
         self.tile_path = tile_path
         self.tiles: list[pygame.Surface] = []
         self.load_tiles()

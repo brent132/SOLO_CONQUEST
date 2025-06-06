@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pygame
 
-from .color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
-from .config import FONT_PATH
-from .tileset_tab.tileset_tab_manager import TilesetTabManager
+from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
+from ..config import FONT_PATH
+from ..tileset_tab.tileset_tab_manager import TilesetTabManager
 
 
 class TabManager:
