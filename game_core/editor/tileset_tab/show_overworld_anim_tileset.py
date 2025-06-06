@@ -6,7 +6,6 @@ from typing import Optional
 import pygame
 
 from .tileset_components import OverworldAnimTileset
-from .tileset_tab_manager import TilesetTabManager
 
 # Lazy loaded tileset instances
 _overworld_anim_tileset: Optional[OverworldAnimTileset] = None
@@ -22,6 +21,9 @@ def _get_overworld_anim_tileset() -> OverworldAnimTileset:
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> None:
     """Draw the animated overworld tileset in the sidebar."""
+
+    # Import here to avoid circular dependency during module initialization
+    from .tileset_tab_manager import TilesetTabManager
 
     tileset = _get_overworld_anim_tileset()
 
