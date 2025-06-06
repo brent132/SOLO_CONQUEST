@@ -20,7 +20,7 @@ def _get_player_tileset() -> PlayerSpawnpointTileset:
 
 def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pygame.Rect]:
     """Draw the player spawn point tile in the sidebar and return tile rectangles."""
-    from ..tileset_tab_manager import TilesetTabManager
+    from ..tileset_palettes import TilesetPalettes
 
     tileset = _get_player_tileset()
 
@@ -30,7 +30,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     tiles_per_row = tileset.tiles_per_row()
     rows = (tileset.tile_count() + tiles_per_row - 1) // tiles_per_row
 
-    offset_y = TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
+    offset_y = TilesetPalettes.PADDING * 3 + TilesetPalettes.TAB_HEIGHT * 2
 
     available_width = sidebar_rect.width
     available_height = sidebar_rect.height - offset_y

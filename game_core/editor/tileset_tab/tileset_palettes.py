@@ -1,4 +1,4 @@
-"""Tab manager for selecting tilesets within the tiles tab."""
+"""UI component for selecting among available tileset palettes."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
 
 
-class TilesetTabManager:
+class TilesetPalettes:
     """Manage numeric tileset tabs (1-6) inside the tiles tab."""
 
     TAB_HEIGHT = 30
@@ -45,14 +45,13 @@ class TilesetTabManager:
         self.sidebar_rect = sidebar_rect
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        """Handle mouse clicks to switch tilesets."""
+        """Handle mouse clicks to switch tilesets and select tiles."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mx, my = event.pos
             for index, rect in enumerate(self._tileset_rects()):
                 if rect.collidepoint(mx, my):
                     self.active = index
                     return
-            # If click wasn't on tabs, delegate to selection manager
             self.selection_manager.handle_event(event, self.active)
 
     def _tileset_rects(self) -> list[pygame.Rect]:
@@ -66,7 +65,7 @@ class TilesetTabManager:
         return rects
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draw tileset tabs on the given surface."""
+        """Draw tileset tabs and the active palette."""
         for index, rect in enumerate(self._tileset_rects()):
             color = LIGHT_GRAY if index == self.active else DARK_GRAY
             pygame.draw.rect(surface, color, rect)
@@ -81,3 +80,6 @@ class TilesetTabManager:
             rects = drawer(surface, self.sidebar_rect)
             self.selection_manager.set_tile_rects(self.active, rects)
             self.selection_manager.draw_selection(surface, self.active)
+
+
+__all__ = ["TilesetPalettes"]
