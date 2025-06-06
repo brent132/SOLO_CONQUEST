@@ -14,7 +14,7 @@ from game_core.editor.config import (
     maintain_aspect_ratio,
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
-from game_core.editor.canvas import Canvas
+from game_core.editor.canvas import Canvas, CanvasControls
 
 # NOTE: Avoid embedding placement logic directly in this file.
 from game_core.editor.sidebar.sidebar_tab_manager import TabManager
@@ -38,6 +38,7 @@ class EditorApp:
         # Editor UI components
         self.sidebar = Sidebar(self.height, self.width - SIDEBAR_WIDTH)
         self.canvas = Canvas(self.width - SIDEBAR_WIDTH, self.height)
+        self.controls = CanvasControls(self.canvas)
         self.tab_manager = TabManager(["tiles", "browse", "save"], self.sidebar.rect)
 
     def toggle_fullscreen(self) -> None:
@@ -67,9 +68,13 @@ class EditorApp:
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
                 self.toggle_fullscreen()
             self.tab_manager.handle_event(event)
-            # Tile placement is handled by the canvas module; keep logic out of
-            # EditorApp to simplify maintenance.
-            self.canvas.handle_event(event, self.tab_manager)
+
+            # Canvas navigation/zoom/dragging
+            self.controls.handle_event(event)
+
+            # Skip placement while dragging a tile
+            if self.controls.dragging is None:
+                self.canvas.handle_event(event, self.tab_manager)
 
     def update(self):
         pass
