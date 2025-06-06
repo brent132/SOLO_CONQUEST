@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import pygame
 
-from game_core.gameplay.other_components.image_cache import sprite_cache
+from game_core.editor.image_cache import sprite_cache
 
 
 class DungeonTileset:
