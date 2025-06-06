@@ -300,7 +300,7 @@
   "game_state": {
     "camera": {
       "x": 0.0,
-      "y": 0.0
+      "y": 3.0
     },
     "enemies": [
       {
