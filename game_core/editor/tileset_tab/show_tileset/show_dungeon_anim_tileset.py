@@ -23,7 +23,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     """Draw the animated dungeon tileset in the sidebar and return tile rectangles."""
 
     # Import here to avoid circular dependency during module initialization
-    from ..tileset_tab_manager import TilesetTabManager
+    from ..tileset_palettes import TilesetPalettes
 
     tileset = _get_dungeon_anim_tileset()
 
@@ -45,7 +45,7 @@ def draw_tileset(surface: pygame.Surface, sidebar_rect: pygame.Rect) -> list[pyg
     if max_height == 0:
         return []
 
-    offset_y = TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
+    offset_y = TilesetPalettes.PADDING * 3 + TilesetPalettes.TAB_HEIGHT * 2
 
     available_width = sidebar_rect.width
     available_height = sidebar_rect.height - offset_y

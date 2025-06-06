@@ -6,7 +6,8 @@ import pygame
 
 from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
-from ..tileset_tab.tileset_tab_manager import TilesetTabManager
+from ..tileset_tab.tileset_palettes import TilesetPalettes
+from ..tileset_tab.tileset_brush import TilesetBrush
 from ..tileset_tab.tile_selection_manager import TileSelectionManager
 
 
@@ -23,25 +24,33 @@ class TabManager:
         self.sidebar_rect = sidebar_rect
         self.font = pygame.font.Font(FONT_PATH, 16)
 
-        # Tile selection manager used by the tileset manager
+        # Tile selection manager used by the tileset palettes
         self.selection_manager = TileSelectionManager()
-        # Manager for the numeric tileset tabs
-        self.tileset_manager = TilesetTabManager(sidebar_rect, self.selection_manager)
+        # Component for selecting among the numeric tilesets
+        self.tileset_palettes = TilesetPalettes(sidebar_rect, self.selection_manager)
+        # Separate brush selection component
+        self.tileset_brush = TilesetBrush(sidebar_rect)
 
     @property
     def active_tileset(self) -> int:
         """Index of the currently selected tileset."""
-        return self.tileset_manager.active
+        return self.tileset_palettes.active
 
     @property
     def selected_tile(self) -> int | None:
         """Currently selected tile index for the active tileset."""
-        return self.selection_manager.get_selected(self.tileset_manager.active)
+        return self.selection_manager.get_selected(self.tileset_palettes.active)
+
+    @property
+    def brush_size(self) -> int:
+        """Current brush size selected in the tiles tab."""
+        return self.tileset_brush.selected
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update the sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
-        self.tileset_manager.resize(sidebar_rect)
+        self.tileset_palettes.resize(sidebar_rect)
+        self.tileset_brush.resize(sidebar_rect)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Handle mouse clicks to switch tabs."""
@@ -53,7 +62,8 @@ class TabManager:
                     break
             # Delegate tileset button handling when the tiles tab is active
             if self.tabs[self.active] == "tiles":
-                self.tileset_manager.handle_event(event)
+                self.tileset_palettes.handle_event(event)
+                self.tileset_brush.handle_event(event)
 
     def _tab_rects(self) -> list[pygame.Rect]:
         rects = []
@@ -78,6 +88,7 @@ class TabManager:
             surface.blit(label, label_rect)
 
         if self.tabs[self.active] == "tiles":
-            self.tileset_manager.draw(surface)
+            self.tileset_palettes.draw(surface)
+            self.tileset_brush.draw(surface)
 
 
