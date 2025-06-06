@@ -1,8 +1,9 @@
-"""Utilities for displaying tilesets in the editor."""
+"""Utilities for displaying the overworld tileset in the editor."""
 
 from __future__ import annotations
 
 from typing import Optional
+import math
 import pygame
 
 from .tileset_components import OverworldTileset
@@ -28,18 +29,33 @@ def draw_tileset(surface: pygame.Surface, index: int, sidebar_rect: pygame.Rect)
 
     tileset = _get_overworld_tileset()
 
-    # Draw tiles at their original 16x16 resolution so the entire tileset
-    # (288x208) fits within the sidebar without scrolling.
-    scale = 1
-    spacing = 0
+    # Automatically scale the overworld tileset to fit inside the sidebar.
+    spacing = 2
     tile_size = tileset.TILE_SIZE
-    scaled_size = tile_size * scale
+
+    tiles_per_row = tileset.tiles_per_row()
+    rows = math.ceil(tileset.tile_count() / tiles_per_row)
+
+    start_x = sidebar_rect.left + spacing
+    start_y = (
+        sidebar_rect.top
+        + TilesetTabManager.PADDING * 3
+        + TilesetTabManager.TAB_HEIGHT * 2
+    )
+
+    avail_width = sidebar_rect.width - spacing * 2
+    avail_height = sidebar_rect.bottom - start_y - spacing
+
+    total_width = tile_size * tiles_per_row + spacing * (tiles_per_row - 1)
+    total_height = tile_size * rows + spacing * (rows - 1)
+
+    scale_x = avail_width / total_width
+    scale_y = avail_height / total_height
+    scale = min(scale_x, scale_y)
+
+    scaled_size = max(1, int(tile_size * scale))
 
     # Arrange tiles in the original grid layout
-    tiles_per_row = tileset.tiles_per_row()
-    start_x = sidebar_rect.left + spacing
-    start_y = sidebar_rect.top + TilesetTabManager.PADDING * 3 + TilesetTabManager.TAB_HEIGHT * 2
-
     for i in range(tileset.tile_count()):
         tile = tileset.get_tile(i)
         if tile is None:
