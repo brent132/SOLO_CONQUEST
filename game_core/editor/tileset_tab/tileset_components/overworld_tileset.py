@@ -12,11 +12,18 @@ class OverworldTileset:
     """Load and store overworld tiles for the editor palette."""
 
     TILE_SIZE = 16
+    # Dimensions of the full overworld tileset image (in pixels)
+    TILESET_WIDTH = 288
+    TILESET_HEIGHT = 208
 
     def __init__(self, tileset_folder: str = "Tilesets/Overworld") -> None:
         self.tileset_folder = tileset_folder
         self.tiles: list[pygame.Surface] = []
         self.load_tiles()
+
+    def tiles_per_row(self) -> int:
+        """Return the number of tiles per row in the full tileset image."""
+        return self.TILESET_WIDTH // self.TILE_SIZE
 
     def load_tiles(self) -> None:
         """Load all tile images from the overworld folder."""
