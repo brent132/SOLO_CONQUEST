@@ -77,15 +77,23 @@ class CanvasControls:
             tile.rect.height = int(tile.rect.height * scale)
             tile.image = pygame.transform.scale(tile.image, tile.rect.size)
 
-    def handle_event(self, event: pygame.event.Event) -> None:
-        """Process Pygame events for canvas controls."""
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Process Pygame events for canvas controls.
+
+        Returns True if the event was handled and should not propagate to other
+        handlers.
+        """
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._start_drag(event.pos)
+            return self.dragging is not None
         elif event.type == pygame.MOUSEMOTION:
             if self.dragging and event.buttons[0]:
                 self._update_drag(event.pos)
+                return True
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            self._end_drag()
+            if self.dragging:
+                self._end_drag()
+                return True
         elif event.type == pygame.KEYDOWN:
             # WASD panning
             if event.key == pygame.K_w:
@@ -101,5 +109,8 @@ class CanvasControls:
             if event.mod & pygame.KMOD_CTRL:
                 if event.key in (pygame.K_EQUALS, pygame.K_KP_PLUS):
                     self._zoom(2.0)
+                    return True
                 elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
                     self._zoom(0.5)
+                    return True
+            return True
