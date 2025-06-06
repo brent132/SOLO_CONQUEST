@@ -36,6 +36,7 @@ class Canvas:
         if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
             grid_x, grid_y = _grid_pos(event.pos)
             brush = tab_manager.brush_size
+            shape = tab_manager.brush_shape
 
             if event.button == 1:
                 tile_index = tab_manager.selected_tile
@@ -43,46 +44,57 @@ class Canvas:
                 if tile_index is not None:
                     tile = self.tilesets.get_tile(tileset_index, tile_index)
                     if tile is not None:
-                        if tile.get_width() != self.grid_size:
+                        if self.grid_size != 16:
+                            factor = self.grid_size / 16
                             tile = pygame.transform.scale(
-                                tile, (self.grid_size, self.grid_size)
+                                tile,
+                                (
+                                    int(tile.get_width() * factor),
+                                    int(tile.get_height() * factor),
+                                ),
                             )
 
-                        for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                        for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
                             self.placement_manager.add_tile(
                                 tile,
                                 bx,
                                 by,
-                                self.grid_size,
-                                self.grid_size,
+                                tile.get_width(),
+                                tile.get_height(),
                             )
             elif event.button == 3:
-                for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
                     self.placement_manager.remove_tile_at(bx, by)
 
         elif event.type == pygame.MOUSEMOTION and self.rect.collidepoint(event.pos):
             grid_x, grid_y = _grid_pos(event.pos)
             brush = tab_manager.brush_size
+            shape = tab_manager.brush_shape
             if event.buttons[0]:  # Left button drag places tiles
                 tile_index = tab_manager.selected_tile
                 tileset_index = tab_manager.active_tileset
                 if tile_index is not None:
                     tile = self.tilesets.get_tile(tileset_index, tile_index)
                     if tile is not None:
-                        if tile.get_width() != self.grid_size:
+                        if self.grid_size != 16:
+                            factor = self.grid_size / 16
                             tile = pygame.transform.scale(
-                                tile, (self.grid_size, self.grid_size)
+                                tile,
+                                (
+                                    int(tile.get_width() * factor),
+                                    int(tile.get_height() * factor),
+                                ),
                             )
-                        for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                        for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
                             self.placement_manager.add_tile(
                                 tile,
                                 bx,
                                 by,
-                                self.grid_size,
-                                self.grid_size,
+                                tile.get_width(),
+                                tile.get_height(),
                             )
             elif event.buttons[2]:  # Right button drag removes tiles
-                for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
                     self.placement_manager.remove_tile_at(bx, by)
 
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -113,15 +125,23 @@ class Canvas:
             tile_index = tab_manager.selected_tile
             tileset_index = tab_manager.active_tileset
             brush = tab_manager.brush_size
+            shape = tab_manager.brush_shape
 
             if tile_index is not None:
                 tile = self.tilesets.get_tile(tileset_index, tile_index)
                 if tile is not None:
-                    if tile.get_width() != self.grid_size:
-                        tile = pygame.transform.scale(tile, (self.grid_size, self.grid_size))
+                    if self.grid_size != 16:
+                        factor = self.grid_size / 16
+                        tile = pygame.transform.scale(
+                            tile,
+                            (
+                                int(tile.get_width() * factor),
+                                int(tile.get_height() * factor),
+                            ),
+                        )
                     preview = tile.copy()
                     preview.set_alpha(150)
-                    for bx, by in iter_brush_positions(grid_x, grid_y, brush):
+                    for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
                         px = bx * self.grid_size - self.offset[0] + self.rect.left
                         py = by * self.grid_size - self.offset[1] + self.rect.top
                         surface.blit(preview, (px, py))
