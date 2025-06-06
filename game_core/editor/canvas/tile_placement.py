@@ -15,9 +15,9 @@ class PlacedTile:
     image: pygame.Surface
     rect: pygame.Rect
 
-    def draw(self, surface: pygame.Surface) -> None:
-        """Blit the tile image onto the destination surface."""
-        surface.blit(self.image, self.rect)
+    def draw(self, surface: pygame.Surface, offset: tuple[int, int] = (0, 0)) -> None:
+        """Blit the tile image onto the destination surface respecting the offset."""
+        surface.blit(self.image, self.rect.move(-offset[0], -offset[1]))
 
 
 class TilePlacementManager:
@@ -59,7 +59,7 @@ class TilePlacementManager:
                 self.tiles.remove(tile)
                 break
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: pygame.Surface, offset: tuple[int, int] = (0, 0)) -> None:
         """Draw all placed tiles onto the provided surface."""
         for tile in self.tiles:
-            tile.draw(surface)
+            tile.draw(surface, offset)

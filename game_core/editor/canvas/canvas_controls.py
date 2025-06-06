@@ -22,30 +22,40 @@ class CanvasControls:
     # Dragging tiles
     # ------------------------------------------------------------------
     def _tile_at_pos(self, pos: tuple[int, int]) -> PlacedTile | None:
+        world_pos = (
+            pos[0] - self.canvas.rect.left + self.canvas.offset[0],
+            pos[1] - self.canvas.rect.top + self.canvas.offset[1],
+        )
         for tile in reversed(self.canvas.placement_manager.tiles):
-            if tile.rect.collidepoint(pos):
+            if tile.rect.collidepoint(world_pos):
                 return tile
         return None
 
     def _start_drag(self, pos: tuple[int, int]) -> None:
         tile = self._tile_at_pos(pos)
         if tile:
+            world_pos = (
+                pos[0] - self.canvas.rect.left + self.canvas.offset[0],
+                pos[1] - self.canvas.rect.top + self.canvas.offset[1],
+            )
             self.dragging = tile
-            self.drag_offset = (pos[0] - tile.rect.x, pos[1] - tile.rect.y)
+            self.drag_offset = (world_pos[0] - tile.rect.x, world_pos[1] - tile.rect.y)
 
     def _update_drag(self, pos: tuple[int, int]) -> None:
         if self.dragging:
-            new_x = pos[0] - self.drag_offset[0]
-            new_y = pos[1] - self.drag_offset[1]
+            world_pos = (
+                pos[0] - self.canvas.rect.left + self.canvas.offset[0],
+                pos[1] - self.canvas.rect.top + self.canvas.offset[1],
+            )
+            new_x = world_pos[0] - self.drag_offset[0]
+            new_y = world_pos[1] - self.drag_offset[1]
             self.dragging.rect.topleft = (new_x, new_y)
 
     def _end_drag(self) -> None:
         if self.dragging:
-            x = self.dragging.rect.x - self.canvas.rect.left
-            y = self.dragging.rect.y - self.canvas.rect.top
             grid = self.canvas.grid_size
-            snapped_x = (x // grid) * grid + self.canvas.rect.left
-            snapped_y = (y // grid) * grid + self.canvas.rect.top
+            snapped_x = (self.dragging.rect.x // grid) * grid
+            snapped_y = (self.dragging.rect.y // grid) * grid
             self.dragging.rect.topleft = (snapped_x, snapped_y)
         self.dragging = None
 
@@ -53,9 +63,8 @@ class CanvasControls:
     # Canvas navigation
     # ------------------------------------------------------------------
     def _pan(self, dx: int, dy: int) -> None:
-        self.canvas.rect.move_ip(dx, dy)
-        for tile in self.canvas.placement_manager.tiles:
-            tile.rect.move_ip(dx, dy)
+        self.canvas.offset[0] += dx
+        self.canvas.offset[1] += dy
 
     # ------------------------------------------------------------------
     # Zoom handling
@@ -68,11 +77,13 @@ class CanvasControls:
         scale = new_size / old_size
         self.canvas.grid_size = new_size
 
+        self.canvas.offset[0] = int(self.canvas.offset[0] * scale)
+        self.canvas.offset[1] = int(self.canvas.offset[1] * scale)
         for tile in self.canvas.placement_manager.tiles:
-            rel_x = tile.rect.x - self.canvas.rect.left
-            rel_y = tile.rect.y - self.canvas.rect.top
-            tile.rect.x = int(rel_x * scale + self.canvas.rect.left)
-            tile.rect.y = int(rel_y * scale + self.canvas.rect.top)
+            rel_x = tile.rect.x
+            rel_y = tile.rect.y
+            tile.rect.x = int(rel_x * scale)
+            tile.rect.y = int(rel_y * scale)
             tile.rect.width = int(tile.rect.width * scale)
             tile.rect.height = int(tile.rect.height * scale)
             tile.image = pygame.transform.scale(tile.image, tile.rect.size)

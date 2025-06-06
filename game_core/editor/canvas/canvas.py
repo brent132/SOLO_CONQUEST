@@ -16,6 +16,8 @@ class Canvas:
     def __init__(self, width: int, height: int, grid_size: int = 16, x: int = 0, y: int = 0) -> None:
         self.grid_size = grid_size
         self.rect = pygame.Rect(x, y, width, height)
+        self.offset = [0, 0]
+        self.last_grid_pos: tuple[int, int] | None = None
         self.placement_manager = TilePlacementManager(grid_size)
         self.tilesets = TilesetRepository()
 
@@ -25,10 +27,14 @@ class Canvas:
 
     def handle_event(self, event: pygame.event.Event, tab_manager: TabManager) -> None:
         """Handle mouse events for placing and removing tiles."""
+
+        def _grid_pos(mouse_pos: tuple[int, int]) -> tuple[int, int]:
+            mx = mouse_pos[0] - self.rect.left + self.offset[0]
+            my = mouse_pos[1] - self.rect.top + self.offset[1]
+            return mx // self.grid_size, my // self.grid_size
+
         if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
-            mx, my = event.pos
-            grid_x = (mx - self.rect.left) // self.grid_size
-            grid_y = (my - self.rect.top) // self.grid_size
+            grid_x, grid_y = _grid_pos(event.pos)
             if event.button == 1:
                 tile_index = tab_manager.selected_tile
                 tileset_index = tab_manager.active_tileset
@@ -36,20 +42,42 @@ class Canvas:
                     tile = self.tilesets.get_tile(tileset_index, tile_index)
                     if tile is not None:
                         self.placement_manager.add_tile(tile, grid_x, grid_y)
+                        self.last_grid_pos = (grid_x, grid_y)
             elif event.button == 3:
                 self.placement_manager.remove_tile_at(grid_x, grid_y)
+                self.last_grid_pos = (grid_x, grid_y)
+
+        elif event.type == pygame.MOUSEMOTION and self.rect.collidepoint(event.pos):
+            if event.buttons[0]:
+                grid_x, grid_y = _grid_pos(event.pos)
+                if self.last_grid_pos != (grid_x, grid_y):
+                    tile_index = tab_manager.selected_tile
+                    tileset_index = tab_manager.active_tileset
+                    if tile_index is not None:
+                        tile = self.tilesets.get_tile(tileset_index, tile_index)
+                        if tile is not None:
+                            self.placement_manager.add_tile(tile, grid_x, grid_y)
+                            self.last_grid_pos = (grid_x, grid_y)
+            elif event.buttons[2]:
+                grid_x, grid_y = _grid_pos(event.pos)
+                if self.last_grid_pos != (grid_x, grid_y):
+                    self.placement_manager.remove_tile_at(grid_x, grid_y)
+                    self.last_grid_pos = (grid_x, grid_y)
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button in (1, 3):
+                self.last_grid_pos = None
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the canvas background and grid."""
         pygame.draw.rect(surface, WHITE, self.rect)
 
-        # Draw vertical grid lines
-        for gx in range(self.rect.left, self.rect.right, self.grid_size):
+        start_x = -self.offset[0] % self.grid_size
+        for gx in range(self.rect.left + start_x, self.rect.right, self.grid_size):
             pygame.draw.line(surface, LIGHT_GRAY, (gx, self.rect.top), (gx, self.rect.bottom))
 
-        # Draw horizontal grid lines
-        for gy in range(self.rect.top, self.rect.bottom, self.grid_size):
+        start_y = -self.offset[1] % self.grid_size
+        for gy in range(self.rect.top + start_y, self.rect.bottom, self.grid_size):
             pygame.draw.line(surface, LIGHT_GRAY, (self.rect.left, gy), (self.rect.right, gy))
 
-        # Draw any placed tiles on top of the grid
-        self.placement_manager.draw(surface)
+        self.placement_manager.draw(surface, tuple(self.offset))
