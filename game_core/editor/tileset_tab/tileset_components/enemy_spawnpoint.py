@@ -17,13 +17,18 @@ class EnemySpawnpointTileset:
 
     def __init__(self, enemies_root: str = "Enemies_Sprites") -> None:
         self.enemies_root = enemies_root
+        # Specific animation folders used to show a preview sprite for each enemy
+        # type. The first frame from these folders will be loaded as the
+        # representative tile in the editor sidebar.
         self.enemy_folders = [
-            "Bomberplant_Sprites",
-            "Phantom_Sprites",
-            "Pinkbat_Sprites",
-            "Pinkslime_Sprites",
-            "Spider_Sprites",
-            "Spinner_Sprites",
+            "Bomberplant_Sprites/bomberplant_idle_anim_all_dir",
+            "Phantom_Sprites/phantom_idle_anim_left",
+            "Phantom_Sprites/phantom_idle_anim_right",
+            "Pinkbat_Sprites/pinkbat_idle_left_anim",
+            "Pinkbat_Sprites/pinkbat_idle_right_anim",
+            "Pinkslime_Sprites/pinkslime_idle_anim_all_dir",
+            "Spider_Sprites/spider_idle_anim_all_dir",
+            "Spinner_Sprites/spinner_idle_anim_all_dir",
         ]
         self.tiles: list[pygame.Surface] = []
         self.load_tiles()
