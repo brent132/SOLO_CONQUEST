@@ -80,7 +80,7 @@ class EditorApp:
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
-        self.canvas.draw(self.screen)
+        self.canvas.draw(self.screen, self.tab_manager)
         self.sidebar.draw(self.screen)
         self.tab_manager.draw(self.screen)
         pygame.display.flip()

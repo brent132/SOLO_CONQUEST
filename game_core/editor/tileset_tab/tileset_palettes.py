@@ -64,8 +64,12 @@ class TilesetPalettes:
             x += self.TAB_WIDTH + self.PADDING
         return rects
 
-    def draw(self, surface: pygame.Surface) -> None:
-        """Draw tileset tabs and the active palette."""
+    def draw(self, surface: pygame.Surface) -> int:
+        """Draw tileset tabs and the active palette.
+
+        Returns the bottom y-coordinate of the palette for layout purposes.
+        """
+        bottom = self.sidebar_rect.top
         for index, rect in enumerate(self._tileset_rects()):
             color = LIGHT_GRAY if index == self.active else DARK_GRAY
             pygame.draw.rect(surface, color, rect)
@@ -78,8 +82,12 @@ class TilesetPalettes:
         if self.active < len(self._drawers):
             drawer = self._drawers[self.active]
             rects = drawer(surface, self.sidebar_rect)
+            if rects:
+                bottom = max(r.bottom for r in rects)
             self.selection_manager.set_tile_rects(self.active, rects)
             self.selection_manager.draw_selection(surface, self.active)
+
+        return bottom
 
 
 __all__ = ["TilesetPalettes"]

@@ -26,15 +26,21 @@ class TilesetBrush:
         self.sidebar_rect = sidebar_rect
         self.selected = 1
         self.font = pygame.font.Font(FONT_PATH, 16)
+        self._top = sidebar_rect.bottom - self.BUTTON_SIZE - self.PADDING
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
+        self._top = sidebar_rect.bottom - self.BUTTON_SIZE - self.PADDING
+
+    def set_top(self, top: int) -> None:
+        """Set the top y-coordinate for the brush buttons."""
+        self._top = top
 
     def _button_rects(self) -> list[pygame.Rect]:
         rects = []
         x = self.sidebar_rect.left + self.PADDING
-        y = self.sidebar_rect.bottom - self.BUTTON_SIZE - self.PADDING
+        y = self._top
         for _ in self.SIZES:
             rects.append(pygame.Rect(x, y, self.BUTTON_SIZE, self.BUTTON_SIZE))
             x += self.BUTTON_SIZE + self.PADDING
