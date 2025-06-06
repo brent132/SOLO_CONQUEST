@@ -57,7 +57,10 @@ class CanvasControls:
         scale_num = new_size
         scale_den = old_size
         self.canvas.grid_size = new_size
-
+        # Keep the placement manager in sync so new tiles use the
+        # current zoom level for pixel calculations
+        self.canvas.placement_manager.grid_size = new_size
+        
         self.canvas.offset[0] = self.canvas.offset[0] * scale_num // scale_den
         self.canvas.offset[1] = self.canvas.offset[1] * scale_num // scale_den
 
