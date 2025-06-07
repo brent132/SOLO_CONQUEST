@@ -123,3 +123,8 @@ class TilePlacementManager:
         """Delete a layer and all its tiles if multiple layers exist."""
         if 0 <= index < len(self.layers) and len(self.layers) > 1:
             self.layers.pop(index)
+
+    def clear(self) -> None:
+        """Remove all tiles and reset to a single empty layer."""
+        self.layers = [[]]
+

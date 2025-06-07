@@ -15,6 +15,7 @@ from game_core.editor.config import (
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
 from game_core.editor.canvas import Canvas, CanvasControls
+from game_core.editor.canvas.new_map import NewMapButton
 
 # NOTE: Avoid embedding placement logic directly in this file.
 from game_core.editor.sidebar.sidebar_tab_manager import TabManager
@@ -44,6 +45,7 @@ class EditorApp:
             self.sidebar.rect,
             self.canvas.placement_manager,
         )
+        self.new_map_button = NewMapButton(self.sidebar.rect, self.canvas.placement_manager)
 
     def toggle_fullscreen(self) -> None:
         """Toggle fullscreen mode."""
@@ -58,6 +60,7 @@ class EditorApp:
         self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
         self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
         self.tab_manager.resize(self.sidebar.rect)
+        self.new_map_button.resize(self.sidebar.rect)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -69,9 +72,11 @@ class EditorApp:
                 self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
                 self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
                 self.tab_manager.resize(self.sidebar.rect)
+                self.new_map_button.resize(self.sidebar.rect)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
                 self.toggle_fullscreen()
             self.tab_manager.handle_event(event)
+            self.new_map_button.handle_event(event)
             handled = self.canvas_controls.handle_event(event)
             if not handled:
                 # Tile placement is handled by the canvas module; keep logic out of
@@ -87,6 +92,7 @@ class EditorApp:
         self.canvas.draw(self.screen, self.tab_manager)
         self.sidebar.draw(self.screen)
         self.tab_manager.draw(self.screen)
+        self.new_map_button.draw(self.screen)
         pygame.display.flip()
 
     def run(self):
