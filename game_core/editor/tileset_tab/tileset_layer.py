@@ -54,11 +54,11 @@ class TilesetLayers:
 
     def scroll(self, amount: int) -> None:
         """Scroll the layer list vertically by ``amount`` pixels."""
-        max_scroll = max(
-            0,
-            (self.LAYER_HEIGHT + self.PADDING) * (len(self.layers) + 1)
-            - self.container_rect.height,
-        )
+        total = (self.LAYER_HEIGHT + self.PADDING) * (len(self.layers) + 1)
+        max_scroll = max(0, total - self.container_rect.height)
+        if max_scroll <= 0:
+            self.scroll_offset = 0
+            return
         self.scroll_offset = max(0, min(self.scroll_offset + amount, max_scroll))
 
     def add_layer(self, name: str | None = None) -> None:

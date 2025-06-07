@@ -113,10 +113,12 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             bottom = self.tileset_palettes.draw(surface)
+            available = self.sidebar_rect.width - self.tileset_brush.PADDING * 3
+            box_width = available // 2
             brush_rect = pygame.Rect(
                 self.sidebar_rect.left + self.tileset_brush.PADDING,
                 bottom + self.tileset_brush.PADDING,
-                self.tileset_brush.container_rect.width,
+                box_width,
                 self.tileset_brush.container_rect.height,
             )
             self.tileset_brush.set_container(brush_rect)
@@ -128,7 +130,7 @@ class TabManager:
                 pygame.Rect(
                     layer_left,
                     brush_rect.top,
-                    self.tileset_layers.LAYER_WIDTH,
+                    box_width,
                     container_height,
                 )
             )
