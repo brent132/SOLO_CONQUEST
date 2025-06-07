@@ -1,4 +1,6 @@
+"""Common helper for drawing tilesets in the sidebar."""
 from __future__ import annotations
+# Calculates layout for tile grids.
 
 from typing import Protocol, List
 import pygame

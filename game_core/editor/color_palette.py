@@ -1,4 +1,5 @@
 """Color palette definitions for the map editor."""
+# Groups commonly used RGB tuples.
 
 # Base colors
 WHITE = (255, 255, 255)

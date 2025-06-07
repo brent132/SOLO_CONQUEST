@@ -70,3 +70,7 @@ You can install the required dependencies using:
 ```
 pip install -r requirements.txt
 ```
+
+## Commenting Guideline
+All Python modules contain brief comments explaining their logic.
+When you add new code, follow this style and include clear docstrings and inline notes.

@@ -1,4 +1,5 @@
 """Utilities for displaying enemy spawn point tiles."""
+# Draws enemy spawn previews inside the sidebar.
 
 from __future__ import annotations
 

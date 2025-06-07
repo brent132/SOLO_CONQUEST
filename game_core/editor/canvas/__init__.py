@@ -1,4 +1,5 @@
 """Canvas module exports."""
+# Re-exports canvas related classes for convenience.
 
 from .canvas import Canvas
 from .tile_placement import TilePlacementManager

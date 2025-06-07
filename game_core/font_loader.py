@@ -1,6 +1,7 @@
 """
 Font Manager module - handles loading and managing fonts
 """
+# Manages font loading and caching for the editor.
 import os
 import pygame
 

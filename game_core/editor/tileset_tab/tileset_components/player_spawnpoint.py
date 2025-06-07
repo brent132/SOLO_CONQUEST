@@ -1,4 +1,5 @@
 """Tileset with a single tile representing the player spawn point."""
+# Provides the spawn point preview tile.
 
 from __future__ import annotations
 

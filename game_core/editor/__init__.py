@@ -1,4 +1,5 @@
 """Editor package containing editor-specific modules."""
+# Groups editor widgets like Sidebar and Canvas.
 
 __all__ = [
     "Sidebar",

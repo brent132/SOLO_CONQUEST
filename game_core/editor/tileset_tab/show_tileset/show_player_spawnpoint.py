@@ -1,4 +1,5 @@
 """Utilities for displaying the player spawn point tile."""
+# Renders player spawn preview inside the sidebar.
 
 from __future__ import annotations
 

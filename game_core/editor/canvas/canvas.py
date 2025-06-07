@@ -1,4 +1,5 @@
 """Canvas component for the map editor."""
+# Implements drawing and tile placement on the map canvas.
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 """Tileset component exports."""
+# Collects tileset component classes into one namespace.
 
 from .overworld_tileset import OverworldTileset
 from .overworld_anim_tileset import OverworldAnimTileset

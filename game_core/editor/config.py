@@ -1,4 +1,5 @@
 """Configuration settings for the map editor."""
+# Defines constants like window size and colors.
 
 # Screen settings
 WIDTH, HEIGHT = 1280, 720  # Default window size

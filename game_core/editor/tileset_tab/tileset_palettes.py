@@ -1,4 +1,5 @@
 """UI component for selecting among available tileset palettes."""
+# Handles numeric tileset tabs in the sidebar.
 
 from __future__ import annotations
 

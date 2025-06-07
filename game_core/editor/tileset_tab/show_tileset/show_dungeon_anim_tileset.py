@@ -1,4 +1,5 @@
 """Utilities for displaying the animated dungeon tileset."""
+# Lays out animated dungeon tiles within the sidebar.
 
 from __future__ import annotations
 

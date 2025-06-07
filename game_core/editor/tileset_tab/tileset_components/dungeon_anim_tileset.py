@@ -1,4 +1,5 @@
 """Loader for the animated dungeon tileset palette."""
+# Extracts representative frames from animated tiles.
 
 from __future__ import annotations
 

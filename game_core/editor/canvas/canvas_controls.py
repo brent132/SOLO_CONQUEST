@@ -1,4 +1,5 @@
 """Utilities for interacting with the editor canvas."""
+# Handles panning and zooming actions.
 
 from __future__ import annotations
 
