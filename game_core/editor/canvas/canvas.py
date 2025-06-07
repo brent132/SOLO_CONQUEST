@@ -38,6 +38,7 @@ class Canvas:
             grid_x, grid_y = _grid_pos(event.pos)
             brush = tab_manager.brush_size
             shape = tab_manager.brush_shape
+            layer = tab_manager.active_layer
 
             if event.button == 1:
                 tile_index = tab_manager.selected_tile
@@ -62,15 +63,17 @@ class Canvas:
                                 by,
                                 tile.get_width(),
                                 tile.get_height(),
+                                layer,
                             )
             elif event.button == 3:
                 for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
-                    self.placement_manager.remove_tile_at(bx, by)
+                    self.placement_manager.remove_tile_at(bx, by, layer)
 
         elif event.type == pygame.MOUSEMOTION and self.rect.collidepoint(event.pos):
             grid_x, grid_y = _grid_pos(event.pos)
             brush = tab_manager.brush_size
             shape = tab_manager.brush_shape
+            layer = tab_manager.active_layer
             if event.buttons[0]:  # Left button drag places tiles
                 tile_index = tab_manager.selected_tile
                 tileset_index = tab_manager.active_tileset
@@ -93,10 +96,11 @@ class Canvas:
                                 by,
                                 tile.get_width(),
                                 tile.get_height(),
+                                layer,
                             )
             elif event.buttons[2]:  # Right button drag removes tiles
                 for bx, by in iter_brush_positions(grid_x, grid_y, brush, shape):
-                    self.placement_manager.remove_tile_at(bx, by)
+                    self.placement_manager.remove_tile_at(bx, by, layer)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             pass
