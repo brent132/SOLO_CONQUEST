@@ -64,7 +64,7 @@ class EditorApp:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.VIDEORESIZE:
+            elif event.type == pygame.VIDEORESIZE and not self.fullscreen:
                 self.width, self.height = maintain_aspect_ratio(*event.size)
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
                 self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
