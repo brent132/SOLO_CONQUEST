@@ -64,12 +64,13 @@ class CanvasControls:
         self.canvas.offset[0] = int(self.canvas.offset[0] * scale)
         self.canvas.offset[1] = int(self.canvas.offset[1] * scale)
 
-        for tile in self.canvas.placement_manager.tiles:
-            tile.rect.x = int(tile.rect.x * scale)
-            tile.rect.y = int(tile.rect.y * scale)
-            tile.rect.width = int(tile.rect.width * scale)
-            tile.rect.height = int(tile.rect.height * scale)
-            tile.image = pygame.transform.scale(tile.image, tile.rect.size)
+        for layer_tiles in self.canvas.placement_manager.layers:
+            for tile in layer_tiles:
+                tile.rect.x = int(tile.rect.x * scale)
+                tile.rect.y = int(tile.rect.y * scale)
+                tile.rect.width = int(tile.rect.width * scale)
+                tile.rect.height = int(tile.rect.height * scale)
+                tile.image = pygame.transform.scale(tile.image, tile.rect.size)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Process Pygame events for canvas controls.
