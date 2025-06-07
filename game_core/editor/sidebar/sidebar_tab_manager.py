@@ -113,21 +113,25 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             bottom = self.tileset_palettes.draw(surface)
-            brush_top = bottom + self.tileset_brush.PADDING
-            self.tileset_brush.set_top(brush_top)
+            brush_rect = pygame.Rect(
+                self.sidebar_rect.left + self.tileset_brush.PADDING,
+                bottom + self.tileset_brush.PADDING,
+                self.tileset_brush.container_rect.width,
+                self.tileset_brush.container_rect.height,
+            )
+            self.tileset_brush.set_container(brush_rect)
             self.tileset_brush.draw(surface)
 
-            width = (
-                self.tileset_brush.BUTTON_SIZE * len(self.tileset_brush.SIZES)
-                + self.tileset_brush.PADDING * (len(self.tileset_brush.SIZES) - 1)
+            layer_left = brush_rect.right + self.tileset_brush.PADDING
+            container_height = self.sidebar_rect.bottom - brush_rect.top - self.PADDING
+            self.tileset_layers.set_container(
+                pygame.Rect(
+                    layer_left,
+                    brush_rect.top,
+                    self.tileset_layers.LAYER_WIDTH,
+                    container_height,
+                )
             )
-            layer_left = (
-                self.sidebar_rect.left
-                + self.tileset_brush.PADDING
-                + width
-                + self.tileset_brush.PADDING
-            )
-            self.tileset_layers.set_position(layer_left, brush_top)
             self.tileset_layers.draw(surface)
 
 
