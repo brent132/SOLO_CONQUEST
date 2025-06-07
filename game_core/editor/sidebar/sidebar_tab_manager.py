@@ -69,6 +69,14 @@ class TabManager:
         self.tileset_palettes.resize(sidebar_rect)
         self.tileset_brush.resize(sidebar_rect)
         self.tileset_layers.resize(sidebar_rect)
+        self.tileset_layers.set_container(
+            pygame.Rect(
+                self.sidebar_rect.left + self.tileset_brush.PADDING,
+                sidebar_rect.top,
+                self.tileset_layers.LAYER_WIDTH,
+                sidebar_rect.height,
+            )
+        )
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Handle mouse clicks to switch tabs."""
@@ -127,7 +135,15 @@ class TabManager:
                 + width
                 + self.tileset_brush.PADDING
             )
-            self.tileset_layers.set_position(layer_left, brush_top)
+            container_height = self.sidebar_rect.bottom - brush_top - self.PADDING
+            self.tileset_layers.set_container(
+                pygame.Rect(
+                    layer_left,
+                    brush_top,
+                    self.tileset_layers.LAYER_WIDTH,
+                    container_height,
+                )
+            )
             self.tileset_layers.draw(surface)
 
 
