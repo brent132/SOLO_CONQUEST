@@ -71,23 +71,23 @@ class TabManager:
         self.tileset_layers.resize(sidebar_rect)
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        """Handle mouse clicks to switch tabs."""
+        """Handle user input for the sidebar and its tabs."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mx, my = event.pos
             for index, rect in enumerate(self._tab_rects()):
                 if rect.collidepoint(mx, my):
                     self.active = index
                     break
-            # Delegate tileset button handling when the tiles tab is active
-            if self.tabs[self.active] == "tiles":
-                self.tileset_palettes.handle_event(event)
-                self.tileset_brush.handle_event(event)
-                action = self.tileset_layers.handle_event(event)
-                if self.placement_manager:
-                    if action == "add":
-                        self.placement_manager.add_layer()
-                    elif isinstance(action, tuple) and action[0] == "delete":
-                        self.placement_manager.delete_layer(action[1])
+
+        if self.tabs[self.active] == "tiles":
+            self.tileset_palettes.handle_event(event)
+            self.tileset_brush.handle_event(event)
+            action = self.tileset_layers.handle_event(event)
+            if self.placement_manager:
+                if action == "add":
+                    self.placement_manager.add_layer()
+                elif isinstance(action, tuple) and action[0] == "delete":
+                    self.placement_manager.delete_layer(action[1])
 
     def _tab_rects(self) -> list[pygame.Rect]:
         rects = []
@@ -113,21 +113,28 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             bottom = self.tileset_palettes.draw(surface)
-            brush_top = bottom + self.tileset_brush.PADDING
-            self.tileset_brush.set_top(brush_top)
+            available = self.sidebar_rect.width - self.tileset_brush.PADDING * 3
+            box_width = available // 2
+            brush_rect = pygame.Rect(
+                self.sidebar_rect.left + self.tileset_brush.PADDING,
+                bottom + self.tileset_brush.PADDING,
+                box_width,
+                self.tileset_brush.container_rect.height,
+            )
+            self.tileset_brush.set_container(brush_rect)
             self.tileset_brush.draw(surface)
 
-            width = (
-                self.tileset_brush.BUTTON_SIZE * len(self.tileset_brush.SIZES)
-                + self.tileset_brush.PADDING * (len(self.tileset_brush.SIZES) - 1)
+            layer_left = brush_rect.right + self.tileset_brush.PADDING
+            max_height = self.sidebar_rect.bottom - brush_rect.top - self.PADDING
+            container_height = min(box_width, max_height)
+            self.tileset_layers.set_container(
+                pygame.Rect(
+                    layer_left,
+                    brush_rect.top,
+                    box_width,
+                    container_height,
+                )
             )
-            layer_left = (
-                self.sidebar_rect.left
-                + self.tileset_brush.PADDING
-                + width
-                + self.tileset_brush.PADDING
-            )
-            self.tileset_layers.set_position(layer_left, brush_top)
             self.tileset_layers.draw(surface)
 
 
