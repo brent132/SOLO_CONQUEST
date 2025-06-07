@@ -23,43 +23,22 @@ class TilesetLayers:
         self.font = pygame.font.Font(FONT_PATH, 16)
         self.layers: List[str] = ["Layer 1"]
         self.active = 0
-        # Container the component is drawn within
-        self.container_rect = sidebar_rect.copy()
-        self.scroll_offset = 0
-        self._left = self.container_rect.left + self.PADDING
-        self._top = self.container_rect.top + self.PADDING
+        self._left = sidebar_rect.left + self.PADDING
+        self._top = sidebar_rect.top + self.PADDING
 
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
-        self.container_rect = sidebar_rect.copy()
-        self._left = self.container_rect.left + self.PADDING
+        self._left = sidebar_rect.left + self.PADDING
 
     def set_top(self, top: int) -> None:
         """Set the top y-coordinate for the layer buttons."""
-        self.container_rect.top = top
-        self._top = self.container_rect.top + self.PADDING
+        self._top = top
 
     def set_position(self, left: int, top: int) -> None:
         """Set the x/y position for the component."""
-        self.container_rect.topleft = (left, top)
-        self._left = self.container_rect.left + self.PADDING
-        self._top = self.container_rect.top + self.PADDING
-
-    def set_container(self, rect: pygame.Rect) -> None:
-        """Define the container rectangle for the layer list."""
-        self.container_rect = rect
-        self._left = self.container_rect.left + self.PADDING
-        self._top = self.container_rect.top + self.PADDING
-
-    def scroll(self, amount: int) -> None:
-        """Scroll the layer list vertically by ``amount`` pixels."""
-        max_scroll = max(
-            0,
-            (self.LAYER_HEIGHT + self.PADDING) * (len(self.layers) + 1)
-            - self.container_rect.height,
-        )
-        self.scroll_offset = max(0, min(self.scroll_offset + amount, max_scroll))
+        self._left = left
+        self._top = top
 
     def add_layer(self, name: str | None = None) -> None:
         """Create a new layer and make it active."""
@@ -88,18 +67,18 @@ class TilesetLayers:
     def _layer_rects(self) -> List[pygame.Rect]:
         rects = []
         x = self._left
-        y = self._top - self.scroll_offset
+        y = self._top
         for _ in self.layers:
             rects.append(pygame.Rect(x, y, self.LAYER_WIDTH, self.LAYER_HEIGHT))
             y += self.LAYER_HEIGHT + self.PADDING
         return rects
 
     def _add_rect(self) -> pygame.Rect:
-        y = self._top + (self.LAYER_HEIGHT + self.PADDING) * len(self.layers) - self.scroll_offset
+        y = self._top + (self.LAYER_HEIGHT + self.PADDING) * len(self.layers)
         return pygame.Rect(self._left, y, self.BUTTON_SIZE, self.BUTTON_SIZE)
 
     def _delete_rect(self) -> pygame.Rect:
-        y = self._top + (self.LAYER_HEIGHT + self.PADDING) * len(self.layers) - self.scroll_offset
+        y = self._top + (self.LAYER_HEIGHT + self.PADDING) * len(self.layers)
         return pygame.Rect(
             self._left + self.BUTTON_SIZE + self.PADDING,
             y,
@@ -114,8 +93,6 @@ class TilesetLayers:
         """
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mx, my = event.pos
-            if not self.container_rect.collidepoint(mx, my):
-                return None
             if self._add_rect().collidepoint(mx, my):
                 self.add_layer()
                 return "add"
@@ -128,23 +105,10 @@ class TilesetLayers:
                 if rect.collidepoint(mx, my):
                     self.active = index
                     break
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (4, 5):
-            mx, my = pygame.mouse.get_pos()
-            if self.container_rect.collidepoint(mx, my):
-                direction = -1 if event.button == 4 else 1
-                self.scroll(direction * (self.LAYER_HEIGHT + self.PADDING))
-        elif event.type == pygame.MOUSEWHEEL:
-            mx, my = pygame.mouse.get_pos()
-            if self.container_rect.collidepoint(mx, my):
-                self.scroll(-event.y * (self.LAYER_HEIGHT + self.PADDING))
         return None
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the layer buttons."""
-        pygame.draw.rect(surface, DARK_GRAY, self.container_rect)
-        pygame.draw.rect(surface, SIDEBAR_BORDER, self.container_rect, 1)
-        old_clip = surface.get_clip()
-        surface.set_clip(self.container_rect.inflate(-1, -1))
         for index, rect in enumerate(self._layer_rects()):
             color = LIGHT_GRAY if index == self.active else DARK_GRAY
             pygame.draw.rect(surface, color, rect)
@@ -165,7 +129,6 @@ class TilesetLayers:
         minus = self.font.render("-", True, WHITE)
         surface.blit(plus, plus.get_rect(center=add_rect.center))
         surface.blit(minus, minus.get_rect(center=del_rect.center))
-        surface.set_clip(old_clip)
 
 
 __all__ = ["TilesetLayers"]
