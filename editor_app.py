@@ -12,7 +12,6 @@ from game_core.editor.config import (
     HEIGHT,
     FPS,
     BACKGROUND_COLOR,
-    maintain_aspect_ratio,
 )
 from game_core.editor.sidebar import Sidebar, SIDEBAR_WIDTH
 from game_core.editor.canvas import Canvas, CanvasControls
@@ -64,8 +63,8 @@ class EditorApp:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.VIDEORESIZE:
-                self.width, self.height = maintain_aspect_ratio(*event.size)
+            elif event.type == pygame.VIDEORESIZE and not self.fullscreen:
+                self.width, self.height = event.size
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
                 self.sidebar.resize(self.height, self.width - SIDEBAR_WIDTH)
                 self.canvas.resize(self.width - SIDEBAR_WIDTH, self.height)
