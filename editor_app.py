@@ -40,7 +40,11 @@ class EditorApp:
         self.sidebar = Sidebar(self.height, self.width - SIDEBAR_WIDTH)
         self.canvas = Canvas(self.width - SIDEBAR_WIDTH, self.height)
         self.canvas_controls = CanvasControls(self.canvas)
-        self.tab_manager = TabManager(["tiles", "browse", "save"], self.sidebar.rect)
+        self.tab_manager = TabManager(
+            ["tiles", "browse", "save"],
+            self.sidebar.rect,
+            self.canvas.placement_manager,
+        )
 
     def toggle_fullscreen(self) -> None:
         """Toggle fullscreen mode."""
