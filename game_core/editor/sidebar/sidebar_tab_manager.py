@@ -9,6 +9,8 @@ from ..color_palette import LIGHT_GRAY, DARK_GRAY, SIDEBAR_BORDER, WHITE
 from ..config import FONT_PATH
 from ..tileset_tab.tileset_palettes import TilesetPalettes
 from ..tileset_tab.tileset_brush import TilesetBrush
+from ..tileset_tab.tileset_layer import TilesetLayers
+from ..canvas.tile_placement import TilePlacementManager
 from ..tileset_tab.tile_selection_manager import TileSelectionManager
 
 
@@ -19,11 +21,13 @@ class TabManager:
     TAB_WIDTH = 100
     PADDING = 5
 
-    def __init__(self, tabs: list[str], sidebar_rect: pygame.Rect) -> None:
+    def __init__(self, tabs: list[str], sidebar_rect: pygame.Rect,
+                 placement_manager: TilePlacementManager | None = None) -> None:
         self.tabs = tabs
         self.active = 0
         self.sidebar_rect = sidebar_rect
         self.font = pygame.font.Font(FONT_PATH, 16)
+        self.placement_manager = placement_manager
 
         # Tile selection manager used by the tileset palettes
         self.selection_manager = TileSelectionManager()
@@ -31,6 +35,8 @@ class TabManager:
         self.tileset_palettes = TilesetPalettes(sidebar_rect, self.selection_manager)
         # Separate brush selection component
         self.tileset_brush = TilesetBrush(sidebar_rect)
+        # Layer management component
+        self.tileset_layers = TilesetLayers(sidebar_rect)
 
     @property
     def active_tileset(self) -> int:
@@ -52,11 +58,17 @@ class TabManager:
         """Current brush shape selected in the tiles tab."""
         return self.tileset_brush.shape
 
+    @property
+    def active_layer(self) -> int:
+        """Currently active tile layer index."""
+        return self.tileset_layers.active
+
     def resize(self, sidebar_rect: pygame.Rect) -> None:
         """Update the sidebar reference when resized."""
         self.sidebar_rect = sidebar_rect
         self.tileset_palettes.resize(sidebar_rect)
         self.tileset_brush.resize(sidebar_rect)
+        self.tileset_layers.resize(sidebar_rect)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """Handle mouse clicks to switch tabs."""
@@ -70,6 +82,12 @@ class TabManager:
             if self.tabs[self.active] == "tiles":
                 self.tileset_palettes.handle_event(event)
                 self.tileset_brush.handle_event(event)
+                action = self.tileset_layers.handle_event(event)
+                if self.placement_manager:
+                    if action == "add":
+                        self.placement_manager.add_layer()
+                    elif isinstance(action, tuple) and action[0] == "delete":
+                        self.placement_manager.delete_layer(action[1])
 
     def _tab_rects(self) -> list[pygame.Rect]:
         rects = []
@@ -95,7 +113,21 @@ class TabManager:
 
         if self.tabs[self.active] == "tiles":
             bottom = self.tileset_palettes.draw(surface)
-            self.tileset_brush.set_top(bottom + self.tileset_brush.PADDING)
+            brush_top = bottom + self.tileset_brush.PADDING
+            self.tileset_brush.set_top(brush_top)
             self.tileset_brush.draw(surface)
+
+            width = (
+                self.tileset_brush.BUTTON_SIZE * len(self.tileset_brush.SIZES)
+                + self.tileset_brush.PADDING * (len(self.tileset_brush.SIZES) - 1)
+            )
+            layer_left = (
+                self.sidebar_rect.left
+                + self.tileset_brush.PADDING
+                + width
+                + self.tileset_brush.PADDING
+            )
+            self.tileset_layers.set_position(layer_left, brush_top)
+            self.tileset_layers.draw(surface)
 
 
