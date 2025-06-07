@@ -117,7 +117,11 @@ class Canvas:
         for gy in range(self.rect.top + start_y, self.rect.bottom, self.grid_size):
             pygame.draw.line(surface, LIGHT_GRAY, (self.rect.left, gy), (self.rect.right, gy))
 
-        self.placement_manager.draw(surface, tuple(self.offset))
+        self.placement_manager.draw(
+            surface,
+            tuple(self.offset),
+            active_layer=tab_manager.active_layer,
+        )
 
         # --------------------------------------------------------------
         # Draw preview of the currently selected tile under the cursor

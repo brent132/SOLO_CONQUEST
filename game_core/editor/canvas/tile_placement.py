@@ -16,9 +16,20 @@ class PlacedTile:
     image: pygame.Surface
     rect: pygame.Rect
 
-    def draw(self, surface: pygame.Surface, offset: tuple[int, int] = (0, 0)) -> None:
-        """Blit the tile image onto the destination surface respecting the offset."""
-        surface.blit(self.image, self.rect.move(-offset[0], -offset[1]))
+    def draw(
+        self,
+        surface: pygame.Surface,
+        offset: tuple[int, int] = (0, 0),
+        alpha: int = 255,
+    ) -> None:
+        """Blit the tile image onto ``surface`` taking offset and transparency into account."""
+
+        if alpha != 255:
+            image = self.image.copy()
+            image.set_alpha(alpha)
+        else:
+            image = self.image
+        surface.blit(image, self.rect.move(-offset[0], -offset[1]))
 
 
 class TilePlacementManager:
@@ -86,11 +97,22 @@ class TilePlacementManager:
             return any(tile.rect.collidepoint(px, py) for tile in self.layers[layer])
         return False
 
-    def draw(self, surface: pygame.Surface, offset: tuple[int, int] = (0, 0)) -> None:
-        """Draw all placed tiles onto the provided surface."""
-        for layer_tiles in self.layers:
+    def draw(
+        self,
+        surface: pygame.Surface,
+        offset: tuple[int, int] = (0, 0),
+        active_layer: int | None = None,
+    ) -> None:
+        """Draw all placed tiles onto the provided surface.
+
+        ``active_layer`` controls which layer is fully opaque. Other layers are
+        rendered semi-transparently.
+        """
+
+        for idx, layer_tiles in enumerate(self.layers):
+            alpha = 255 if active_layer is None or idx == active_layer else 128
             for tile in layer_tiles:
-                tile.draw(surface, offset)
+                tile.draw(surface, offset, alpha)
 
     # Layer management -------------------------------------------------
     def add_layer(self) -> None:
