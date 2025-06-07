@@ -1,4 +1,6 @@
+"""UI component for choosing brush size and shape."""
 from __future__ import annotations
+# Provides brush button layout and logic.
 
 import pygame
 from typing import Iterator

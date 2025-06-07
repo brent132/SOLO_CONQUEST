@@ -1,4 +1,5 @@
 """Loader for the animated overworld tileset palette."""
+# Extracts first frames of animated overworld tiles.
 
 from __future__ import annotations
 

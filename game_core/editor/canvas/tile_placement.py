@@ -1,4 +1,5 @@
 """Utility classes for placing tiles on the canvas."""
+# Tracks tile instances and their screen positions.
 
 from __future__ import annotations
 

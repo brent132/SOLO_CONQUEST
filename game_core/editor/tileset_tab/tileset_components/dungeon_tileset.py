@@ -1,4 +1,5 @@
 """Loader for the dungeon tileset palette."""
+# Reads dungeon tiles from disk for use in the palette.
 
 from __future__ import annotations
 

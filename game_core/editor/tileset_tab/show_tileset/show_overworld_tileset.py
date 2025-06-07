@@ -1,4 +1,5 @@
 """Utilities for displaying tilesets in the editor."""
+# Renders the basic overworld tile palette.
 
 from __future__ import annotations
 

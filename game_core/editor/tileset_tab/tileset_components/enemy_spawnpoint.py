@@ -1,4 +1,5 @@
 """Tileset with preview tiles for enemy spawn points."""
+# Loads first enemy animation frame as preview.
 
 from __future__ import annotations
 

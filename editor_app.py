@@ -1,4 +1,5 @@
 """Basic editor window for SOLO CONQUEST"""
+# Creates the main loop and ties all components together.
 import pygame
 import sys
 import os

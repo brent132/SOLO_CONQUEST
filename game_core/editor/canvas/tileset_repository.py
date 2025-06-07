@@ -1,4 +1,6 @@
+"""Repository for loaded tileset objects."""
 from __future__ import annotations
+# Centralized access to various tileset resources.
 
 import pygame
 

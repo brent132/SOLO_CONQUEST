@@ -1,4 +1,5 @@
 """Utilities for displaying the dungeon tileset."""
+# Draws the static dungeon tiles palette.
 
 from __future__ import annotations
 

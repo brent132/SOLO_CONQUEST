@@ -1,4 +1,5 @@
 """Loader for the overworld tileset palette."""
+# Reads overworld tiles from disk for use in the palette.
 
 from __future__ import annotations
 

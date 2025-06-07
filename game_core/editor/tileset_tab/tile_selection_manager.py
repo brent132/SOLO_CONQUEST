@@ -1,4 +1,5 @@
 """Manage tile selection across all tileset palettes."""
+# Tracks which tile the user has clicked in each palette.
 
 from __future__ import annotations
 

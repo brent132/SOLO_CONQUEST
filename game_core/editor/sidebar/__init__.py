@@ -1,4 +1,5 @@
 """Sidebar module exports."""
+# Exposes Sidebar class and constants.
 
 from .sidebar import Sidebar, SIDEBAR_WIDTH
 

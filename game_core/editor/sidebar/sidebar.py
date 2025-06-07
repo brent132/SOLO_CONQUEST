@@ -1,4 +1,5 @@
 """Sidebar UI component for the map editor."""
+# Defines the rectangular container for UI elements.
 
 import pygame
 

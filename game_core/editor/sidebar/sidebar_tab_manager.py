@@ -1,4 +1,5 @@
 """Simple tab manager for sidebar tabs."""
+# Switches between tiles, browse, and save views.
 
 from __future__ import annotations
 

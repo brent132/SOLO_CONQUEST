@@ -2,6 +2,7 @@
 Sprite Cache System - Centralized sprite and image caching to reduce memory usage
 """
 import os
+# Loads images on demand and caches them across the application.
 import pygame
 import weakref
 from typing import Dict, Optional, Tuple, List

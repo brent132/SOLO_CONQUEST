@@ -1,4 +1,5 @@
 """Utilities for displaying the animated overworld tileset."""
+# Displays animated overworld tiles inside the sidebar.
 
 from __future__ import annotations
 
